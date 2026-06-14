@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wheel Spin - Web Tech Realtime Control</title>
+  <style>
+    * { font-weight: bold !important; }
+    body {
+      font-family: Arial, sans-serif; background: white; color: white;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 100vh; margin: 0;
+    }
+    h1 { margin-bottom: 30px; color: blue; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); }
+    .grid-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 600px; width: 90%; }
+    .btn-change {
+      background: purple; color: white; border: 2px solid aqua; padding: 25px 15px;
+      font-size: 18px; font-weight: bold; border-radius: 12px; cursor: pointer;
+      transition: all 0.2s ease; text-align: center;
+    }
+    .btn-change:hover { background: orange; color: white; transform: translateY(-3px); }
+    .status-text { margin-top: 30px; font-size: 16px; color: green; }
+    .btn-reset {
+      margin-top: 20px; background: red; color: white; border: none;
+      padding: 12px 25px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer;
+    }
+    .btn-reset:hover { background: orange; color: white; transform: translateY(-2px); }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.4/dist/socket.io.min.js"></script>
+</head>
+
+<body>
+
+  <h1>BẢNG ĐIỀU KHIỂN WEB TECH REALTIME</h1>
+
+  <div class="grid-container">
+    <button class="btn-change" onclick="changeWheelImage('vong1.png')">Mặt Nón 1</button>
+    <button class="btn-change" onclick="changeWheelImage('vong2.png')">Mặt Nón 2</button>
+    <button class="btn-change" onclick="changeWheelImage('vong3.png')">Mặt Nón 3</button>
+    <button class="btn-change" onclick="changeWheelImage('vong4.png')">Mặt Nón 4</button>
+    <button class="btn-change" onclick="changeWheelImage('vong5.png')">Mặt Nón 5</button>
+    <button class="btn-change" onclick="changeWheelImage('vong6.png')">Mặt Nón 6</button>
+  </div>
+
+  <button class="btn-reset" onclick="resetWheelPosition()">Đưa nón về góc 0</button>
+
+  <p class="status-text" id="status">Đang kết nối tới hệ thống máy chủ Node.js...</p>
+
+  <script>
+    // CẤU HÌNH ĐƯỜNG DẪN ĐẾN SERVER RENDER (Thay bằng link Render của bạn sau khi deploy)
+    const SERVER_URL = "http://localhost:3000"; 
+    const socket = io(SERVER_URL);
+
+    socket.on('connect', () => {
+      document.getElementById('status').innerText = "Hệ thống máy chủ Socket sẵn sàng!";
+      document.getElementById('status').style.color = 'green';
+    });
+
+    socket.on('disconnect', () => {
+      document.getElementById('status').innerText = "Mất kết nối tới máy chủ!";
+      document.getElementById('status').style.color = 'red';
+    });
+
+    // Hàm đổi mặt nón đồng bộ qua Socket.io
+    function changeWheelImage(imageName) {
+      socket.emit('techChangeImage', imageName);
+      document.getElementById('status').innerText = `Đã cập nhật Mặt Nón: ${imageName}`;
+      document.getElementById('status').style.color = '#34d399';
+    }
+
+    // Hàm đặt lại góc quay về vị trí ban đầu
+    function resetWheelPosition() {
+      socket.emit('techResetWheel');
+      document.getElementById('status').innerText = `Đã đưa nón của tất cả mọi người về góc số 0!`;
+      document.getElementById('status').style.color = '#f59e0b';
+    }
+  </script>
+</body>
+</html>

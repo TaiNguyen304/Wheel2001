@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<title>Wheel Spin - Snapping Bottom Pointer</title>
+
+<style>
+  *{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+  }
+
+  body{
+    width:100vw;
+    height:100vh;
+    overflow:hidden;
+    background:#111827;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-family:Arial, Helvetica, sans-serif;
+  }
+
+  .app{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .wheel-container{
+    position:relative;
+    width:820px;
+    height:820px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  #wheel{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+
+    user-select:none;
+    pointer-events:none;
+
+    filter:drop-shadow(0 0 30px rgba(0,0,0,0.5));
+
+    will-change: transform;
+    transform: translateZ(0);
+  }
+
+  /* Định vị kim ở mép dưới, thiết lập tâm xoay ở gốc trên của kim (gần sát nón) để nảy tự nhiên */
+  .pointer-wrapper {
+    position:absolute;
+    bottom: -35px;
+    left: 50%;
+    width: 90px;
+    height: 90px;
+    transform: translateX(-50%);
+    z-index: 5;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .pointer{
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    /* Quay ngược đầu hướng lên tâm */
+    transform: rotate(180deg);
+    /* Gốc xoay nằm ở đầu kim chỉ vào nón để tạo hiệu ứng nảy gẩy chốt chân thực */
+    transform-origin: center top; 
+    will-change: transform;
+  }
+
+  .drag-zone {
+    position:absolute;
+    width:100%;
+    height:100%;
+    border-radius:50%;
+    z-index:10;
+    cursor: grab;
+  }
+  
+  .drag-zone:active {
+    cursor: grabbing;
+  }
+</style>
+</head>
+
+<body>
+
+<div class="app">
+  <div class="wheel-container">
+    <div class="pointer-wrapper">
+      <img id="pointerImg" class="pointer" src="pointer.png" />
+    </div>
+    <img id="wheel" src="wheel-template.png" />
+    <div class="drag-zone" id="dragZone"></div>
+  </div>
+</div>
+
+<audio id="spinSound" src="spin.mp3" preload="auto"></audio>
+
+<script>
+  const wheel = document.getElementById("wheel");
+  const dragZone = document.getElementById("dragZone");
+  const spinSound = document.getElementById("spinSound");
+  const pointerImg = document.getElementById("pointerImg");
+
+  let currentRotation = 0;   
+  let velocity = 0;          
+  let isDragging = false;    
+  let lastAngle = 0;         
+  
+  let dragAngles = [];
+  let dragTimes = [];
+  let soundTimeout = null;
+
+  // Cấu hình số chốt (24 chốt theo yêu cầu)
+  const pinCount = 24;
+  const pinAngleStep = 360 / pinCount; // Mỗi chốt cách nhau 15 độ
+
+  function getAngle(clientX, clientY) {
+    const rect = wheel.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    
+    let angle = Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI);
+    return angle < 0 ? angle + 360 : angle;
+  }
+
+  // --- BẮT ĐẦU KÉO ---
+  function handleStart(e) {
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    
+    isDragging = true;
+    velocity = 0; 
+    
+    clearTimeout(soundTimeout);
+    
+    spinSound.play().then(() => {
+      spinSound.pause();
+      spinSound.volume = 1.0;
+    }).catch(err => console.log("Chờ tương tác"));
+    
+    lastAngle = getAngle(clientX, clientY);
+    
+    dragAngles = [lastAngle];
+    dragTimes = [performance.now()];
+  }
+
+  // --- ĐANG KÉO ---
+  function handleMove(e) {
+    if (!isDragging) return;
+    
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    
+    const currentAngle = getAngle(clientX, clientY);
+    let deltaAngle = currentAngle - lastAngle;
+
+    if (deltaAngle > 180) deltaAngle -= 360;
+    if (deltaAngle < -180) deltaAngle += 360;
+
+    currentRotation += deltaAngle;
+    
+    wheel.style.transform = `rotate(${currentRotation.toFixed(2)}deg) translateZ(0)`;
+    
+    // Cập nhật hiệu ứng nảy kim ngay cả khi người dùng đang dùng tay kéo nón quay
+    updatePointerFlap();
+
+    lastAngle = currentAngle;
+
+    const now = performance.now();
+    dragAngles.push(currentAngle);
+    dragTimes.push(now);
+    
+    while (dragTimes.length > 1 && now - dragTimes[0] > 100) {
+      dragAngles.shift();
+      dragTimes.shift();
+    }
+  }
+
+  // --- THẢ CHUỘT / TAY ---
+  function handleEnd() {
+    if (!isDragging) return;
+    isDragging = false;
+
+    if (dragTimes.length > 1) {
+      const firstTime = dragTimes[0];
+      const lastTime = dragTimes[dragTimes.length - 1];
+      const timeDiff = lastTime - firstTime;
+
+      if (timeDiff > 0) {
+        let totalDelta = 0;
+        for (let i = 1; i < dragAngles.length; i++) {
+          let diff = dragAngles[i] - dragAngles[i - 1];
+          if (diff > 180) diff -= 360;
+          if (diff < -180) diff += 360;
+          totalDelta += diff;
+        }
+        
+        velocity = (totalDelta / timeDiff) * 25; 
+      }
+    }
+
+    clearTimeout(soundTimeout); 
+    if (Math.abs(velocity) > 2) {
+      soundTimeout = setTimeout(() => {
+        if (Math.abs(velocity) > 0.1) {
+          spinSound.currentTime = 0;
+          spinSound.play().catch(e => console.log("Lỗi âm thanh:", e));
+        }
+      }, 1000); 
+    }
+  }
+
+  dragZone.addEventListener("mousedown", handleStart);
+  window.addEventListener("mousemove", handleMove);
+  window.addEventListener("mouseup", handleEnd);
+
+  dragZone.addEventListener("touchstart", handleStart, { passive: true });
+  window.addEventListener("touchmove", handleMove, { passive: false });
+  window.addEventListener("touchend", handleEnd);
+
+  // --- LOGIC HIỆU ỨNG KIM NẢY (TICKING POINTER) ---
+  // Kim nằm ở hướng 6 giờ (mép dưới), tương ứng với mốc góc toán học là 90 độ (hoặc tùy thuộc vào cách thiết kế ảnh gốc).
+  // Để đơn giản và chính xác tuyệt đối không phụ thuộc góc ban đầu:
+  // Chúng ta theo dõi vị trí tương đối của các chốt đi qua kim chỉ.
+  
+  function updatePointerFlap() {
+    // Góc xoay hiện tại quy đổi về khoảng [0, 360)
+    let normalizedRotation = currentRotation % 360;
+    if (normalizedRotation < 0) normalizedRotation += 360;
+
+    // Tính toán khoảng cách từ kim đến chốt gần nhất
+    // Vị trí kim ở dưới đáy, ta xem độ lệch góc của nón chia cho khoảng cách các chốt
+    let remainder = normalizedRotation % pinAngleStep;
+    
+    // Đưa về khoảng góc từ chốt trước đến chốt sau [-pinAngleStep/2, pinAngleStep/2]
+    if (remainder > pinAngleStep / 2) {
+      remainder -= pinAngleStep;
+    }
+
+    let pointerAngleOffset = 0;
+    // Ngưỡng chốt chạm vào kim và gạt kim đi (ví dụ trong phạm vi 6 độ xung quanh chốt)
+    const contactZone = 6; 
+
+    if (Math.abs(remainder) < contactZone) {
+      // Khi chốt đi qua, nó sẽ đẩy kim lệch đi một góc tỷ lệ thuận với chiều quay (dấu của velocity hoặc remainder)
+      // Khi nón quay, chốt đẩy kim đi, góc đẩy tối đa khoảng 15-20 độ tạo độ nảy
+      let pushIntensity = (contactZone - Math.abs(remainder)) / contactZone;
+      
+      // Xác định hướng gạt dựa vào remainder
+      pointerAngleOffset = remainder * pushIntensity * 2.2; 
+    }
+
+    // Áp dụng góc lệch nảy vào kim chỉ (giữ nguyên gốc 180deg hướng lên và cộng thêm góc nảy)
+    // Giới hạn góc nảy tối đa không quá 22 độ để tránh kim bị quay vòng tròn
+    pointerAngleOffset = Math.max(-22, Math.min(22, pointerAngleOffset));
+    
+    pointerImg.style.transform = `rotate(${180 + pointerAngleOffset}deg)`;
+  }
+
+  // --- VÒNG LẶP ANIMATION ---
+  const friction = 0.993; 
+
+  function updatePhysics() {
+    if (!isDragging && Math.abs(velocity) > 0.04) {
+      currentRotation += velocity;
+      wheel.style.transform = `rotate(${currentRotation.toFixed(2)}deg) translateZ(0)`;
+      
+      // Cập nhật hiệu ứng nảy kim theo quán tính quay tự do
+      updatePointerFlap();
+      
+      velocity *= friction;
+    } else if (!isDragging && velocity !== 0) {
+      velocity = 0;
+      spinSound.pause();
+      // Trả kim về vị trí thẳng đứng cân bằng khi nón dừng hoàn toàn
+      pointerImg.style.transform = `rotate(180deg)`;
+    }
+    
+    requestAnimationFrame(updatePhysics);
+  }
+
+  requestAnimationFrame(updatePhysics);
+</script>
+
+</body>
+</html>
