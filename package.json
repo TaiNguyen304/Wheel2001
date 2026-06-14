@@ -1,0 +1,14 @@
+{
+  "name": "wheel-spin-sync",
+  "version": "1.0.0",
+  "description": "Realtime Wheel Spin System using Socket.io",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.3",
+    "socket.io": "^4.7.4"
+  }
+}
