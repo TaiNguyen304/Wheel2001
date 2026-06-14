@@ -6,26 +6,78 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Wheel Spin - Web Tech Realtime Control</title>
   <style>
-    * { font-weight: bold !important; }
+    * {
+      font-weight: bold !important;
+    }
+
     body {
-      font-family: Arial, sans-serif; background: white; color: white;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      min-height: 100vh; margin: 0;
+      font-family: Arial, sans-serif;
+      background: white;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
     }
-    h1 { margin-bottom: 30px; color: blue; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); }
-    .grid-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 600px; width: 90%; }
+
+    h1 {
+      margin-bottom: 30px;
+      color: blue;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      max-width: 600px;
+      width: 90%;
+    }
+
     .btn-change {
-      background: purple; color: white; border: 2px solid aqua; padding: 25px 15px;
-      font-size: 18px; font-weight: bold; border-radius: 12px; cursor: pointer;
-      transition: all 0.2s ease; text-align: center;
+      background: purple;
+      color: white;
+      border: 2px solid aqua;
+      padding: 25px 15px;
+      font-size: 18px;
+      font-weight: bold;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
     }
-    .btn-change:hover { background: orange; color: white; transform: translateY(-3px); }
-    .status-text { margin-top: 30px; font-size: 16px; color: green; }
+
+    .btn-change:hover {
+      background: orange;
+      color: white;
+      transform: translateY(-3px);
+    }
+
+    .status-text {
+      margin-top: 30px;
+      font-size: 16px;
+      color: green;
+    }
+
     .btn-reset {
-      margin-top: 20px; background: red; color: white; border: none;
-      padding: 12px 25px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer;
+      margin-top: 20px;
+      background: red;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
     }
-    .btn-reset:hover { background: orange; color: white; transform: translateY(-2px); }
+
+    .btn-reset:hover {
+      background: orange;
+      color: white;
+      transform: translateY(-2px);
+    }
   </style>
 
   <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.4/dist/socket.io.min.js"></script>
@@ -50,7 +102,7 @@
 
   <script>
     // CẤU HÌNH ĐƯỜNG DẪN ĐẾN SERVER RENDER (Thay bằng link Render của bạn sau khi deploy)
-    const SERVER_URL = "http://localhost:3000"; 
+    const SERVER_URL = "https://wheel2001.onrender.com";
     const socket = io(SERVER_URL);
 
     socket.on('connect', () => {
@@ -74,8 +126,17 @@
     function resetWheelPosition() {
       socket.emit('techResetWheel');
       document.getElementById('status').innerText = `Đã đưa nón của tất cả mọi người về góc số 0!`;
-      document.getElementById('status').style.color = '#f59e0b';
+      document.getElementById('status').style.color = 'green';
     }
+
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+      if (e.keyCode === 123) e.preventDefault();
+      if ((e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
+        e.preventDefault();
+      }
+    });
   </script>
 </body>
+
 </html>
