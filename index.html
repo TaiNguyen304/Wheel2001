@@ -67,8 +67,8 @@
 
     .btn-submit {
       width: 100%;
-      background: #39ff14;
-      color: black;
+      background: green;
+      color: white;
       border: none;
       padding: 14px;
       font-size: 18px;
@@ -170,7 +170,7 @@
       <input type="password" id="passwordInput" maxlength="4" placeholder="Nhập mật khẩu...">
     </div>
     <button class="btn-submit" onclick="executeLoginVerify()">XÁC NHẬN ĐĂNG NHẬP</button>
-    <button class="btn-submit" style="background: aqua; margin-top: 8px;" onclick="debugCheckRooms()">🔍 KIỂM TRA SERVER</button>
+    <button class="btn-submit" style="background: blue; margin-top: 8px;" onclick="debugCheckRooms()">🔍 KIỂM TRA SERVER</button>
   </div>
 
   <div id="customAlert" class="popup-modal">
@@ -288,7 +288,7 @@
         console.log('[DEBUG] Phòng từ server:', data);
         const roomCount = Object.keys(data).length;
         if (roomCount === 0) {
-          showAlertPopup('❌ Không có phòng nào!\nBạn cần mở tech.html và bấm "KÍCH HOẠT KHỞI TẠO PHÒNG TỰ ĐỘNG"', false);
+          showAlertPopup('❌ Không có phòng nào!"', false);
         } else {
           let msg = `✓ Tìm thấy ${roomCount} phòng:\n\n`;
           for (let roomid in data) {
