@@ -7,7 +7,6 @@
   <style>
     * {
       box-sizing: border-box;
-      font-weight: bold !important;
       font-family: Arial, sans-serif;
     }
 
@@ -36,6 +35,7 @@
       margin-bottom: 25px;
       font-size: 22px;
       text-transform: uppercase;
+      font-weight: bold;
     }
 
     .form-item {
@@ -48,6 +48,7 @@
       margin-bottom: 7px;
       color: #bbb;
       font-size: 14px;
+      font-weight: bold;
     }
 
     select,
@@ -60,6 +61,7 @@
       border-radius: 8px;
       font-size: 16px;
       outline: none;
+      font-weight: bold;
     }
 
     select:focus,
@@ -78,6 +80,7 @@
       cursor: pointer;
       transition: transform 0.1s;
       margin-top: 10px;
+      font-weight: bold;
     }
 
     .btn-submit:active {
@@ -112,7 +115,6 @@
       box-shadow: 0 0 20px rgba(255, 0, 0, 0.4);
     }
 
-    /* Đổi màu viền pop-up thông tin/debug thành màu xanh cho thân thiện */
     .popup-modal.info .popup-content {
       border-color: #39ff14;
       box-shadow: 0 0 20px rgba(57, 255, 20, 0.4);
@@ -125,6 +127,7 @@
       line-height: 1.5;
       text-align: left;
       white-space: pre-line;
+      font-weight: bold;
     }
 
     .popup-content button {
@@ -136,6 +139,7 @@
       cursor: pointer;
       font-size: 15px;
       width: 100%;
+      font-weight: bold;
     }
 
     .popup-modal.info .popup-content button {
@@ -172,15 +176,14 @@
       <input type="password" id="passwordInput" maxlength="4" placeholder="Nhập mật khẩu...">
     </div>
     <button class="btn-submit" onclick="executeLoginVerify()">XÁC NHẬN ĐĂNG NHẬP</button>
-    <button class="btn-submit" style="background: blue; margin-top: 8px;" onclick="debugCheckRooms()">🔍 KIỂM TRA
-      SERVER</button>
+    <button class="btn-submit" style="background: blue; margin-top: 8px;" onclick="debugCheckRooms()">🔍 KIỂM TRA SERVER</button>
   </div>
 
   <div id="customAlert" class="popup-modal">
     <div class="popup-content">
       <p id="alertMessage">Thông báo hệ thống!</p>
       <button id="alertBtn"
-        style="background: #ff00ff; color: white; font-weight: bold; border: none; padding: 10px 30px; border-radius: 6px; cursor: pointer; font-size: 15px; width: 100%; transition: background 0.2s;"
+        style="background: red; color: white; font-weight: bold; border: none; padding: 10px 30px; border-radius: 6px; cursor: pointer; font-size: 15px; width: 100%; transition: background 0.2s;"
         onclick="closeAlertPopup()">
         ĐÓNG THÔNG BÁO
       </button>
@@ -190,9 +193,6 @@
   <script>
     const socket = io("https://wheel2001.onrender.com");
 
-    // Hàm hiển thị Popup tùy biến
-    // isInfo = true: viền xanh lá, nút xanh lá (dành cho thành công, danh sách phòng)
-    // isInfo = false: viền đỏ, nút đỏ (dành cho lỗi nhập liệu, sai mật khẩu)
     function showAlertPopup(message, isInfo = false) {
       const modal = document.getElementById('customAlert');
       const msgParagraph = document.getElementById('alertMessage');
@@ -208,18 +208,15 @@
       modal.style.display = 'flex';
     }
 
-    // Hàm đóng Popup
     function closeAlertPopup() {
       document.getElementById('customAlert').style.display = 'none';
     }
 
-    // Xử lý logic đăng nhập gửi lên server
     function executeLoginVerify() {
       const playerRole = document.getElementById('playerSelect').value;
       const roomid = document.getElementById('roomIdInput').value.trim();
       const password = document.getElementById('passwordInput').value.trim();
 
-      // Kiểm tra định dạng đầu vào trực tiếp tại Client
       if (roomid.length !== 6 || isNaN(roomid)) {
         showAlertPopup('❌ Mã phòng phải nhập đủ 6 chữ số!', false);
         return;
@@ -231,24 +228,26 @@
 
       console.log('[SOCKET] Đang gửi yêu cầu xác thực:', { roomid, playerRole, password });
 
-      // Gửi sự kiện kiểm tra thông tin lên server
+      // Gửi sự kiện kiểm tra thông tin lên server và xử lý phản hồi trực tiếp bằng callback
       socket.emit('playerVerifyLogin', { roomid, playerRole, password }, (response) => {
-        if (response.success) {
-          // Nếu thành công, lưu trữ thông tin tạm thời vào sessionStorage để trang Player đọc dữ liệu
+        console.log('[SOCKET] Kết quả phản hồi từ server:', response);
+        
+        if (response && response.success) {
+          // Lưu thông tin xác thực vào sessionStorage
           sessionStorage.setItem('authenticatedRoomID', roomid);
           sessionStorage.setItem('authenticatedRole', playerRole);
 
-          // Chuyển hướng trực tiếp đến trang của Player tương ứng (ví dụ: Player1.html)
+          // Tạo file đích (VD: Player1.html) và tự động chuyển hướng ngay lập tức
           const targetPage = playerRole.replace(' ', '') + '.html';
           window.location.href = targetPage;
         } else {
-          // Hiển thị lỗi từ server trả về (phòng không tồn tại, sai mật khẩu, hoặc vai chơi đã có người đăng nhập)
-          showAlertPopup('❌ Thất bại: ' + response.message, false);
+          // Xuất thông báo lỗi chi tiết ra màn hình nếu sai thông tin
+          const errorMsg = response ? response.message : 'Phòng không tồn tại hoặc sai mật khẩu!';
+          showAlertPopup('❌ Thất bại: ' + errorMsg, false);
         }
       });
     }
 
-    // Hàm Debug kiểm tra toàn bộ danh sách phòng trực tuyến trên Server
     function debugCheckRooms() {
       if (!socket.connected) {
         showAlertPopup('Không kết nối được tới server!', false);
@@ -268,20 +267,17 @@
         let msg = `✓ Tìm thấy ${roomCount} phòng đang mở:\n\n`;
 
         for (let id in data) {
-          // Đảm bảo dữ liệu phòng tồn tại để không bị lỗi undefined
           const roomPasswords = data[id] || {};
-
           msg += `Mã Phòng: ${id}\n`;
           msg += `  • Player 1: ${roomPasswords["Player 1"] ? "🔒 Đã đặt MK" : "Trống"}\n`;
           msg += `  • Player 2: ${roomPasswords["Player 2"] ? "🔒 Đã đặt MK" : "Trống"}\n`;
           msg += `  • Player 3: ${roomPasswords["Player 3"] ? "🔒 Đã đặt MK" : "Trống"}\n\n`;
         }
 
-        showAlertPopup(msg, true); // Hiển thị màu xanh lá (thành công)
+        showAlertPopup(msg, true);
       });
     }
 
-    // Lắng nghe sự kiện kết nối thành công/thất bại để ghi log debug
     socket.on('connect', () => {
       console.log('[SOCKET] Kết nối máy chủ thành công. ID:', socket.id);
     });
@@ -290,12 +286,11 @@
       console.error('[SOCKET] Lỗi kết nối tới máy chủ:', error.message);
     });
 
-    // Chặn chuột phải và phím tắt F12 / Developer Tools để đồng bộ trải nghiệm các máy trạm
     document.addEventListener('contextmenu', e => e.preventDefault());
     document.addEventListener('keydown', e => {
-      if (e.keyCode === 123) e.preventDefault(); // Chặn F12
+      if (e.keyCode === 123) e.preventDefault();
       if ((e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
-        e.preventDefault(); // Chặn Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
+        e.preventDefault();
       }
     });
   </script>
