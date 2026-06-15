@@ -144,8 +144,8 @@
     }
 
     .popup-content button:hover {
-      background: orange;
-      color: white;
+      background: orange !important;
+      color: white !important;
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.4/dist/socket.io.min.js"></script>
@@ -179,13 +179,16 @@
   <div id="customAlert" class="popup-modal">
     <div class="popup-content">
       <p id="alertMessage">Thông báo hệ thống!</p>
-      <button id="alertBtn" onclick="closeAlertPopup()">ĐÓNG THÔNG BÁO</button>
+      <button id="alertBtn"
+        style="background: #ff00ff; color: white; font-weight: bold; border: none; padding: 10px 30px; border-radius: 6px; cursor: pointer; font-size: 15px; width: 100%; transition: background 0.2s;"
+        onclick="closeAlertPopup()">
+        ĐÓNG THÔNG BÁO
+      </button>
     </div>
   </div>
 
   <script>
-    // Khởi tạo kết nối Socket.io tới máy chủ địa phương (hoặc cùng host)
-    const socket = io(window.location.protocol + '//' + window.location.hostname + ':' + window.location.port);
+    const socket = io("https://wheel2001.onrender.com");
 
     // Hàm hiển thị Popup tùy biến
     // isInfo = true: viền xanh lá, nút xanh lá (dành cho thành công, danh sách phòng)
