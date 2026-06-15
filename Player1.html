@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vòng Quay Thí Sinh 1</title>
+  <title>Vòng Quay Thí Sinh</title>
   <style>
     * {
       margin: 0;
@@ -128,7 +128,6 @@
   </div>
 
   <div class="app">
-    <div id="statusIndicator" class="status-badge">HỆ THỐNG ĐANG KHÓA QUAY QUYỀN LUỒNG</div>
     <div class="wheel-container">
       <div class="pointer-wrapper">
         <img id="pointerImg" class="pointer" src="pointer.png" />
@@ -141,11 +140,38 @@
   <audio id="spinSound" src="spin.mp3" preload="auto" loop></audio>
 
   <script>
-    const THIS_PLAYER = "Player 1"; // Sửa thành "Player 2" hoặc "Player 3" ở các file tương ứng
-
+    // =============================================================
+    // LỚP BẢO MẬT: KIỂM TRA CHÉO MÃ PHÒNG VÀ MẬT KHẨU TỪ URL TỐC ĐỘ CAO
+    // =============================================================
     const urlParams = new URLSearchParams(window.location.search);
     const roomid = urlParams.get('roomid');
+    const password = urlParams.get('password');
+    
+    // !!! LƯU Ý: Sửa thành "Player 2" hoặc "Player 3" ở các file tương ứng
+    const THIS_PLAYER = "Player 1"; 
 
+    if (!roomid || !password || roomid.length !== 6 || isNaN(roomid) || password.length !== 4 || isNaN(password)) {
+      // Chặn đứng lập tức, xóa sạch giao diện cũ và hiển thị màn hình thông báo lỗi tùy biến chuyên nghiệp
+      document.body.innerHTML = `
+  <div style="background: #0c0c0c; color: white; height: 100vh; width: 100vw; display: flex; align-items: center; justify-content: center; font-family: Arial, sans-serif; position: fixed; top: 0; left: 0; z-index: 99999;">
+    <div style="background: #181818; border: 3px solid #ff0000; padding: 40px; border-radius: 16px; text-align: center; box-shadow: 0 0 25px rgba(255,0,0,0.3); width: 440px; box-sizing: border-box;">
+      <h2 style="color: #ff0000; margin-bottom: 20px; font-size: 24px; letter-spacing: 1px; font-weight: bold;">TRUY CẬP BỊ CHẶN!</h2>
+      <p style="color: #bbb; margin-bottom: 25px; line-height: 1.6; font-size: 16px; font-weight: bold;">Bạn không có quyền truy cập trực tiếp vào giao diện người chơi mà không có mã phòng và mật khẩu hợp lệ.</p>
+      <button onclick="window.location.href='index.html'" 
+              onmouseover="this.style.backgroundColor='orange'; this.style.color='white';" 
+              onmouseout="this.style.backgroundColor='#ff0000'; this.style.color='white';" 
+              style="background: #ff0000; color: white; border: none; padding: 14px 25px; font-size: 16px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; transition: background 0.2s, color 0.2s;">
+        QUAY LẠI TRANG ĐĂNG NHẬP
+      </button>
+    </div>
+  </div>
+`;
+      throw new Error("[BẢO MẬT] Ngăn chặn thực thi Script do thiếu thông tin hoặc sai mật khẩu!");
+    }
+
+    // =============================================================
+    // LOGIC HỆ THỐNG VÒNG QUAY ĐỒNG BỘ
+    // =============================================================
     const socket = io("https://wheel2001.onrender.com");
 
     const wheel = document.getElementById("wheel");
@@ -172,7 +198,8 @@
       spinSound.volume = 0;
       spinSound.play().catch(e => console.log(e));
       if (roomid) {
-        socket.emit('joinRoom', roomid);
+        // GỬI KÈM MẬT KHẨU lên máy chủ khi yêu cầu joinRoom để xác thực lớp cuối cùng
+        socket.emit('joinRoom', { roomid, player: THIS_PLAYER, password });
       }
     }
 
@@ -409,7 +436,7 @@
       requestAnimationFrame(renderLoop);
     }
     requestAnimationFrame(renderLoop);
-  </script>
+</script>
 </body>
 
 </html>
