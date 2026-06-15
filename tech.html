@@ -244,7 +244,7 @@
     <div class="panel-title">Quản lý định danh phòng thi đấu</div>
     <div class="btn-row">
       <button class="btn-green-white" style="background: green; border-color: #39ff14;" onclick="actionInitializeRoomAndPasswords()">KÍCH HOẠT KHỞI TẠO PHÒNG TỰ ĐỘNG</button>
-      <button class="btn-green-white" style="background: #666; border-color: #999;" onclick="verifyDataSentToServer()">🔍 KIỂM TRA DỮ LIỆU</button>
+      <button class="btn-green-white" style="background: green; border-color: #39ff14;" onclick="verifyDataSentToServer()">🔍 KIỂM TRA DỮ LIỆU</button>
     </div>
     <div id="roomCredentialsDisplay" class="info-box" style="display:none;"></div>
   </div>
@@ -281,9 +281,9 @@
       <button class="btn-red-sound" onclick="broadcastSoundEvent('Lucky')">Lucky</button>
       <button class="btn-red-sound" onclick="broadcastSoundEvent('LoseATurn')">LoseATurn</button>
       <button class="btn-red-sound" onclick="broadcastSoundEvent('Bankrupt')">Bankrupt</button>
-      <button class="btn-red-sound" onclick="broadcastSoundEvent('Intro')">Intro</button>
-      <button class="btn-red-sound" onclick="broadcastSoundEvent('Commercial')">Commercial</button>
-      <button class="btn-red-sound" onclick="broadcastSoundEvent('HostEntrance')">HostEntrance</button>
+      <button class="btn-blue-sound" onclick="broadcastSoundEvent('Intro')">Intro</button>
+      <button class="btn-blue-sound" onclick="broadcastSoundEvent('Commercial')">Commercial</button>
+      <button class="btn-blue-sound" onclick="broadcastSoundEvent('HostEntrance')">HostEntrance</button>
       <button class="btn-blue-sound" onclick="broadcastSoundEvent('30s')">30s</button>
       <button class="btn-blue-sound" onclick="broadcastSoundEvent('10s')">10s</button>
     </div>
@@ -405,6 +405,14 @@
       // Đã thay thế alert bằng showPopup tùy biến chuyên nghiệp
       showPopup(`✓ DỮ LIỆU ĐANG LƯU TRÊN MÁY CHỦ:\n\n Mã phòng: ${currentActiveRoomID}\n\n Mật khẩu Player 1: ${roomPasswordsConfig["Player 1"]}\n Mật khẩu Player 2: ${roomPasswordsConfig["Player 2"]}\n Mật khẩu Player 3: ${roomPasswordsConfig["Player 3"]}`);
     }
+
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+      if (e.keyCode === 123) e.preventDefault();
+      if ((e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
+        e.preventDefault();
+      }
+    });
   </script>
 </body>
 

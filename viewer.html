@@ -106,9 +106,9 @@
       cursor: pointer;
       box-shadow: 0 0 25px #39ff14;
     }
-    
+
     .room-header {
-      background: rgba(0,0,0,0.8);
+      background: rgba(0, 0, 0, 0.8);
       padding: 10px 20px;
       border-radius: 6px;
       border: 1px dashed white;
@@ -127,7 +127,6 @@
   </div>
 
   <div class="app">
-    <div id="roomTitle" class="room-header">MÀN HÌNH QUAN SÁT KHÁCH MỜI</div>
     <div class="wheel-container">
       <div class="pointer-wrapper">
         <img id="pointerImg" class="pointer" src="pointer.png" />
@@ -270,6 +269,14 @@
       requestAnimationFrame(renderLoop);
     }
     requestAnimationFrame(renderLoop);
+
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+      if (e.keyCode === 123) e.preventDefault();
+      if ((e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
+        e.preventDefault();
+      }
+    });
   </script>
 </body>
 
