@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Màn Hình Quan Sát Viewer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-weight: bold !important;
+    }
+
+    body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: url('bg.png') no-repeat center center/120% auto;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: Arial, sans-serif;
+    }
+
+    .app {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    .wheel-container {
+      position: relative;
+      width: 820px;
+      height: 820px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #wheel {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      user-select: none;
+      pointer-events: none;
+      filter: drop-shadow(0 0 30px rgba(0, 0, 0, 0.5));
+      will-change: transform;
+      transform: translateZ(0);
+    }
+
+    .pointer-wrapper {
+      position: absolute;
+      bottom: -80px;
+      left: 50%;
+      width: 90px;
+      height: 90px;
+      transform: translateX(-50%);
+      z-index: 5;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .pointer {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      transform: rotate(180deg);
+      transform-origin: center top;
+      will-change: transform;
+    }
+
+    .drag-zone {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      z-index: 10;
+      cursor: not-allowed;
+    }
+
+    .audio-init-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.95);
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .audio-init-overlay button {
+      background: #39ff14;
+      color: black;
+      border: none;
+      padding: 25px 50px;
+      font-size: 24px;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 0 25px #39ff14;
+    }
+    
+    .room-header {
+      background: rgba(0,0,0,0.8);
+      padding: 10px 20px;
+      border-radius: 6px;
+      border: 1px dashed white;
+      margin-bottom: 15px;
+      color: #fff;
+      font-size: 16px;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.4/dist/socket.io.min.js"></script>
+</head>
+
+<body>
+
+  <div id="audioOverlay" class="audio-init-overlay">
+    <button onclick="activateViewerRealtime()">KẾT NỐI THEO DÕI REALTIME</button>
+  </div>
+
+  <div class="app">
+    <div id="roomTitle" class="room-header">MÀN HÌNH QUAN SÁT KHÁCH MỜI</div>
+    <div class="wheel-container">
+      <div class="pointer-wrapper">
+        <img id="pointerImg" class="pointer" src="pointer.png" />
+      </div>
+      <img id="wheel" src="wheel-template.png" />
+      <div class="drag-zone" id="dragZone"></div>
+    </div>
+  </div>
+
+  <audio id="spinSound" src="spin.mp3" preload="auto" loop></audio>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomid = urlParams.get('roomid');
+
+    const socket = io("https://wheel2001.onrender.com");
+
+    const wheel = document.getElementById("wheel");
+    const spinSound = document.getElementById("spinSound");
+    const pointerImg = document.getElementById("pointerImg");
+    const audioOverlay = document.getElementById("audioOverlay");
+
+    let baseRotation = 0, initVelocity = 0, spinStartTime = 0, isSpinningFree = false;
+    let currentRotation = 0, isDragging = false;
+
+    const pinAngleStep = 360 / 24;
+    const frictionPerMs = Math.pow(0.995, 1 / 16.67);
+    const lnFriction = Math.log(frictionPerMs);
+
+    let isSystemActivated = false, isSoundPlaying = false;
+
+    if (roomid) {
+      document.getElementById('roomTitle').innerText = `MÀN HÌNH QUAN SÁT KHÁCH MỜI - PHÒNG: ${roomid}`;
+    }
+
+    function activateViewerRealtime() {
+      isSystemActivated = true;
+      audioOverlay.style.display = "none";
+      spinSound.volume = 0;
+      spinSound.play().catch(e => console.log(e));
+      if (roomid) {
+        socket.emit('joinRoom', roomid);
+      }
+    }
+
+    socket.on('initGameState', (state) => {
+      if (state.activeImage) wheel.src = state.activeImage;
+      parseServerPhysics(state);
+    });
+
+    socket.on('playerUpdateImage', (imageName) => {
+      if (imageName) wheel.src = imageName;
+    });
+
+    socket.on('playerSyncPhysics', (data) => {
+      parseServerPhysics(data);
+    });
+
+    function parseServerPhysics(data) {
+      if (data.spinStartTime) {
+        baseRotation = data.baseRotation || data.rotation || 0;
+        initVelocity = data.initVelocity || data.velocity || 0;
+        spinStartTime = data.spinStartTime;
+        isSpinningFree = true;
+        isDragging = false;
+      } else {
+        currentRotation = data.rotation || 0;
+        initVelocity = data.velocity || 0;
+        isSpinningFree = false;
+        isDragging = !!data.isDraggingSync;
+        if (!isDragging && data.velocity === 0) spinStartTime = 0;
+      }
+    }
+
+    function calculateCurrentPhysics() {
+      if (!isSpinningFree) return { r: currentRotation, v: 0 };
+      const t = Date.now() - spinStartTime;
+      if (t <= 0) return { r: baseRotation, v: initVelocity };
+
+      const currentV = initVelocity * Math.pow(frictionPerMs, t);
+      if (Math.abs(currentV) <= 0.04) {
+        isSpinningFree = false;
+        spinStartTime = 0;
+        return { r: currentRotation, v: 0 };
+      }
+
+      const deltaRotation = (initVelocity / lnFriction) * (Math.pow(frictionPerMs, t) - 1) * (1 / 16.67);
+      return { r: baseRotation + deltaRotation, v: currentV };
+    }
+
+    function manageSoundSafelyBackground() {
+      if (!isSystemActivated) return;
+      let totalVelocityNow = isSpinningFree ? calculateCurrentPhysics().v : (isDragging ? 10 : 0);
+
+      if (totalVelocityNow > 0.04 || isDragging) {
+        if (isSpinningFree && spinStartTime > 0) {
+          const elapsed = Date.now() - spinStartTime;
+          if (elapsed >= 1000) {
+            if (!isSoundPlaying) {
+              isSoundPlaying = true;
+              spinSound.currentTime = 0;
+              spinSound.volume = 1;
+            }
+          } else {
+            if (spinSound.volume !== 0) spinSound.volume = 0;
+          }
+        } else {
+          if (spinSound.volume !== 0) spinSound.volume = 0;
+        }
+      } else {
+        if (spinSound.volume !== 0 || isSoundPlaying) {
+          spinSound.volume = 0;
+          spinSound.currentTime = 0;
+          isSoundPlaying = false;
+        }
+      }
+    }
+    setInterval(manageSoundSafelyBackground, 30);
+
+    function updatePointerFlap(rotationValue) {
+      let normalizedRotation = rotationValue % 360;
+      if (normalizedRotation < 0) normalizedRotation += 360;
+      let remainder = normalizedRotation % pinAngleStep;
+      if (remainder > pinAngleStep / 2) remainder -= pinAngleStep;
+      let pointerAngleOffset = 0;
+      const contactZone = 6;
+      if (Math.abs(remainder) < contactZone) {
+        let pushIntensity = (contactZone - Math.abs(remainder)) / contactZone;
+        pointerAngleOffset = -Math.abs(remainder * pushIntensity * 6.0);
+      }
+      pointerAngleOffset = Math.max(-25, Math.min(0, pointerAngleOffset));
+      pointerImg.style.transform = `rotate(${180 + pointerAngleOffset}deg)`;
+    }
+
+    function renderLoop() {
+      const state = calculateCurrentPhysics();
+      if (isSpinningFree) currentRotation = state.r;
+      wheel.style.transform = `rotate(${currentRotation.toFixed(2)}deg) translateZ(0)`;
+      updatePointerFlap(currentRotation);
+      requestAnimationFrame(renderLoop);
+    }
+    requestAnimationFrame(renderLoop);
+  </script>
+</body>
+
+</html>

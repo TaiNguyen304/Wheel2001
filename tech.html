@@ -4,138 +4,407 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Wheel Spin - Web Tech Realtime Control</title>
+  <title>Bàn Điều Khiển Web Tech</title>
   <style>
     * {
       font-weight: bold !important;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
     }
 
     body {
-      font-family: Arial, sans-serif;
       background: white;
-      color: white;
+      color: black;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       min-height: 100vh;
       margin: 0;
+      padding: 20px;
     }
 
     h1 {
-      margin-bottom: 30px;
+      margin-bottom: 5px;
       color: blue;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
-    .grid-container {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
-      max-width: 600px;
-      width: 90%;
-    }
-
-    .btn-change {
-      background: purple;
-      color: white;
-      border: 2px solid aqua;
-      padding: 25px 15px;
+    .status-log {
+      margin: 10px 0 20px 0;
       font-size: 18px;
-      font-weight: bold;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.2s ease;
+      color: green;
       text-align: center;
     }
 
-    .btn-change:hover {
+    .panel-box {
+      border: 2px solid #ccc;
+      padding: 18px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      width: 100%;
+      max-width: 780px;
+      text-align: center;
+    }
+
+    .panel-title {
+      font-size: 15px;
+      color: #666;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .btn-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .grid-layout {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      width: 100%;
+    }
+
+    /* Button Color Tokens Specified */
+    .btn-green-white {
+      background: green;
+      color: white;
+      border: 2px solid darkgreen;
+      padding: 14px 28px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .btn-green-white:hover {
+      background: orange !important;
+      color: white !important;
+    }
+
+    .btn-yellow-black {
+      background: yellow;
+      color: black;
+      border: 2px solid #ccaa00;
+      padding: 15px 22px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .btn-yellow-black:hover {
       background: orange;
       color: white;
-      transform: translateY(-3px);
     }
 
-    .status-text {
-      margin-top: 30px;
+    .btn-purple-face {
+      background: purple;
+      color: white;
+      border: 2px solid aqua;
+      padding: 20px 10px;
       font-size: 16px;
-      color: green;
+      border-radius: 8px;
+      cursor: pointer;
     }
 
-    .btn-reset {
-      margin-top: 20px;
+    .btn-purple-face:hover {
+      background: orange;
+      color: white;
+    }
+
+    .btn-red-sound {
+      background: red;
+      color: white;
+      border: 2px solid darkred;
+      padding: 14px 12px;
+      font-size: 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      flex: 1 1 15%;
+      min-width: 110px;
+    }
+
+    .btn-red-sound:hover {
+      background: orange;
+      color: white;
+    }
+
+    .btn-blue-sound {
+      background: blue;
+      color: white;
+      border: 2px solid darkblue;
+      padding: 14px 12px;
+      font-size: 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      flex: 1 1 15%;
+      min-width: 110px;
+    }
+
+    .btn-blue-sound:hover {
+      background: orange;
+      color: white;
+    }
+    
+    .btn-system-reset {
       background: red;
       color: white;
       border: none;
       padding: 12px 25px;
       font-size: 16px;
-      font-weight: bold;
       border-radius: 8px;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+
+    .btn-system-reset:hover {
+      background: orange;
+      color: white;
+    }
+
+    .info-box {
+      margin-top: 12px;
+      font-size: 16px;
+      background: #f9f9f9;
+      padding: 12px;
+      border-radius: 6px;
+      border: 2px dashed #bbb;
+      line-height: 1.6;
+      text-align: left;
+      display: inline-block;
+    }
+
+    /* --- Giao diện Hệ thống Popup Tùy biến Mới --- */
+    .popup-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 99999;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .popup-box {
+      background: white;
+      border: 4px solid blue;
+      padding: 30px;
+      border-radius: 14px;
+      max-width: 480px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      animation: popupShow 0.2s ease-out;
+    }
+
+    .popup-message {
+      font-size: 16px;
+      color: #111;
+      margin-bottom: 25px;
+      text-align: left;
+      line-height: 1.6;
+      white-space: pre-line;
+    }
+
+    .btn-popup-close {
+      background: blue;
+      color: white;
+      border: 2px solid darkblue;
+      padding: 10px 30px;
+      font-size: 16px;
+      border-radius: 6px;
       cursor: pointer;
     }
 
-    .btn-reset:hover {
+    .btn-popup-close:hover {
       background: orange;
-      color: white;
-      transform: translateY(-2px);
+      border-color: darkorange;
+    }
+
+    @keyframes popupShow {
+      from { transform: scale(0.85); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
     }
   </style>
-
   <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.4/dist/socket.io.min.js"></script>
 </head>
 
 <body>
 
-  <h1>BẢNG ĐIỀU KHIỂN WEB TECH REALTIME</h1>
+  <h1>HỆ THỐNG ĐIỀU KHIỂN KỸ THUẬT TẬP TRUNG</h1>
+  <p class="status-log" id="statusLog">Đang kết nối tới máy chủ Socket.io...</p>
 
-  <div class="grid-container">
-    <button class="btn-change" onclick="changeWheelImage('vong1.png')">Mặt Nón 1</button>
-    <button class="btn-change" onclick="changeWheelImage('vong2.png')">Mặt Nón 2</button>
-    <button class="btn-change" onclick="changeWheelImage('vong3.png')">Mặt Nón 3</button>
-    <button class="btn-change" onclick="changeWheelImage('vong4.png')">Mặt Nón 4</button>
-    <button class="btn-change" onclick="changeWheelImage('vong5.png')">Mặt Nón 5</button>
-    <button class="btn-change" onclick="changeWheelImage('vong6.png')">Mặt Nón 6</button>
+  <div class="panel-box" style="background: #f4faf4;">
+    <div class="panel-title">Quản lý định danh phòng thi đấu</div>
+    <div class="btn-row">
+      <button class="btn-green-white" style="background: green; border-color: #39ff14;" onclick="actionInitializeRoomAndPasswords()">KÍCH HOẠT KHỞI TẠO PHÒNG TỰ ĐỘNG</button>
+      <button class="btn-green-white" style="background: #666; border-color: #999;" onclick="verifyDataSentToServer()">🔍 KIỂM TRA DỮ LIỆU</button>
+    </div>
+    <div id="roomCredentialsDisplay" class="info-box" style="display:none;"></div>
   </div>
 
-  <button class="btn-reset" onclick="resetWheelPosition()">Đưa nón về góc 0</button>
+  <div class="panel-box" style="background: #fffee8;">
+    <div class="panel-title">Quản lý phân quyền điều khiển nón</div>
+    <div class="btn-row">
+      <button class="btn-yellow-black" onclick="dispatchPlayerPermission('Player 1')">Mở quay Player1</button>
+      <button class="btn-yellow-black" onclick="dispatchPlayerPermission('Player 2')">Mở quay Player2</button>
+      <button class="btn-yellow-black" onclick="dispatchPlayerPermission('Player 3')">Mở quay Player3</button>
+      <button class="btn-yellow-black" onclick="dispatchPlayerPermission(null)">Khóa tất cả</button>
+    </div>
+  </div>
 
-  <p class="status-text" id="status">Đang kết nối tới hệ thống máy chủ Node.js...</p>
+  <div class="panel-box">
+    <div class="panel-title">Giao diện nón thi đấu</div>
+    <div class="grid-layout">
+      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong1.png')">Mặt Nón 1</button>
+      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong2.png')">Mặt Nón 2</button>
+      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong3.png')">Mặt Nón 3</button>
+      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong4.png')">Mặt Nón 4</button>
+      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong5.png')">Mặt Nón 5</button>
+      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong6.png')">Mặt Nón 6</button>
+    </div>
+    <button class="btn-system-reset" onclick="triggerResetWheelZero()">Đưa nón về góc 0</button>
+  </div>
+
+  <div class="panel-box" style="background: #fffafa;">
+    <div class="panel-title">Bàn điều phối âm thanh Soundboard</div>
+    <div class="btn-row">
+      <button class="btn-red-sound" onclick="broadcastSoundEvent('Half')">Half</button>
+      <button class="btn-red-sound" onclick="broadcastSoundEvent('Double')">Double</button>
+      <button class="btn-red-sound" onclick="broadcastSoundEvent('FreeTurn')">FreeTurn</button>
+      <button class="btn-red-sound" onclick="broadcastSoundEvent('Lucky')">Lucky</button>
+      <button class="btn-red-sound" onclick="broadcastSoundEvent('LoseATurn')">LoseATurn</button>
+      <button class="btn-red-sound" onclick="broadcastSoundEvent('Bankrupt')">Bankrupt</button>
+      <button class="btn-red-sound" onclick="broadcastSoundEvent('Intro')">Intro</button>
+      <button class="btn-red-sound" onclick="broadcastSoundEvent('Commercial')">Commercial</button>
+      <button class="btn-red-sound" onclick="broadcastSoundEvent('HostEntrance')">HostEntrance</button>
+      <button class="btn-blue-sound" onclick="broadcastSoundEvent('30s')">30s</button>
+      <button class="btn-blue-sound" onclick="broadcastSoundEvent('10s')">10s</button>
+    </div>
+  </div>
+
+  <div id="techPopupModal" class="popup-overlay">
+    <div class="popup-box">
+      <div id="techPopupMessage" class="popup-message"></div>
+      <button class="btn-popup-close" onclick="closeCustomPopup()">ĐÓNG</button>
+    </div>
+  </div>
 
   <script>
-    // CẤU HÌNH ĐƯỜNG DẪN ĐẾN SERVER RENDER (Thay bằng link Render của bạn sau khi deploy)
-    const SERVER_URL = "https://wheel2001.onrender.com";
-    const socket = io(SERVER_URL);
+    const socket = io("https://wheel2001.onrender.com");
+
+    let currentActiveRoomID = null;
+    let roomPasswordsConfig = { "Player 1": null, "Player 2": null, "Player 3": null };
+
+    // Hàm gọi hiển thị Popup thay thế alert/confirm/prompt
+    function showPopup(message) {
+      document.getElementById('techPopupMessage').innerText = message;
+      document.getElementById('techPopupModal').style.display = 'flex';
+    }
+
+    // Hàm đóng Popup
+    function closeCustomPopup() {
+      document.getElementById('techPopupModal').style.display = 'none';
+    }
 
     socket.on('connect', () => {
-      document.getElementById('status').innerText = "Hệ thống máy chủ Socket sẵn sàng!";
-      document.getElementById('status').style.color = 'green';
+      document.getElementById('statusLog').innerText = "Máy chủ Socket.io kết nối thành công!";
+      document.getElementById('statusLog').style.color = 'green';
     });
 
     socket.on('disconnect', () => {
-      document.getElementById('status').innerText = "Mất kết nối tới máy chủ!";
-      document.getElementById('status').style.color = 'red';
+      document.getElementById('statusLog').innerText = "Mất kết nối tới máy chủ!";
+      document.getElementById('statusLog').style.color = 'red';
     });
 
-    // Hàm đổi mặt nón đồng bộ qua Socket.io
-    function changeWheelImage(imageName) {
-      socket.emit('techChangeImage', imageName);
-      document.getElementById('status').innerText = `Đã cập nhật Mặt Nón: ${imageName}`;
-      document.getElementById('status').style.color = '#34d399';
+    function renderRoomCredentialsBox() {
+      const display = document.getElementById('roomCredentialsDisplay');
+      display.style.display = "inline-block";
+      display.innerHTML = `
+        <strong>MÃ PHÒNG (ROOM ID):</strong> <span style="color:blue; font-size:18px;">${currentActiveRoomID || 'Chưa thiết lập'}</span><br>
+        <strong>Mật khẩu Player 1 (4 số):</strong> <span style="color:darkgreen;">${roomPasswordsConfig["Player 1"] || 'Chưa thiết lập'}</span><br>
+        <strong>Mật khẩu Player 2 (4 số):</strong> <span style="color:darkgreen;">${roomPasswordsConfig["Player 2"] || 'Chưa thiết lập'}</span><br>
+        <strong>Mật khẩu Player 3 (4 số):</strong> <span style="color:darkgreen;">${roomPasswordsConfig["Player 3"] || 'Chưa thiết lập'}</span>
+      `;
     }
 
-    // Hàm đặt lại góc quay về vị trí ban đầu
-    function resetWheelPosition() {
-      socket.emit('techResetWheel');
-      document.getElementById('status').innerText = `Đã đưa nón của tất cả mọi người về góc số 0!`;
-      document.getElementById('status').style.color = 'green';
+    function actionInitializeRoomAndPasswords() {
+      currentActiveRoomID = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      roomPasswordsConfig["Player 1"] = Math.floor(1000 + Math.random() * 9000).toString();
+      roomPasswordsConfig["Player 2"] = Math.floor(1000 + Math.random() * 9000).toString();
+      roomPasswordsConfig["Player 3"] = Math.floor(1000 + Math.random() * 9000).toString();
+      
+      renderRoomCredentialsBox();
+      pushRoomConfigurationToServer();
     }
 
-    document.addEventListener('contextmenu', e => e.preventDefault());
-    document.addEventListener('keydown', e => {
-      if (e.keyCode === 123) e.preventDefault();
-      if ((e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
-        e.preventDefault();
+    function pushRoomConfigurationToServer() {
+      if (!currentActiveRoomID) return;
+      
+      console.log('[TECH] Gửi dữ liệu lên server:', {
+        roomid: currentActiveRoomID,
+        passwords: roomPasswordsConfig
+      });
+      
+      socket.emit('techCreateRoom', {
+        roomid: currentActiveRoomID,
+        passwords: roomPasswordsConfig
+      });
+      
+      document.getElementById('statusLog').innerText = `Phòng ${currentActiveRoomID} và Mật khẩu đã được đồng bộ an toàn lên Server!`;
+      document.getElementById('statusLog').style.color = 'green';
+    }
+
+    function dispatchPlayerPermission(player) {
+      if (!currentActiveRoomID) {
+        document.getElementById('statusLog').innerText = "LỖI: Bạn phải tạo phòng trước khi phân quyền!";
+        document.getElementById('statusLog').style.color = 'red';
+        return;
       }
-    });
+      socket.emit('techSetAllowedPlayer', player);
+      document.getElementById('statusLog').innerText = player ? `Đã truyền lệnh: Mở tính năng quay cho ${player}` : "Đã khóa tính năng tác động vòng quay của tất cả người chơi!";
+      document.getElementById('statusLog').style.color = 'orange';
+    }
+
+    function changeRoomWheelImage(imageName) {
+      socket.emit('techChangeImage', imageName);
+      document.getElementById('statusLog').innerText = `Cập nhật giao diện mặt nón thành công: ${imageName}`;
+      document.getElementById('statusLog').style.color = 'purple';
+    }
+
+    function triggerResetWheelZero() {
+      socket.emit('techResetWheel');
+      document.getElementById('statusLog').innerText = "Đã đồng bộ reset nón về góc 0 độ.";
+      document.getElementById('statusLog').style.color = 'green';
+    }
+
+    function broadcastSoundEvent(soundName) {
+      socket.emit('techPlaySound', soundName);
+      document.getElementById('statusLog').innerText = `Lệnh phát nhạc Soundboard: ${soundName}.mp3`;
+      document.getElementById('statusLog').style.color = 'blue';
+    }
+
+    function verifyDataSentToServer() {
+      if (!currentActiveRoomID) {
+        document.getElementById('statusLog').innerText = "⚠️ Bạn chưa tạo phòng!";
+        document.getElementById('statusLog').style.color = 'red';
+        return;
+      }
+      console.log('[TECH DEBUG] Kiểm tra dữ liệu đã gửi:', {
+        roomid: currentActiveRoomID,
+        passwords: roomPasswordsConfig
+      });
+      
+      // Đã thay thế alert bằng showPopup tùy biến chuyên nghiệp
+      showPopup(`✓ DỮ LIỆU ĐANG LƯU TRÊN MÁY CHỦ:\n\n Mã phòng: ${currentActiveRoomID}\n\n Mật khẩu Player 1: ${roomPasswordsConfig["Player 1"]}\n Mật khẩu Player 2: ${roomPasswordsConfig["Player 2"]}\n Mật khẩu Player 3: ${roomPasswordsConfig["Player 3"]}`);
+    }
   </script>
 </body>
 
