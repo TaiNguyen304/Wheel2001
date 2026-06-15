@@ -73,15 +73,6 @@
       will-change: transform;
     }
 
-    .drag-zone {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      z-index: 10;
-      cursor: not-allowed;
-    }
-
     .audio-init-overlay {
       position: fixed;
       top: 0;
@@ -98,23 +89,30 @@
 
     .audio-init-overlay button {
       background: #ff00ff;
-      color: white;
+      color: black;
       border: none;
       padding: 25px 50px;
       font-size: 24px;
       border-radius: 12px;
       cursor: pointer;
-      box-shadow: 0 0 25px #39ff14;
+      box-shadow: 0 0 25px #00ffff;
     }
 
-    .room-header {
-      background: rgba(0, 0, 0, 0.8);
-      padding: 10px 20px;
-      border-radius: 6px;
-      border: 1px dashed white;
-      margin-bottom: 15px;
-      color: #fff;
+    /* Vùng hiển thị lỗi cấu hình trực quan thay thế cho alert/prompt */
+    .error-status-toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: red;
+      border: 2px solid yellow;
+      color: white;
+      padding: 12px 30px;
+      border-radius: 8px;
       font-size: 16px;
+      z-index: 9999;
+      box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+      display: none;
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.4/dist/socket.io.min.js"></script>
@@ -123,8 +121,10 @@
 <body>
 
   <div id="audioOverlay" class="audio-init-overlay">
-    <button onclick="activateViewerRealtime()">KẾT NỐI THEO DÕI REALTIME</button>
+    <button onclick="activateAudioStream()">KÍCH HOẠT ÂM THANH MÀN HÌNH VIEWER</button>
   </div>
+
+  <div id="errorToast" class="error-status-toast"></div>
 
   <div class="app">
     <div class="wheel-container">
@@ -132,126 +132,145 @@
         <img id="pointerImg" class="pointer" src="pointer.png" />
       </div>
       <img id="wheel" src="wheel-template.png" />
-      <div class="drag-zone" id="dragZone"></div>
     </div>
   </div>
 
-  <audio id="spinSound" src="spin.mp3" preload="auto" loop></audio>
-
   <script>
-    // Thiết lập kết nối Socket thời gian thực cho màn hình quan sát tổng quát
-    const socket = io();
+    const socket = io("https://wheel2001.onrender.com");
 
-    // 1. TỰ ĐỘNG LẤY MÃ PHÒNG TRỰC TIẾP TỪ URL (?roomid=...) HOẶC SESSIONSTORAGE
+    // Đọc mã phòng từ URL (Ví dụ: viewer.html?roomid=123456)
     const urlParams = new URLSearchParams(window.location.search);
     let roomid = urlParams.get('roomid');
 
+    const errorToast = document.getElementById('errorToast');
+
     if (roomid) {
-      // Nếu có roomid trên URL, lưu lại vào sessionStorage để ghi nhớ trạng thái phòng
-      sessionStorage.setItem('roomid', roomid);
+      roomid = roomid.trim();
+      console.log(`[VIEWER] Đang kết nối realtime đồng bộ phòng: ${roomid}`);
+      socket.emit('viewerRegisterRoom', { roomid: roomid });
     } else {
-      // Nếu trên URL không có, thử lấy lại phòng cũ đã lưu trong phiên làm việc
-      roomid = sessionStorage.getItem('roomid');
-    }
-
-    // 2. KIỂM TRA MÃ PHÒNG (Không dùng alert/prompt/confirm)
-    if (!roomid) {
-      console.error("⚠️ [VIEWER ERROR] Thừa/Thiếu tham số mã phòng! Vui lòng truy cập theo dạng: viewer.html?roomid=TEN_PHONG");
-
-      // Tùy chọn nâng cao: Hiển thị lỗi trực tiếp lên giao diện thay vì alert rác màn hình
-      document.addEventListener("DOMContentLoaded", () => {
-        const appContainer = document.querySelector('.app');
-        if (appContainer) {
-          appContainer.innerHTML = `<h2 style="color: red; text-align: center; background: rgba(0,0,0,0.8); padding: 20px; border-radius: 10px; border: 2px solid red;">
-        ⚠️ THIẾU MÃ PHÒNG TRÊN URL<br>
-        <span style="font-size: 16px; color: #ccc; font-weight: normal;">Vui lòng thêm ?roomid=... vào cuối đường dẫn</span>
-      </h2>`;
-        }
-      });
-    } else {
-      // Gửi sự kiện tham gia phòng trực tiếp với vai trò là 'viewer'
-      socket.emit('joinRoom', { roomid, role: 'viewer' });
+      // Hiển thị cảnh báo trực quan trên giao diện thay vì dùng Alert/Prompt phá hỏng màn hình
+      if (errorToast) {
+        errorToast.innerText = "⚠️ Thao tác thiếu thông số! Hãy thêm '?roomid=XXXXXX' vào địa chỉ URL để đồng bộ.";
+        errorToast.style.display = 'block';
+      }
+      console.error("[VIEWER ERROR] Không tìm thấy mã phòng 'roomid' trên tham số URL.");
     }
 
     const wheel = document.getElementById('wheel');
-    const pointerImg = document.getElementById('pointer');
+    const pointerImg = document.getElementById('pointerImg');
 
-    // Quản lý kho âm thanh Soundboard cục bộ cho Viewer hiển thị màn hình lớn
+    // --- HỆ THỐNG ÂM THANH CHUẨN HOÁ ---
     const clickSound = new Audio('click.mp3');
+    const spinSound = new Audio('spin.mp3');
+    spinSound.loop = true;
+
     const soundboard = {
-      goc: new Audio('goc.mp3'),
-      matluot: new Audio('matluot.mp3'),
-      mayman: new Audio('mayman.mp3'),
-      nhacnen: new Audio('nhacnen.mp3'),
-      chia_doi: new Audio('chia_doi.mp3'),
-      nhan_doi: new Audio('nhan_doi.mp3'),
-      'vỗ_tay': new Audio('vỗ_tay.mp3')
+      "10s": new Audio('10s.mp3'),
+      "30s": new Audio('30s.mp3'),
+      "Bankrupt": new Audio('Bankrupt.mp3'),
+      "Commercial": new Audio('Commercial.mp3'),
+      "Double": new Audio('Double.mp3'),
+      "FreeTurn": new Audio('FreeTurn.mp3'),
+      "Half": new Audio('Half.mp3'),
+      "HostEntrance": new Audio('HostEntrance.mp3'),
+      "Intro": new Audio('Intro.mp3'),
+      "LoseATurn": new Audio('LoseATurn.mp3'),
+      "Lucky": new Audio('Lucky.mp3')
     };
 
-    // Hàm phát âm thanh soundboard tối ưu bằng Object Mapping
-    function playSoundboardEvent(soundName) {
-      try {
-        const audio = soundboard[soundName];
-        if (audio) {
-          audio.currentTime = 0;
-          audio.play().catch(err => console.warn(`Chưa tương tác với trang, chưa thể tự động phát: ${soundName}`, err));
-        }
-      } catch (err) {
-        console.error("Lỗi phát âm thanh Soundboard:", err);
+    function activateAudioStream() {
+      document.getElementById('audioOverlay').style.display = 'none';
+      clickSound.play().then(() => { clickSound.pause(); }).catch(e => console.log(e));
+      spinSound.play().then(() => { spinSound.pause(); }).catch(e => console.log(e));
+      for (let key in soundboard) {
+        soundboard[key].play().then(() => { soundboard[key].pause(); }).catch(e => console.log(e));
       }
     }
 
-    // Khai báo biến vật lý vòng quay
+    function playSoundboardEvent(soundName) {
+      if (soundboard[soundName]) {
+        try {
+          soundboard[soundName].currentTime = 0;
+          soundboard[soundName].play();
+        } catch (err) {
+          console.error("Lỗi phát âm thanh soundboard:", err);
+        }
+      }
+    }
+
     let currentRotation = 0;
     let baseRotation = 0;
     let initVelocity = 0;
     let spinStartTime = 0;
     let isSpinningFree = false;
 
-    const friction = 0.988;
+    let spinTimeoutToken = null;
+    let isSpinSoundPlaying = false;
+
+    const friction = 0.999;
     const pinAngleStep = 15;
     let lastClickAngleIndex = 0;
     let isSoundPlaying = false;
 
-    // Tiếp nhận đồng bộ chuyển động vật lý nón xoay từ phòng thi
+    function triggerSpinSoundTimeout() {
+      clearTimeout(spinTimeoutToken);
+      spinTimeoutToken = setTimeout(() => {
+        if (isSpinningFree && !isSpinSoundPlaying) {
+          try {
+            spinSound.currentTime = 0;
+            spinSound.play();
+            isSpinSoundPlaying = true;
+          } catch (e) { console.log(e); }
+        }
+      }, 1000);
+    }
+
+    function stopSpinSoundSafely() {
+      clearTimeout(spinTimeoutToken);
+      if (isSpinSoundPlaying) {
+        spinSound.pause();
+        spinSound.currentTime = 0;
+        isSpinSoundPlaying = false;
+      }
+    }
+
     socket.on('playerSyncPhysics', (data) => {
       if (data.spinStartTime) {
         baseRotation = data.baseRotation;
         initVelocity = data.initVelocity;
         spinStartTime = data.spinStartTime;
         isSpinningFree = true;
+        triggerSpinSoundTimeout();
       } else {
         if (data.rotation !== undefined) currentRotation = data.rotation;
         if (data.velocity === 0) {
           isSpinningFree = false;
           spinStartTime = 0;
           initVelocity = 0;
+          stopSpinSoundSafely();
         }
       }
     });
 
-    // Tính toán toán học vận tốc và góc quay theo thời gian thực (Delta-time)
     function calculateCurrentPhysics() {
       if (!isSpinningFree) return { r: currentRotation, v: 0 };
-
       const t = (performance.now() - spinStartTime) / 1000;
       if (t < 0) return { r: baseRotation, v: initVelocity };
 
       const currentVelocity = initVelocity * Math.pow(friction, t * 60);
-
       if (Math.abs(currentVelocity) < 0.2) {
         isSpinningFree = false;
+        stopSpinSoundSafely();
         const finalRotation = baseRotation + (initVelocity * (1 - Math.pow(friction, t * 60))) / (1 - friction) / 60;
         return { r: finalRotation, v: 0 };
       }
-
       const computedRotation = baseRotation + (initVelocity * (1 - Math.pow(friction, t * 60))) / (1 - friction) / 60;
       return { r: computedRotation, v: currentVelocity };
     }
 
-    // Phát âm thanh "tạch tạch" khi các chốt của nón đi qua kim (Đã đồng bộ mượt mà theo fps)
-    function manageSoundSafelyBackground(activeRotation) {
-      let normalizedRotation = activeRotation % 360;
+    function manageSoundSafelyBackground(rotationValue) {
+      let normalizedRotation = rotationValue % 360;
       if (normalizedRotation < 0) normalizedRotation += 360;
       let currentAngleIndex = Math.floor(normalizedRotation / pinAngleStep);
 
@@ -260,14 +279,11 @@
         if (!isSoundPlaying) {
           isSoundPlaying = true;
           clickSound.currentTime = 0;
-          clickSound.play()
-            .then(() => { isSoundPlaying = false; })
-            .catch(() => { isSoundPlaying = false; });
+          clickSound.play().then(() => { isSoundPlaying = false; }).catch(() => { isSoundPlaying = false; });
         }
       }
     }
 
-    // Khớp bẻ kim nón xoay sinh động
     function updatePointerFlap(rotationValue) {
       let normalizedRotation = rotationValue % 360;
       if (normalizedRotation < 0) normalizedRotation += 360;
@@ -276,64 +292,43 @@
 
       let pointerAngleOffset = 0;
       const contactZone = 6;
-
       if (Math.abs(remainder) < contactZone) {
         let pushIntensity = (contactZone - Math.abs(remainder)) / contactZone;
         pointerAngleOffset = -Math.abs(remainder * pushIntensity * 6.0);
       }
-
       pointerAngleOffset = Math.max(-25, Math.min(0, pointerAngleOffset));
-      pointerImg.style.transform = `rotate(${180 + pointerAngleOffset}deg)`;
+      if(pointerImg) pointerImg.style.transform = `rotate(${180 + pointerAngleOffset}deg)`;
     }
 
-    // Vòng lặp Render hình ảnh và tính toán âm thanh 60fps - 144fps
     function renderLoop() {
       const state = calculateCurrentPhysics();
       if (isSpinningFree) currentRotation = state.r;
 
-      // Cập nhật giao diện hình ảnh nón
-      wheel.style.transform = `rotate(${currentRotation.toFixed(2)}deg) translateZ(0)`;
+      if(wheel) wheel.style.transform = `rotate(${currentRotation.toFixed(2)}deg) translateZ(0)`;
       updatePointerFlap(currentRotation);
-
-      // Thực hiện tính toán âm thanh tạch tạch dựa trên góc hiện tại của render công thức vật lý
       manageSoundSafelyBackground(currentRotation);
 
       requestAnimationFrame(renderLoop);
     }
     requestAnimationFrame(renderLoop);
 
-
-    // ==========================================
-    // ĐỒNG BỘ MẶT NÓN VÀ SOUNDBOARD CHO VIEWER
-    // ==========================================
-
-    // Đồng bộ mặt nón trực tuyến từ bàn điều khiển Tech
     socket.on('playerUpdateImage', (imageName) => {
-      if (imageName && wheel) {
-        wheel.src = imageName;
-      }
+      if (imageName && wheel) wheel.src = imageName;
     });
 
-    // Tiếp nhận lệnh phát âm thanh từ bàn điều khiển Tech
     socket.on('listenSoundboard', (soundName) => {
-      if (soundName) {
-        playSoundboardEvent(soundName);
-      }
+      if (soundName) playSoundboardEvent(soundName);
     });
 
-    // Nạp cấu hình mặt nón ban đầu ngay lập tức khi vừa kết nối thành công vào phòng
     socket.on('initGameState', (state) => {
-      if (state?.activeImage && wheel) {
-        wheel.src = state.activeImage;
-      }
+      if (state?.activeImage && wheel) wheel.src = state.activeImage;
     });
 
-    // Chặn các tính năng Developer Tools để bảo mật mã nguồn màn hình led lớn
     document.addEventListener('contextmenu', e => e.preventDefault());
     document.addEventListener('keydown', e => {
-      if (e.keyCode === 123) e.preventDefault(); // Chặn F12
+      if (e.keyCode === 123) e.preventDefault();
       if ((e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
-        e.preventDefault(); // Chặn Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
+        e.preventDefault();
       }
     });
   </script>

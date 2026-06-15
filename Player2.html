@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vòng Quay Thí Sinh - Player 1</title>
+  <title>Player 2</title>
   <style>
     * {
       margin: 0;
@@ -126,8 +126,6 @@
     </div>
   </div>
 
-  <audio id="spinSound" src="spin.mp3" preload="auto" loop></audio>
-
   <script>
     const socket = io("https://wheel2001.onrender.com");
 
@@ -135,53 +133,58 @@
     const playerRole = sessionStorage.getItem('player');
     const playerPass = sessionStorage.getItem('password');
 
-    const myPlayerName = "Player 2";
+    const myPlayerName = "Player 2"; // Đổi thành "Player 2" hoặc "Player 3" tương ứng với từng file
     let isDraggingAllowed = false; 
 
-    // FIX CHẶN TRUY CẬP: Sửa đúng tên sự kiện gửi lên server là 'playerVerifyLogin'
     if (!roomid || !playerRole) {
       window.location.href = 'index.html';
     } else {
       socket.emit('playerVerifyLogin', { roomid, playerRole, password: playerPass }, (res) => {
         if (!res || !res.success) {
-          console.error("[AUTH] Xác thực thất bại hoặc phòng không tồn tại!");
           window.location.href = 'index.html';
-        } else {
-          console.log("[AUTH] Thiết lập kết nối phòng thành công!");
         }
       });
     }
 
     const wheel = document.getElementById('wheel');
-    const pointerImg = document.getElementById('pointerImg'); // Sửa lại ID trỏ chuẩn
+    const pointerImg = document.getElementById('pointerImg');
 
-    // Quản lý hệ thống âm thanh cục bộ
+    // --- HỆ THỐNG ÂM THANH MỚI CẬP NHẬT ---
     const clickSound = new Audio('click.mp3');
-    const soundboard_goc = new Audio('goc.mp3');
-    const soundboard_matluot = new Audio('matluot.mp3');
-    const soundboard_mayman = new Audio('mayman.mp3');
-    const soundboard_nhacnen = new Audio('nhacnen.mp3');
-    const soundboard_chia_doi = new Audio('chia_doi.mp3');
-    const soundboard_nhan_doi = new Audio('nhan_doi.mp3');
-    const soundboard_vỗ_tay = new Audio('vỗ_tay.mp3');
+    const spinSound = new Audio('spin.mp3');
+    spinSound.loop = true;
+
+    const soundboard = {
+      "10s": new Audio('10s.mp3'),
+      "30s": new Audio('30s.mp3'),
+      "Bankrupt": new Audio('Bankrupt.mp3'),
+      "Commercial": new Audio('Commercial.mp3'),
+      "Double": new Audio('Double.mp3'),
+      "FreeTurn": new Audio('FreeTurn.mp3'),
+      "Half": new Audio('Half.mp3'),
+      "HostEntrance": new Audio('HostEntrance.mp3'),
+      "Intro": new Audio('Intro.mp3'),
+      "LoseATurn": new Audio('LoseATurn.mp3'),
+      "Lucky": new Audio('Lucky.mp3')
+    };
 
     function activateAudioStream() {
       document.getElementById('audioOverlay').style.display = 'none';
-      // Phát và dừng thử để kích hoạt AudioContext trên trình duyệt
       clickSound.play().then(() => { clickSound.pause(); }).catch(e => console.log(e));
+      spinSound.play().then(() => { spinSound.pause(); }).catch(e => console.log(e));
+      for (let key in soundboard) {
+        soundboard[key].play().then(() => { soundboard[key].pause(); }).catch(e => console.log(e));
+      }
     }
 
     function playSoundboardEvent(soundName) {
-      try {
-        if (soundName === 'goc') { soundboard_goc.currentTime = 0; soundboard_goc.play(); }
-        else if (soundName === 'matluot') { soundboard_matluot.currentTime = 0; soundboard_matluot.play(); }
-        else if (soundName === 'mayman') { soundboard_mayman.currentTime = 0; soundboard_mayman.play(); }
-        else if (soundName === 'nhacnen') { soundboard_nhacnen.currentTime = 0; soundboard_nhacnen.play(); }
-        else if (soundName === 'chia_doi') { soundboard_chia_doi.currentTime = 0; soundboard_chia_doi.play(); }
-        else if (soundName === 'nhan_doi') { soundboard_nhan_doi.currentTime = 0; soundboard_nhan_doi.play(); }
-        else if (soundName === 'vỗ_tay') { soundboard_vỗ_tay.currentTime = 0; soundboard_vỗ_tay.play(); }
-      } catch (err) {
-        console.error("Lỗi phát âm thanh bảng Tech:", err);
+      if (soundboard[soundName]) {
+        try {
+          soundboard[soundName].currentTime = 0;
+          soundboard[soundName].play();
+        } catch (err) {
+          console.error("Lỗi phát âm thanh soundboard:", err);
+        }
       }
     }
 
@@ -189,7 +192,6 @@
     let isDragging = false;
     let startAngle = 0;
     let currentAngle = 0;
-
     let dragHistory = [];
     let isDraggingByMe = false;
 
@@ -198,7 +200,11 @@
     let spinStartTime = 0;
     let isSpinningFree = false;
 
-    const friction = 0.988;
+    // Biến quản lý phát nhạc spin tự động sau 1 giây
+    let spinTimeoutToken = null;
+    let isSpinSoundPlaying = false;
+
+    const friction = 0.999;
     const pinAngleStep = 15;
     let lastClickAngleIndex = 0;
     let isSoundPlaying = false;
@@ -217,17 +223,14 @@
       if (allowedPlayer === myPlayerName) {
         isDraggingAllowed = true;
         if(dragZone) dragZone.style.cursor = 'grab';
-        console.log("%c[QUYỀN QUAY] Bạn ĐÃ ĐƯỢC TECH MỞ QUYỀN QUAY NÓN!", "color: green; font-size: 14px; font-weight: bold;");
       } else {
         isDraggingAllowed = false;
         if(dragZone) dragZone.style.cursor = 'not-allowed';
-        console.log(`%c[QUYỀN QUAY] Bị khóa. Lượt quay hiện tại thuộc về: ${allowedPlayer}`, "color: red;");
       }
     }
 
     function onMouseDown(e) {
-      if (!isDraggingAllowed) return;
-      if (isSpinningFree) return;
+      if (!isDraggingAllowed || isSpinningFree) return;
       isDragging = true;
       isDraggingByMe = true;
       startAngle = getMouseAngle(e);
@@ -306,6 +309,9 @@
         spinStartTime = performance.now();
         isSpinningFree = true;
 
+        // Kích hoạt bộ đếm thời gian: Đúng 1 giây sau khi xoay tự do thì tự động phát spin.mp3
+        triggerSpinSoundTimeout();
+
         socket.emit('playerUpdatePhysics', {
           baseRotation: baseRotation,
           initVelocity: initVelocity,
@@ -314,6 +320,28 @@
       } else {
         isDraggingByMe = false;
         socket.emit('playerUpdatePhysics', { rotation: currentRotation, velocity: 0, isDraggingSync: false });
+      }
+    }
+
+    function triggerSpinSoundTimeout() {
+      clearTimeout(spinTimeoutToken);
+      spinTimeoutToken = setTimeout(() => {
+        if (isSpinningFree && !isSpinSoundPlaying) {
+          try {
+            spinSound.currentTime = 0;
+            spinSound.play();
+            isSpinSoundPlaying = true;
+          } catch (e) { console.log("Chưa tương tác âm thanh:", e); }
+        }
+      }, 1000); // 1 giây định thời
+    }
+
+    function stopSpinSoundSafely() {
+      clearTimeout(spinTimeoutToken);
+      if (isSpinSoundPlaying) {
+        spinSound.pause();
+        spinSound.currentTime = 0;
+        isSpinSoundPlaying = false;
       }
     }
 
@@ -332,12 +360,16 @@
         initVelocity = data.initVelocity;
         spinStartTime = data.spinStartTime;
         isSpinningFree = true;
+        
+        // Đồng bộ kích hoạt bộ đếm phát spin.mp3 từ xa cho máy khác
+        triggerSpinSoundTimeout();
       } else {
         if (data.rotation !== undefined) currentRotation = data.rotation;
         if (data.velocity === 0) {
           isSpinningFree = false;
           spinStartTime = 0;
           initVelocity = 0;
+          stopSpinSoundSafely(); // Dừng phát khi có tín hiệu đứng yên
         }
       }
     });
@@ -352,6 +384,7 @@
       const currentVelocity = initVelocity * Math.pow(friction, t * 60);
       if (Math.abs(currentVelocity) < 0.2) {
         isSpinningFree = false;
+        stopSpinSoundSafely(); // Dừng khi nón ma sát về 0
         const finalRotation = baseRotation + (initVelocity * (1 - Math.pow(friction, t * 60))) / (1 - friction) / 60;
         return { r: finalRotation, v: 0 };
       }
@@ -370,11 +403,7 @@
         if (!isSoundPlaying) {
           isSoundPlaying = true;
           clickSound.currentTime = 0;
-          clickSound.play().then(() => {
-            isSoundPlaying = false;
-          }).catch(() => {
-            isSoundPlaying = false;
-          });
+          clickSound.play().then(() => { isSoundPlaying = false; }).catch(() => { isSoundPlaying = false; });
         }
       }
     }
@@ -407,6 +436,7 @@
         isDraggingByMe = false;
         spinStartTime = 0;
         isSoundPlaying = false;
+        stopSpinSoundSafely();
         socket.emit('playerStopWheel', { rotation: currentRotation });
       }
       requestAnimationFrame(renderLoop);
@@ -414,9 +444,7 @@
     requestAnimationFrame(renderLoop);
 
     socket.on('playerUpdateImage', (imageName) => {
-      if (imageName && wheel) {
-        wheel.src = imageName;
-      }
+      if (imageName && wheel) wheel.src = imageName;
     });
 
     socket.on('syncAllowedPlayer', (player) => {
@@ -441,7 +469,7 @@
         e.preventDefault();
       }
     });
-</script>
+  </script>
 </body>
 
 </html>
