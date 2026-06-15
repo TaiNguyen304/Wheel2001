@@ -83,8 +83,8 @@
     }
 
     .btn-submit:hover {
-      background: orange;
-      color: white;
+      background: orange !important;
+      color: white !important;
     }
 
     .popup-modal {
@@ -106,8 +106,14 @@
       padding: 30px;
       border-radius: 12px;
       text-align: center;
-      width: 380px;
+      width: 420px; /* Tăng nhẹ kích thước để hiển thị danh sách phòng debug đẹp hơn */
       box-shadow: 0 0 20px rgba(255, 0, 0, 0.4);
+    }
+
+    /* Đổi màu viền pop-up thông tin/debug thành màu xanh cho thân thiện */
+    .popup-modal.info .popup-content {
+      border-color: #39ff14;
+      box-shadow: 0 0 20px rgba(57, 255, 20, 0.4);
     }
 
     .popup-content p {
@@ -115,6 +121,8 @@
       color: white;
       margin-bottom: 22px;
       line-height: 1.5;
+      text-align: left; /* Đổi thành căn trái để xuống dòng thông tin phòng dễ đọc */
+      white-space: pre-line; /* Giữ nguyên các ký tự xuống dòng \n khi hiển thị text */
     }
 
     .popup-content button {
@@ -125,6 +133,12 @@
       border-radius: 6px;
       cursor: pointer;
       font-size: 15px;
+      width: 100%;
+    }
+
+    .popup-modal.info .popup-content button {
+      background: #39ff14;
+      color: black;
     }
 
     .popup-content button:hover {
@@ -156,12 +170,12 @@
       <input type="password" id="passwordInput" maxlength="4" placeholder="Nhập mật khẩu...">
     </div>
     <button class="btn-submit" onclick="executeLoginVerify()">XÁC NHẬN ĐĂNG NHẬP</button>
-    <button class="btn-submit" style="background: #666; margin-top: 8px;" onclick="debugCheckRooms()">🔍 KIỂM TRA SERVER</button>
+    <button class="btn-submit" style="background: aqua; margin-top: 8px;" onclick="debugCheckRooms()">🔍 KIỂM TRA SERVER</button>
   </div>
 
   <div id="customAlert" class="popup-modal">
     <div class="popup-content">
-      <p id="alertMessage">Thông báo lỗi hệ thống!</p>
+      <p id="alertMessage">Thông báo hệ thống!</p>
       <button onclick="closeAlertPopup()">ĐÓNG THÔNG BÁO</button>
     </div>
   </div>
@@ -175,10 +189,20 @@
       transports: ['websocket', 'polling']
     });
 
-    function showAlertPopup(msg) {
+    // Hàm hiển thị thông báo tùy chỉnh (isInfo = true sẽ đổi giao diện sang màu xanh thay vì đỏ cảnh báo)
+    function showAlertPopup(msg, isInfo = false) {
+      const modal = document.getElementById('customAlert');
       document.getElementById('alertMessage').innerText = msg;
-      document.getElementById('customAlert').style.display = 'flex';
+      
+      if (isInfo) {
+        modal.classList.add('info');
+      } else {
+        modal.classList.remove('info');
+      }
+      
+      modal.style.display = 'flex';
     }
+    
     function closeAlertPopup() {
       document.getElementById('customAlert').style.display = 'none';
     }
@@ -191,11 +215,11 @@
       const password = document.getElementById('passwordInput').value.trim();
 
       if (roomid.length !== 6 || isNaN(roomid)) {
-        showAlertPopup("Mã phòng không hợp lệ! Vui lòng nhập đúng 6 chữ số.");
+        showAlertPopup("Mã phòng không hợp lệ! Vui lòng nhập đúng 6 chữ số.", false);
         return;
       }
       if (password.length !== 4 || isNaN(password)) {
-        showAlertPopup("Mật khẩu không hợp lệ! Vui lòng nhập đúng 4 chữ số.");
+        showAlertPopup("Mật khẩu không hợp lệ! Vui lòng nhập đúng 4 chữ số.", false);
         return;
       }
 
@@ -203,7 +227,7 @@
       console.log('[LOGIN] Gửi xác thực:', { roomid, player, password });
       
       if (!socket.connected) {
-        showAlertPopup("Đang kết nối lại tới máy chủ... Vui lòng thử lại trong 2 giây.");
+        showAlertPopup("Đang kết nối lại tới máy chủ... Vui lòng thử lại trong 2 giây.", false);
         socket.connect();
         setTimeout(executeLoginVerify, 2000);
         return;
@@ -211,9 +235,8 @@
 
       loginAttempt++;
       
-      // Thêm timeout dài hơn cho phép server xử lý
       const timeoutId = setTimeout(() => {
-        showAlertPopup("Máy chủ không phản hồi. Vui lòng kiểm tra kết nối và thử lại!");
+        showAlertPopup("Máy chủ không phản hồi. Vui lòng kiểm tra kết nối và thử lại!", false);
         console.error('[LOGIN] TIMEOUT - Không nhận được response từ server sau 10 giây');
         loginAttempt = 0;
       }, 10000);
@@ -230,11 +253,13 @@
             "Player 3": "Player3.html" 
           };
           console.log('[LOGIN] ✓ Đăng nhập thành công! Chuyển hướng tới:', fileMap[player]);
-          window.location.href = `${fileMap[player]}?roomid=${roomid}`;
+          
+          // Điều hướng an toàn với cả roomid và password thông qua chuỗi truy vấn (Query String) đúng chuẩn
+          window.location.href = `${fileMap[player]}?roomid=${roomid}&password=${password}`;
         } else {
           const errorMsg = response && response.msg ? response.msg : "Xác thực không thành công!";
           console.error('[LOGIN] ✗ Lỗi:', errorMsg);
-          showAlertPopup(errorMsg);
+          showAlertPopup(errorMsg, false);
         }
       });
     }
@@ -255,7 +280,7 @@
 
     function debugCheckRooms() {
       if (!socket.connected) {
-        alert('Không kết nối được tới server!');
+        showAlertPopup('Không kết nối được tới server!', false);
         return;
       }
       console.log('[DEBUG] Kiểm tra tất cả phòng lưu trên server...');
@@ -263,16 +288,16 @@
         console.log('[DEBUG] Phòng từ server:', data);
         const roomCount = Object.keys(data).length;
         if (roomCount === 0) {
-          alert('❌ Không có phòng nào! Bạn cần mở tech.html và bấm "KÍCH HOẠT KHỞI TẠO PHÒNG TỰ ĐỘNG"');
+          showAlertPopup('❌ Không có phòng nào!\nBạn cần mở tech.html và bấm "KÍCH HOẠT KHỞI TẠO PHÒNG TỰ ĐỘNG"', false);
         } else {
           let msg = `✓ Tìm thấy ${roomCount} phòng:\n\n`;
           for (let roomid in data) {
             msg += `Phòng: ${roomid}\n`;
-            msg += `  Player 1: ${data[roomid]["Player 1"]}\n`;
-            msg += `  Player 2: ${data[roomid]["Player 2"]}\n`;
-            msg += `  Player 3: ${data[roomid]["Player 3"]}\n\n`;
+            msg += `  • Player 1: ${data[roomid]["Player 1"] || "Trống"}\n`;
+            msg += `  • Player 2: ${data[roomid]["Player 2"] || "Trống"}\n`;
+            msg += `  • Player 3: ${data[roomid]["Player 3"] || "Trống"}\n\n`;
           }
-          alert(msg);
+          showAlertPopup(msg, true); // Gọi hiển thị thông tin với màu xanh lá
         }
       });
     }
