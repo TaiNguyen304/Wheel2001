@@ -173,7 +173,7 @@
     // LOGIC HỆ THỐNG VÒNG QUAY ĐỒNG BỘ
     // =============================================================
     const socket = io("https://wheel2001.onrender.com");
-
+    const myPlayerName = sessionStorage.getItem('player') || "Player 1";
     const wheel = document.getElementById("wheel");
     const dragZone = document.getElementById("dragZone");
     const spinSound = document.getElementById("spinSound");
