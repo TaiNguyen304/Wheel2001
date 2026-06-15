@@ -140,266 +140,255 @@
   <audio id="spinSound" src="spin.mp3" preload="auto" loop></audio>
 
   <script>
-    // =============================================================
-    // LỚP BẢO MẬT: KIỂM TRA CHÉO MÃ PHÒNG VÀ MẬT KHẨU TỪ URL TỐC ĐỘ CAO
-    // =============================================================
-    const urlParams = new URLSearchParams(window.location.search);
-    const roomid = urlParams.get('roomid');
-    const password = urlParams.get('password');
-    
-    // !!! LƯU Ý: Sửa thành "Player 2" hoặc "Player 3" ở các file tương ứng
-    const THIS_PLAYER = "Player 1"; 
+    // Thiết lập cấu hình kết nối máy chủ Socket
+    const socket = io();
 
-    if (!roomid || !password || roomid.length !== 6 || isNaN(roomid) || password.length !== 4 || isNaN(password)) {
-      // Chặn đứng lập tức, xóa sạch giao diện cũ và hiển thị màn hình thông báo lỗi tùy biến chuyên nghiệp
-      document.body.innerHTML = `
-  <div style="background: #0c0c0c; color: white; height: 100vh; width: 100vw; display: flex; align-items: center; justify-content: center; font-family: Arial, sans-serif; position: fixed; top: 0; left: 0; z-index: 99999;">
-    <div style="background: #181818; border: 3px solid #ff0000; padding: 40px; border-radius: 16px; text-align: center; box-shadow: 0 0 25px rgba(255,0,0,0.3); width: 440px; box-sizing: border-box;">
-      <h2 style="color: #ff0000; margin-bottom: 20px; font-size: 24px; letter-spacing: 1px; font-weight: bold;">TRUY CẬP BỊ CHẶN!</h2>
-      <p style="color: #bbb; margin-bottom: 25px; line-height: 1.6; font-size: 16px; font-weight: bold;">Bạn không có quyền truy cập trực tiếp vào giao diện người chơi mà không có mã phòng và mật khẩu hợp lệ.</p>
-      <button onclick="window.location.href='index.html'" 
-              onmouseover="this.style.backgroundColor='orange'; this.style.color='white';" 
-              onmouseout="this.style.backgroundColor='#ff0000'; this.style.color='white';" 
-              style="background: #ff0000; color: white; border: none; padding: 14px 25px; font-size: 16px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; transition: background 0.2s, color 0.2s;">
-        QUAY LẠI TRANG ĐĂNG NHẬP
-      </button>
-    </div>
-  </div>
-`;
-      throw new Error("[BẢO MẬT] Ngăn chặn thực thi Script do thiếu thông tin hoặc sai mật khẩu!");
+    const roomid = sessionStorage.getItem('roomid');
+    const playerRole = sessionStorage.getItem('player');
+    const playerPass = sessionStorage.getItem('password');
+
+    // TÊN ĐỊNH DANH BẮT BUỘC ĐỂ ĐỒNG BỘ QUYỀN VỚI TECH
+    const myPlayerName = "Player 1";
+    let isDraggingAllowed = false; // Mặc định khóa tương tác khi chưa được Tech mở
+
+    if (!roomid || !playerRole) {
+      window.location.href = 'index.html';
+    } else {
+      socket.emit('verifyLogin', { roomid, playerRole, playerPassword: playerPass }, (res) => {
+        if (!res.success) {
+          window.location.href = 'index.html';
+        }
+      });
     }
 
-    // =============================================================
-    // LOGIC HỆ THỐNG VÒNG QUAY ĐỒNG BỘ
-    // =============================================================
-    const socket = io("https://wheel2001.onrender.com");
-    const myPlayerName = sessionStorage.getItem('player') || "Player 1";
-    const wheel = document.getElementById("wheel");
-    const dragZone = document.getElementById("dragZone");
-    const spinSound = document.getElementById("spinSound");
-    const pointerImg = document.getElementById("pointerImg");
-    const audioOverlay = document.getElementById("audioOverlay");
-    const statusIndicator = document.getElementById("statusIndicator");
+    const wheel = document.getElementById('wheel');
+    const pointerImg = document.getElementById('pointer');
 
-    let baseRotation = 0, initVelocity = 0, spinStartTime = 0, isSpinningFree = false;
-    let currentRotation = 0, isDragging = false, lastAngle = 0, isDraggingByMe = false;
-    let dragTrack = [];
+    // Quản lý hệ thống âm thanh cục bộ
+    const clickSound = new Audio('click.mp3');
+    const soundboard_goc = new Audio('goc.mp3');
+    const soundboard_matluot = new Audio('matluot.mp3');
+    const soundboard_mayman = new Audio('mayman.mp3');
+    const soundboard_nhacnen = new Audio('nhacnen.mp3');
+    const soundboard_chia_doi = new Audio('chia_doi.mp3');
+    const soundboard_nhan_doi = new Audio('nhan_doi.mp3');
+    const soundboard_vỗ_tay = new Audio('vỗ_tay.mp3');
 
-    const pinAngleStep = 360 / 24;
-    const frictionPerMs = Math.pow(0.995, 1 / 16.67);
-    const lnFriction = Math.log(frictionPerMs);
-
-    let isSystemActivated = false, isSoundPlaying = false;
-    let myTurnToControl = false; 
-
-    function activateAudioStream() {
-      isSystemActivated = true;
-      audioOverlay.style.display = "none";
-      spinSound.volume = 0;
-      spinSound.play().catch(e => console.log(e));
-      if (roomid) {
-        // GỬI KÈM MẬT KHẨU lên máy chủ khi yêu cầu joinRoom để xác thực lớp cuối cùng
-        socket.emit('joinRoom', { roomid, player: THIS_PLAYER, password });
+    // Hàm thực thi phát nhạc Soundboard từ mạng điều phối
+    function playSoundboardEvent(soundName) {
+      try {
+        if (soundName === 'goc') { soundboard_goc.currentTime = 0; soundboard_goc.play(); }
+        else if (soundName === 'matluot') { soundboard_matluot.currentTime = 0; soundboard_matluot.play(); }
+        else if (soundName === 'mayman') { soundboard_mayman.currentTime = 0; soundboard_mayman.play(); }
+        else if (soundName === 'nhacnen') { soundboard_nhacnen.currentTime = 0; soundboard_nhacnen.play(); }
+        else if (soundName === 'chia_doi') { soundboard_chia_doi.currentTime = 0; soundboard_chia_doi.play(); }
+        else if (soundName === 'nhan_doi') { soundboard_nhan_doi.currentTime = 0; soundboard_nhan_doi.play(); }
+        else if (soundName === 'vỗ_tay') { soundboard_vỗ_tay.currentTime = 0; soundboard_vỗ_tay.play(); }
+      } catch (err) {
+        console.error("Lỗi phát âm thanh bảng Tech:", err);
       }
     }
 
-    socket.on('initGameState', (state) => {
-      if (state) {
-        if (state.activeImage && wheel) wheel.src = state.activeImage;
-        applyPermissionUI(state.allowedPlayer);
-      }
-    });
+    // Các biến trạng thái tính toán động lực học nón
+    let currentRotation = 0;
+    let isDragging = false;
+    let startAngle = 0;
+    let currentAngle = 0;
 
-    socket.on('playerUpdateImage', (imageName) => {
-      if (imageName && wheel) {
-        wheel.src = imageName;
-      }
-    });
+    let dragHistory = [];
+    let isDraggingByMe = false;
 
-    socket.on('playerSyncPhysics', (data) => {
-      if (isDraggingByMe) return;
-      parseServerPhysics(data);
-    });
+    let baseRotation = 0;
+    let initVelocity = 0;
+    let spinStartTime = 0;
+    let isSpinningFree = false;
 
-    socket.on('syncAllowedPlayer', (player) => {
-      applyPermissionUI(player);
-    });
+    const friction = 0.988;
+    const pinAngleStep = 15;
+    let lastClickAngleIndex = 0;
+    let isSoundPlaying = false;
 
+    function getMouseAngle(e) {
+      const rect = wheel.getBoundingClientRect();
+      const wheelX = rect.left + rect.width / 2;
+      const wheelY = rect.top + rect.height / 2;
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return Math.atan2(clientY - wheelY, clientX - wheelX) * (180 / Math.PI);
+    }
+
+    // SỬA LỖI ĐỒNG BỘ: Hàm áp dụng quyền và log thông báo trạng thái trực quan
     function applyPermissionUI(allowedPlayer) {
-      const isMyTurn = (allowedPlayer === myPlayerName);
-      
-      if (isMyTurn) {
-        isDraggingAllowed = true; 
+      if (allowedPlayer === myPlayerName) {
+        isDraggingAllowed = true;
+        console.log("%c[QUYỀN QUAY] Bạn ĐÃ ĐƯỢC TECH MỞ QUYỀN QUAY NÓN!", "color: green; font-size: 14px; font-weight: bold;");
       } else {
         isDraggingAllowed = false;
+        console.log(`%c[QUYỀN QUAY] Bị khóa. Lượt quay hiện tại thuộc về: ${allowedPlayer}`, "color: red;");
       }
     }
 
-    function parseServerPhysics(data) {
-      if (data.spinStartTime) {
-        baseRotation = data.baseRotation || data.rotation || 0;
-        initVelocity = data.initVelocity || data.velocity || 0;
-        spinStartTime = data.spinStartTime;
-        isSpinningFree = true;
-        isDragging = false;
-      } else {
-        currentRotation = data.rotation || 0;
-        initVelocity = data.velocity || 0;
-        isSpinningFree = false;
-        isDragging = !!data.isDraggingSync;
-        if (!isDragging && data.velocity === 0) spinStartTime = 0;
+    // SỬA LỖI TƯƠNG TÁC: Lồng biến chặn isDraggingAllowed lên đầu các hàm sự kiện chuột
+    function onMouseDown(e) {
+      if (!isDraggingAllowed) {
+        console.warn("Hành động bị chặn: Bạn chưa được bàn Tech cấp quyền quay!");
+        return;
       }
-    }
-
-    function calculateCurrentPhysics() {
-      if (!isSpinningFree) return { r: currentRotation, v: 0 };
-      const t = Date.now() - spinStartTime;
-      if (t <= 0) return { r: baseRotation, v: initVelocity };
-
-      const currentV = initVelocity * Math.pow(frictionPerMs, t);
-      if (Math.abs(currentV) <= 0.04) {
-        isSpinningFree = false;
-        spinStartTime = 0;
-        return { r: currentRotation, v: 0 };
-      }
-
-      const deltaRotation = (initVelocity / lnFriction) * (Math.pow(frictionPerMs, t) - 1) * (1 / 16.67);
-      return { r: baseRotation + deltaRotation, v: currentV };
-    }
-
-    function manageSoundSafelyBackground() {
-      if (!isSystemActivated) return;
-      let totalVelocityNow = isSpinningFree ? calculateCurrentPhysics().v : (isDragging ? 10 : 0);
-
-      if (totalVelocityNow > 0.04 || isDragging) {
-        if (isSpinningFree && spinStartTime > 0) {
-          const elapsed = Date.now() - spinStartTime;
-          if (elapsed >= 1000) {
-            if (!isSoundPlaying) {
-              isSoundPlaying = true;
-              spinSound.currentTime = 0;
-              spinSound.volume = 1;
-            }
-          } else {
-            if (spinSound.volume !== 0) spinSound.volume = 0;
-          }
-        } else {
-          if (spinSound.volume !== 0) spinSound.volume = 0;
-        }
-      } else {
-        if (spinSound.volume !== 0 || isSoundPlaying) {
-          spinSound.volume = 0;
-          spinSound.currentTime = 0;
-          isSoundPlaying = false;
-        }
-      }
-    }
-    setInterval(manageSoundSafelyBackground, 30);
-
-    function getAngle(clientX, clientY) {
-      const wheelRect = wheel.getBoundingClientRect();
-      const centerX = wheelRect.left + wheelRect.width / 2;
-      const centerY = wheelRect.top + wheelRect.height / 2;
-      let angle = Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI);
-      return angle < 0 ? angle + 360 : angle;
-    }
-
-    function handleStart(e) {
-      if (!isSystemActivated || !myTurnToControl) return;
-      let currentV = isSpinningFree ? calculateCurrentPhysics().v : 0;
-      if (Math.abs(currentV) > 0.04) return;
-
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
+      if (isSpinningFree) return;
       isDragging = true;
       isDraggingByMe = true;
-      isSpinningFree = false;
+      startAngle = getMouseAngle(e);
+      currentAngle = startAngle;
+      dragHistory = [{ angle: startAngle, time: performance.now() }];
       spinStartTime = 0;
-      isSoundPlaying = false;
+      initVelocity = 0;
 
-      lastAngle = getAngle(clientX, clientY);
-      dragTrack = [{ angle: lastAngle, time: Date.now() }];
-
-      socket.emit('playerMoveWheel', { rotation: currentRotation, velocity: 0, isDraggingSync: true });
+      socket.emit('playerUpdatePhysics', {
+        rotation: currentRotation,
+        velocity: 0,
+        isDraggingSync: true
+      });
     }
 
-    function handleMove(e) {
+    function onMouseMove(e) {
       if (!isDragging || !isDraggingByMe) return;
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const mouseAngle = getMouseAngle(e);
+      const delta = mouseAngle - currentAngle;
+      currentAngle = mouseAngle;
 
-      const currentAngle = getAngle(clientX, clientY);
-      let deltaAngle = currentAngle - lastAngle;
+      let adjustedDelta = delta;
+      if (delta > 180) adjustedDelta -= 360;
+      if (delta < -180) adjustedDelta += 360;
 
+      currentRotation += adjustedDelta;
+      dragHistory.push({ angle: mouseAngle, time: performance.now() });
+      if (dragHistory.length > 5) dragHistory.shift();
+
+      socket.emit('playerUpdatePhysics', {
+        rotation: currentRotation,
+        velocity: 0,
+        isDraggingSync: true
+      });
+    }
+
+    function onMouseUp() {
+      if (!isDragging || !isDraggingByMe) return;
+      isDragging = false;
+
+      if (dragHistory.length < 2) {
+        isDraggingByMe = false;
+        socket.emit('playerUpdatePhysics', { rotation: currentRotation, velocity: 0, isDraggingSync: false });
+        return;
+      }
+
+      const now = performance.now();
+      let validSample = null;
+      for (let i = dragHistory.length - 1; i >= 0; i--) {
+        if (now - dragHistory[i].time > 10 && now - dragHistory[i].time < 150) {
+          validSample = dragHistory[i];
+          break;
+        }
+      }
+      if (!validSample) validSample = dragHistory[0];
+
+      const dt = (now - validSample.time) / 1000;
+      if (dt <= 0) {
+        isDraggingByMe = false;
+        socket.emit('playerUpdatePhysics', { rotation: currentRotation, velocity: 0, isDraggingSync: false });
+        return;
+      }
+
+      let deltaAngle = currentAngle - validSample.angle;
       if (deltaAngle > 180) deltaAngle -= 360;
       if (deltaAngle < -180) deltaAngle += 360;
 
-      currentRotation += deltaAngle;
-      lastAngle = currentAngle;
-
-      const now = Date.now();
-      dragTrack.push({ angle: currentAngle, time: now });
-      while (dragTrack.length > 0 && now - dragTrack[0].time > 100) dragTrack.shift();
-
-      socket.emit('playerMoveWheel', { rotation: currentRotation, velocity: 0, isDraggingSync: true });
-    }
-
-    function handleEnd() {
-      if (!isDragging || !isDraggingByMe) return;
-      isDragging = false;
-      let calculatedVelocity = 0;
-      const now = Date.now();
-
-      while (dragTrack.length > 0 && now - dragTrack[0].time > 100) dragTrack.shift();
-
-      if (dragTrack.length >= 2) {
-        const first = dragTrack[0];
-        const last = dragTrack[dragTrack.length - 1];
-        const timeDiff = last.time - first.time;
-
-        if (timeDiff > 0) {
-          let totalDelta = 0;
-          for (let i = 1; i < dragTrack.length; i++) {
-            let diff = dragTrack[i].angle - dragTrack[i - 1].angle;
-            if (diff > 180) diff -= 360;
-            if (diff < -180) diff += 360;
-            totalDelta += diff;
-          }
-          calculatedVelocity = (totalDelta / timeDiff) * 15;
-        }
-      }
-
-      const maxVel = 25;
+      let calculatedVelocity = deltaAngle / dt;
+      const maxVel = 2500;
       if (calculatedVelocity > maxVel) calculatedVelocity = maxVel;
       if (calculatedVelocity < -maxVel) calculatedVelocity = -maxVel;
 
-      if (Math.abs(calculatedVelocity) > 0.1) {
+      if (Math.abs(calculatedVelocity) > 40) {
         baseRotation = currentRotation;
         initVelocity = calculatedVelocity;
-        spinStartTime = Date.now();
+        spinStartTime = performance.now();
         isSpinningFree = true;
-        isSoundPlaying = false;
 
-        socket.emit('playerMoveWheel', {
+        socket.emit('playerUpdatePhysics', {
           baseRotation: baseRotation,
           initVelocity: initVelocity,
           spinStartTime: spinStartTime
         });
       } else {
         isDraggingByMe = false;
-        spinStartTime = 0;
-        isSoundPlaying = false;
-        socket.emit('playerStopWheel', { rotation: currentRotation });
+        socket.emit('playerUpdatePhysics', { rotation: currentRotation, velocity: 0, isDraggingSync: false });
       }
     }
 
-    dragZone.addEventListener("mousedown", handleStart);
-    window.addEventListener("mousemove", handleMove);
-    window.addEventListener("mouseup", handleEnd);
-    dragZone.addEventListener("touchstart", handleStart, { passive: true });
-    window.addEventListener("touchmove", handleMove, { passive: false });
-    window.addEventListener("touchend", handleEnd);
+    window.addEventListener('mousedown', onMouseDown);
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+    window.addEventListener('touchstart', onMouseDown, { passive: false });
+    window.addEventListener('touchmove', onMouseMove, { passive: false });
+    window.addEventListener('touchend', onMouseUp);
+
+    // Xử lý các sự kiện mạng đồng bộ trạng thái vật lý từ người khác
+    socket.on('playerSyncPhysics', (data) => {
+      if (isDraggingByMe) return;
+
+      if (data.spinStartTime) {
+        baseRotation = data.baseRotation;
+        initVelocity = data.initVelocity;
+        spinStartTime = data.spinStartTime;
+        isSpinningFree = true;
+      } else {
+        if (data.rotation !== undefined) currentRotation = data.rotation;
+        if (data.velocity === 0) {
+          isSpinningFree = false;
+          spinStartTime = 0;
+          initVelocity = 0;
+        }
+      }
+    });
+
+    // Tính toán giả lập động cơ vật lý học động
+    function calculateCurrentPhysics() {
+      if (!isSpinningFree) {
+        return { r: currentRotation, v: 0 };
+      }
+      const t = (performance.now() - spinStartTime) / 1000;
+      if (t < 0) return { r: baseRotation, v: initVelocity };
+
+      const currentVelocity = initVelocity * Math.pow(friction, t * 60);
+      if (Math.abs(currentVelocity) < 0.2) {
+        isSpinningFree = false;
+        const finalRotation = baseRotation + (initVelocity * (1 - Math.pow(friction, t * 60))) / (1 - friction) / 60;
+        return { r: finalRotation, v: 0 };
+      }
+
+      const computedRotation = baseRotation + (initVelocity * (1 - Math.pow(friction, t * 60))) / (1 - friction) / 60;
+      return { r: computedRotation, v: currentVelocity };
+    }
+
+    // Quản lý tạo tiếng tạch khấc nón chạy ngầm bảo mật
+    function manageSoundSafelyBackground() {
+      let normalizedRotation = currentRotation % 360;
+      if (normalizedRotation < 0) normalizedRotation += 360;
+      let currentAngleIndex = Math.floor(normalizedRotation / pinAngleStep);
+
+      if (currentAngleIndex !== lastClickAngleIndex) {
+        lastClickAngleIndex = currentAngleIndex;
+        if (!isSoundPlaying) {
+          isSoundPlaying = true;
+          clickSound.currentTime = 0;
+          clickSound.play().then(() => {
+            isSoundPlaying = false;
+          }).catch(() => {
+            isSoundPlaying = false;
+          });
+        }
+      }
+    }
+    setInterval(manageSoundSafelyBackground, 30);
 
     function updatePointerFlap(rotationValue) {
       let normalizedRotation = rotationValue % 360;
@@ -433,6 +422,35 @@
       requestAnimationFrame(renderLoop);
     }
     requestAnimationFrame(renderLoop);
+
+    // ==========================================
+    // LẮNG NGHE SỰ KIỆN TỪ TECH (VIẾT LẠI CHUẨN)
+    // ==========================================
+
+    // 1. Đổi hình mặt nón trực tuyến
+    socket.on('playerUpdateImage', (imageName) => {
+      if (imageName && wheel) {
+        wheel.src = imageName;
+      }
+    });
+
+    // 2. Cấp phát và chặn quyền quay
+    socket.on('syncAllowedPlayer', (player) => {
+      applyPermissionUI(player);
+    });
+
+    // 3. ĐỒNG BỘ PHÁT NHẠC SOUNDBOARD TỪ BÀN TECH
+    socket.on('listenSoundboard', (soundName) => {
+      if (soundName) playSoundboardEvent(soundName);
+    });
+
+    // 4. Khởi tạo dữ liệu tức thời khi vừa đăng nhập thành công
+    socket.on('initGameState', (state) => {
+      if (state) {
+        if (state.activeImage && wheel) wheel.src = state.activeImage;
+        applyPermissionUI(state.allowedPlayer);
+      }
+    });
 
     document.addEventListener('contextmenu', e => e.preventDefault());
     document.addEventListener('keydown', e => {
