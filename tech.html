@@ -316,6 +316,14 @@
     socket.on('connect', () => {
       document.getElementById('statusLog').innerText = "Máy chủ Socket.io kết nối thành công!";
       document.getElementById('statusLog').style.color = 'green';
+      
+      // Nếu mất kết nối và kết nối lại, tự động rejoin room để giữ trạng thái ổn định
+      if (currentActiveRoomID) {
+        socket.emit('techCreateRoom', {
+          roomid: currentActiveRoomID,
+          passwords: roomPasswordsConfig
+        });
+      }
     });
 
     socket.on('disconnect', () => {
@@ -362,31 +370,42 @@
       document.getElementById('statusLog').style.color = 'green';
     }
 
+    // ĐÃ SỬA: Gửi kèm roomid trực tiếp để Server nhận diện chính xác phòng
     function dispatchPlayerPermission(player) {
       if (!currentActiveRoomID) {
         document.getElementById('statusLog').innerText = "LỖI: Bạn phải tạo phòng trước khi phân quyền!";
         document.getElementById('statusLog').style.color = 'red';
         return;
       }
-      socket.emit('techSetAllowedPlayer', player);
+      socket.emit('techSetAllowedPlayer', { roomid: currentActiveRoomID, player: player });
       document.getElementById('statusLog').innerText = player ? `Đã truyền lệnh: Mở tính năng quay cho ${player}` : "Đã khóa tính năng tác động vòng quay của tất cả người chơi!";
       document.getElementById('statusLog').style.color = 'orange';
     }
 
+    // ĐÃ SỬA: Gửi kèm roomid trực tiếp khi thay đổi giao diện mặt nón
     function changeRoomWheelImage(imageName) {
-      socket.emit('techChangeImage', imageName);
+      if (!currentActiveRoomID) {
+        document.getElementById('statusLog').innerText = "LỖI: Bạn phải tạo phòng trước khi chọn mặt nón!";
+        document.getElementById('statusLog').style.color = 'red';
+        return;
+      }
+      socket.emit('techChangeImage', { roomid: currentActiveRoomID, imageName: imageName });
       document.getElementById('statusLog').innerText = `Cập nhật giao diện mặt nón thành công: ${imageName}`;
       document.getElementById('statusLog').style.color = 'purple';
     }
 
+    // ĐÃ SỬA: Gửi kèm roomid khi reset nón
     function triggerResetWheelZero() {
-      socket.emit('techResetWheel');
+      if (!currentActiveRoomID) return;
+      socket.emit('techResetWheel', { roomid: currentActiveRoomID });
       document.getElementById('statusLog').innerText = "Đã đồng bộ reset nón về góc 0 độ.";
       document.getElementById('statusLog').style.color = 'green';
     }
 
+    // ĐÃ SỬA: Gửi kèm roomid khi phát nhạc soundboard
     function broadcastSoundEvent(soundName) {
-      socket.emit('techPlaySound', soundName);
+      if (!currentActiveRoomID) return;
+      socket.emit('techPlaySound', { roomid: currentActiveRoomID, soundName: soundName });
       document.getElementById('statusLog').innerText = `Lệnh phát nhạc Soundboard: ${soundName}.mp3`;
       document.getElementById('statusLog').style.color = 'blue';
     }
@@ -402,7 +421,6 @@
         passwords: roomPasswordsConfig
       });
       
-      // Đã thay thế alert bằng showPopup tùy biến chuyên nghiệp
       showPopup(`✓ DỮ LIỆU ĐANG LƯU TRÊN MÁY CHỦ:\n\n Mã phòng: ${currentActiveRoomID}\n\n Mật khẩu Player 1: ${roomPasswordsConfig["Player 1"]}\n Mật khẩu Player 2: ${roomPasswordsConfig["Player 2"]}\n Mật khẩu Player 3: ${roomPasswordsConfig["Player 3"]}`);
     }
 

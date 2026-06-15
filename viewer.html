@@ -173,12 +173,15 @@
     }
 
     socket.on('initGameState', (state) => {
-      if (state.activeImage) wheel.src = state.activeImage;
-      parseServerPhysics(state);
+      if (state && state.activeImage && wheel) {
+        wheel.src = state.activeImage;
+      }
     });
 
     socket.on('playerUpdateImage', (imageName) => {
-      if (imageName) wheel.src = imageName;
+      if (imageName && wheel) {
+        wheel.src = imageName;
+      }
     });
 
     socket.on('playerSyncPhysics', (data) => {

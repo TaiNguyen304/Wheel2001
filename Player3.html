@@ -204,13 +204,14 @@
     }
 
     socket.on('initGameState', (state) => {
-      if (state.activeImage) wheel.src = state.activeImage;
-      applyPermissionUI(state.allowedPlayer);
-      parseServerPhysics(state);
+      if (state) {
+        if (state.activeImage && wheel) wheel.src = state.activeImage;
+        applyPermissionUI(state.allowedPlayer);
+      }
     });
 
     socket.on('playerUpdateImage', (imageName) => {
-      if (imageName) wheel.src = imageName;
+      if (imageName && wheel) wheel.src = imageName;
     });
 
     socket.on('playerSyncPhysics', (data) => {
@@ -222,19 +223,12 @@
       applyPermissionUI(player);
     });
 
-    function applyPermissionUI(player) {
-      if (player === THIS_PLAYER) {
-        myTurnToControl = true;
-        dragZone.style.cursor = "grab";
-        statusIndicator.innerText = "BẠN ĐANG ĐƯỢC CẤP QUYỀN QUAY! HÃY KÉO THẢ NÓN";
-        statusIndicator.style.color = "#39ff14";
-        statusIndicator.style.borderColor = "#39ff14";
+    function applyPermissionUI(allowedPlayer) {
+      const isMyTurn = (allowedPlayer === myPlayerName);
+      if (isMyTurn) {
+        isDraggingAllowed = true;
       } else {
-        myTurnToControl = false;
-        dragZone.style.cursor = "not-allowed";
-        statusIndicator.innerText = player ? `LƯỢT ĐIỀU KHIỂN CỦA: ${player.toUpperCase()}` : "HỆ THỐNG ĐANG KHÓA TÍNH NĂNG QUAY";
-        statusIndicator.style.color = player ? "orange" : "yellow";
-        statusIndicator.style.borderColor = "cyan";
+        isDraggingAllowed = false;
       }
     }
 
