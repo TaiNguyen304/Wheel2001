@@ -149,30 +149,45 @@ io.on('connection', (socket) => {
   });
 
   // Xác thực đăng nhập qua callback (Khuyên dùng phương thức này)
-  socket.on('verifyLogin', (data, callback) => {
-    const { roomid, playerRole, playerPassword } = data;
-    if (!roomid) return callback({ success: false, message: 'Thiếu mã phòng!' });
+  // ĐỒNG BỘ: Xử lý xác thực đăng nhập từ index.html gửi lên
+  socket.on('playerVerifyLogin', (data, callback) => {
+    // Chấp nhận cả trường 'password' hoặc 'playerPassword' để tránh lỗi giao diện
+    const roomid = data?.roomid !== undefined ? String(data.roomid).trim() : "";
+    const playerRole = data?.playerRole;
+    const clientPass = data?.password !== undefined ? String(data.password).trim() : 
+                       (data?.playerPassword !== undefined ? String(data.playerPassword).trim() : "");
+
+    if (!roomid) {
+      if (typeof callback === 'function') callback({ success: false, message: 'Thiếu mã phòng!' });
+      return;
+    }
 
     initRoomIfNotExist(roomid);
 
     const savedPass = rooms[roomid].passwords[playerRole];
-    const clientPass = playerPassword !== undefined ? String(playerPassword).trim() : "";
 
-    if (savedPass !== null && savedPass === clientPass) {
+    // Tiến hành so khớp nghiêm ngặt sau khi đã đồng bộ về kiểu dữ liệu Chuỗi (String)
+    if (savedPass !== null && savedPass !== undefined && String(savedPass).trim() === clientPass) {
       myRoomId = roomid;
       socket.join(roomid);
       
-      // Phản hồi kết quả ngay lập tức qua callback
-      callback({ success: true, playerRole });
+      // 1. Phản hồi kết quả thành công về cho index.html qua callback công khai
+      if (typeof callback === 'function') {
+        callback({ success: true, playerRole: playerRole });
+      }
 
-      // Gửi cấu hình ban đầu cho client vừa đăng nhập thành công
+      // 2. Đồng bộ nạp cấu hình mặt nón và quyền quay hiện tại cho player vừa vào
       socket.emit('initGameState', {
         activeImage: rooms[roomid].wheelState.activeImage,
         allowedPlayer: rooms[roomid].allowedPlayer
       });
-      console.log(`[SERVER] ${playerRole} đăng nhập THÀNH CÔNG qua verifyLogin vào phòng ${roomid}`);
+      
+      console.log(`[SERVER] Người chơi [${playerRole}] đăng nhập THÀNH CÔNG vào phòng [${roomid}]`);
     } else {
-      callback({ success: false, message: 'Mật khẩu hoặc phòng không chính xác!' });
+      console.log(`[SERVER] Người chơi [${playerRole}] đăng nhập THẤT BẠI vào phòng [${roomid}] (Nhập: "${clientPass}" | Đúng: "${savedPass}")`);
+      if (typeof callback === 'function') {
+        callback({ success: false, message: 'Mật khẩu hoặc mã phòng không chính xác!' });
+      }
     }
   });
 
