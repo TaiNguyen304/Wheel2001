@@ -106,7 +106,7 @@
       padding: 30px;
       border-radius: 12px;
       text-align: center;
-      width: 420px; /* Tăng nhẹ kích thước để hiển thị danh sách phòng debug đẹp hơn */
+      width: 420px;
       box-shadow: 0 0 20px rgba(255, 0, 0, 0.4);
     }
 
@@ -121,8 +121,8 @@
       color: white;
       margin-bottom: 22px;
       line-height: 1.5;
-      text-align: left; /* Đổi thành căn trái để xuống dòng thông tin phòng dễ đọc */
-      white-space: pre-line; /* Giữ nguyên các ký tự xuống dòng \n khi hiển thị text */
+      text-align: left;
+      white-space: pre-line;
     }
 
     .popup-content button {
@@ -176,23 +176,22 @@
   <div id="customAlert" class="popup-modal">
     <div class="popup-content">
       <p id="alertMessage">Thông báo hệ thống!</p>
-      <button onclick="closeAlertPopup()">ĐÓNG THÔNG BÁO</button>
+      <button id="alertBtn" onclick="closeAlertPopup()">ĐÓNG THÔNG BÁO</button>
     </div>
   </div>
 
   <script>
-    const socket = io("https://wheel2001.onrender.com", {
-      reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      reconnectionAttempts: 5,
-      transports: ['websocket', 'polling']
-    });
+    // Khởi tạo kết nối Socket.io tới máy chủ địa phương (hoặc cùng host)
+    const socket = io(window.location.protocol + '//' + window.location.hostname + ':' + window.location.port);
 
-    // Hàm hiển thị thông báo tùy chỉnh (isInfo = true sẽ đổi giao diện sang màu xanh thay vì đỏ cảnh báo)
-    function showAlertPopup(msg, isInfo = false) {
+    // Hàm hiển thị Popup tùy biến
+    // isInfo = true: viền xanh lá, nút xanh lá (dành cho thành công, danh sách phòng)
+    // isInfo = false: viền đỏ, nút đỏ (dành cho lỗi nhập liệu, sai mật khẩu)
+    function showAlertPopup(message, isInfo = false) {
       const modal = document.getElementById('customAlert');
-      document.getElementById('alertMessage').innerText = msg;
+      const msgParagraph = document.getElementById('alertMessage');
+      
+      msgParagraph.innerText = message;
       
       if (isInfo) {
         modal.classList.add('info');
@@ -202,111 +201,89 @@
       
       modal.style.display = 'flex';
     }
-    
+
+    // Hàm đóng Popup
     function closeAlertPopup() {
       document.getElementById('customAlert').style.display = 'none';
     }
 
-    let loginAttempt = 0;
-
+    // Xử lý logic đăng nhập gửi lên server
     function executeLoginVerify() {
-      const player = document.getElementById('playerSelect').value;
+      const playerRole = document.getElementById('playerSelect').value;
       const roomid = document.getElementById('roomIdInput').value.trim();
       const password = document.getElementById('passwordInput').value.trim();
 
+      // Kiểm tra định dạng đầu vào trực tiếp tại Client
       if (roomid.length !== 6 || isNaN(roomid)) {
-        showAlertPopup("Mã phòng không hợp lệ! Vui lòng nhập đúng 6 chữ số.", false);
+        showAlertPopup('❌ Mã phòng phải nhập đủ 6 chữ số!', false);
         return;
       }
       if (password.length !== 4 || isNaN(password)) {
-        showAlertPopup("Mật khẩu không hợp lệ! Vui lòng nhập đúng 4 chữ số.", false);
+        showAlertPopup('❌ Mật khẩu phải nhập đủ 4 chữ số!', false);
         return;
       }
 
-      console.log('[LOGIN] Trạng thái kết nối:', socket.connected);
-      console.log('[LOGIN] Gửi xác thực:', { roomid, player, password });
+      console.log('[SOCKET] Đang gửi yêu cầu xác thực:', { roomid, playerRole, password });
       
-      if (!socket.connected) {
-        showAlertPopup("Đang kết nối lại tới máy chủ... Vui lòng thử lại trong 2 giây.", false);
-        socket.connect();
-        setTimeout(executeLoginVerify, 2000);
-        return;
-      }
-
-      loginAttempt++;
-      
-      const timeoutId = setTimeout(() => {
-        showAlertPopup("Máy chủ không phản hồi. Vui lòng kiểm tra kết nối và thử lại!", false);
-        console.error('[LOGIN] TIMEOUT - Không nhận được response từ server sau 10 giây');
-        loginAttempt = 0;
-      }, 10000);
-
-      socket.emit('verifyLogin', { roomid, player, password }, (response) => {
-        clearTimeout(timeoutId);
-        console.log('[LOGIN] Server phản hồi:', response);
-        loginAttempt = 0;
-        
-        if (response && response.success) {
-          let fileMap = { 
-            "Player 1": "Player1.html", 
-            "Player 2": "Player2.html", 
-            "Player 3": "Player3.html" 
-          };
-          console.log('[LOGIN] ✓ Đăng nhập thành công! Chuyển hướng tới:', fileMap[player]);
+      // Gửi sự kiện kiểm tra thông tin lên server
+      socket.emit('playerVerifyLogin', { roomid, playerRole, password }, (response) => {
+        if (response.success) {
+          // Nếu thành công, lưu trữ thông tin tạm thời vào sessionStorage để trang Player đọc dữ liệu
+          sessionStorage.setItem('authenticatedRoomID', roomid);
+          sessionStorage.setItem('authenticatedRole', playerRole);
           
-          // Điều hướng an toàn với cả roomid và password thông qua chuỗi truy vấn (Query String) đúng chuẩn
-          window.location.href = `${fileMap[player]}?roomid=${roomid}&password=${password}`;
+          // Chuyển hướng trực tiếp đến trang của Player tương ứng (ví dụ: Player1.html)
+          const targetPage = playerRole.replace(' ', '') + '.html';
+          window.location.href = targetPage;
         } else {
-          const errorMsg = response && response.msg ? response.msg : "Xác thực không thành công!";
-          console.error('[LOGIN] ✗ Lỗi:', errorMsg);
-          showAlertPopup(errorMsg, false);
+          // Hiển thị lỗi từ server trả về (phòng không tồn tại, sai mật khẩu, hoặc vai chơi đã có người đăng nhập)
+          showAlertPopup('❌ Thất bại: ' + response.message, false);
         }
       });
     }
 
-    socket.on('connect', () => {
-      console.log('[SOCKET] ✓ Kết nối thành công! Socket ID:', socket.id);
-      document.title = '✓ Xác Thực Người Chơi';
-    });
+    // Hàm Debug kiểm tra toàn bộ danh sách phòng trực tuyến trên Server
+    function debugCheckRooms() {
+      if (!socket.connected) {
+        showAlertPopup('❌ Không kết nối được tới máy chủ Socket!', false);
+        return;
+      }
+      
+      console.log('[DEBUG] Kiểm tra tất cả phòng lưu trên server...');
+      socket.emit('debugGetAllRooms', (data) => {
+        console.log('[DEBUG] Dữ liệu phòng từ server:', data);
+        const roomCount = Object.keys(data).length;
+        
+        if (roomCount === 0) {
+          showAlertPopup('❌ Không có phòng nào đang chạy trên máy chủ!', false);
+        } else {
+          let msg = `✓ Tìm thấy ${roomCount} phòng đang mở:\n\n`;
+          for (let id in data) {
+            msg += `Phòng: ${id}\n`;
+            msg += `  • Player 1: ${data[id]["Player 1"] ? "🔒 Đã đặt MK" : "Trống"}\n`;
+            msg += `  • Player 2: ${data[id]["Player 2"] ? "🔒 Đã đặt MK" : "Trống"}\n`;
+            msg += `  • Player 3: ${data[id]["Player 3"] ? "🔒 Đã đặt MK" : "Trống"}\n\n`;
+          }
+          showAlertPopup(msg, true); // Chuyển màu xanh lá bắt mắt khi lấy dữ liệu debug thành công
+        }
+      });
+    }
 
-    socket.on('disconnect', () => {
-      console.warn('[SOCKET] ✗ Mất kết nối từ máy chủ!');
-      document.title = '✗ Xác Thực Người Chơi';
+    // Lắng nghe sự kiện kết nối thành công/thất bại để ghi log debug
+    socket.on('connect', () => {
+      console.log('[SOCKET] Kết nối máy chủ thành công. ID:', socket.id);
     });
 
     socket.on('connect_error', (error) => {
-      console.error('[SOCKET] Lỗi kết nối:', error.message);
+      console.error('[SOCKET] Lỗi kết nối tới máy chủ:', error.message);
     });
 
-    function debugCheckRooms() {
-      if (!socket.connected) {
-        showAlertPopup('Không kết nối được tới server!', false);
-        return;
-      }
-      console.log('[DEBUG] Kiểm tra tất cả phòng lưu trên server...');
-      socket.emit('debugGetAllRooms', (data) => {
-        console.log('[DEBUG] Phòng từ server:', data);
-        const roomCount = Object.keys(data).length;
-        if (roomCount === 0) {
-          showAlertPopup('❌ Không có phòng nào!"', false);
-        } else {
-          let msg = `✓ Tìm thấy ${roomCount} phòng:\n\n`;
-          for (let roomid in data) {
-            msg += `Phòng: ${roomid}\n`;
-            msg += `  • Player 1: ${data[roomid]["Player 1"] || "Trống"}\n`;
-            msg += `  • Player 2: ${data[roomid]["Player 2"] || "Trống"}\n`;
-            msg += `  • Player 3: ${data[roomid]["Player 3"] || "Trống"}\n\n`;
-          }
-          showAlertPopup(msg, true); // Gọi hiển thị thông tin với màu xanh lá
-        }
-      });
-    }
-
+    // Chặn chuột phải và phím tắt F12 / Developer Tools để đồng bộ trải nghiệm các máy trạm
     document.addEventListener('contextmenu', e => e.preventDefault());
     document.addEventListener('keydown', e => {
-      if (e.keyCode === 123) e.preventDefault();
+      if (e.keyCode === 123) e.preventDefault(); // Chặn F12
       if ((e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
-        e.preventDefault();
+        e.preventDefault(); // Chặn Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
       }
     });
   </script>
