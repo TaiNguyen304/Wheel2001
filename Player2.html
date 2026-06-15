@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vòng Quay Thí Sinh 1</title>
+  <title>Vòng Quay Thí Sinh - Player 1</title>
   <style>
     * {
       margin: 0;
@@ -106,17 +106,6 @@
       cursor: pointer;
       box-shadow: 0 0 25px #39ff14;
     }
-    
-    .status-badge {
-      background: rgba(0,0,0,0.85);
-      padding: 14px 28px;
-      border-radius: 8px;
-      border: 2px solid cyan;
-      margin-bottom: 15px;
-      font-size: 18px;
-      color: yellow;
-      text-align: center;
-    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.4/dist/socket.io.min.js"></script>
 </head>
@@ -140,29 +129,33 @@
   <audio id="spinSound" src="spin.mp3" preload="auto" loop></audio>
 
   <script>
-    const socket = io();
+    const socket = io("https://wheel2001.onrender.com");
 
     const roomid = sessionStorage.getItem('roomid');
     const playerRole = sessionStorage.getItem('player');
     const playerPass = sessionStorage.getItem('password');
 
-    // TÊN ĐỊNH DANH BẮT BUỘC ĐỂ ĐỒNG BỘ QUYỀN VỚI TECH
     const myPlayerName = "Player 2";
-    let isDraggingAllowed = false;
+    let isDraggingAllowed = false; 
 
+    // FIX CHẶN TRUY CẬP: Sửa đúng tên sự kiện gửi lên server là 'playerVerifyLogin'
     if (!roomid || !playerRole) {
       window.location.href = 'index.html';
     } else {
-      socket.emit('verifyLogin', { roomid, playerRole, playerPassword: playerPass }, (res) => {
-        if (!res.success) {
+      socket.emit('playerVerifyLogin', { roomid, playerRole, password: playerPass }, (res) => {
+        if (!res || !res.success) {
+          console.error("[AUTH] Xác thực thất bại hoặc phòng không tồn tại!");
           window.location.href = 'index.html';
+        } else {
+          console.log("[AUTH] Thiết lập kết nối phòng thành công!");
         }
       });
     }
 
     const wheel = document.getElementById('wheel');
-    const pointerImg = document.getElementById('pointer');
+    const pointerImg = document.getElementById('pointerImg'); // Sửa lại ID trỏ chuẩn
 
+    // Quản lý hệ thống âm thanh cục bộ
     const clickSound = new Audio('click.mp3');
     const soundboard_goc = new Audio('goc.mp3');
     const soundboard_matluot = new Audio('matluot.mp3');
@@ -171,6 +164,12 @@
     const soundboard_chia_doi = new Audio('chia_doi.mp3');
     const soundboard_nhan_doi = new Audio('nhan_doi.mp3');
     const soundboard_vỗ_tay = new Audio('vỗ_tay.mp3');
+
+    function activateAudioStream() {
+      document.getElementById('audioOverlay').style.display = 'none';
+      // Phát và dừng thử để kích hoạt AudioContext trên trình duyệt
+      clickSound.play().then(() => { clickSound.pause(); }).catch(e => console.log(e));
+    }
 
     function playSoundboardEvent(soundName) {
       try {
@@ -182,7 +181,7 @@
         else if (soundName === 'nhan_doi') { soundboard_nhan_doi.currentTime = 0; soundboard_nhan_doi.play(); }
         else if (soundName === 'vỗ_tay') { soundboard_vỗ_tay.currentTime = 0; soundboard_vỗ_tay.play(); }
       } catch (err) {
-        console.error("Lỗi phát nhạc mạng:", err);
+        console.error("Lỗi phát âm thanh bảng Tech:", err);
       }
     }
 
@@ -190,8 +189,10 @@
     let isDragging = false;
     let startAngle = 0;
     let currentAngle = 0;
+
     let dragHistory = [];
     let isDraggingByMe = false;
+
     let baseRotation = 0;
     let initVelocity = 0;
     let spinStartTime = 0;
@@ -212,20 +213,20 @@
     }
 
     function applyPermissionUI(allowedPlayer) {
+      const dragZone = document.getElementById('dragZone');
       if (allowedPlayer === myPlayerName) {
         isDraggingAllowed = true;
+        if(dragZone) dragZone.style.cursor = 'grab';
         console.log("%c[QUYỀN QUAY] Bạn ĐÃ ĐƯỢC TECH MỞ QUYỀN QUAY NÓN!", "color: green; font-size: 14px; font-weight: bold;");
       } else {
         isDraggingAllowed = false;
-        console.log(`%c[QUYỀN QUAY] Bị khóa. Lượt quay thuộc về: ${allowedPlayer}`, "color: red;");
+        if(dragZone) dragZone.style.cursor = 'not-allowed';
+        console.log(`%c[QUYỀN QUAY] Bị khóa. Lượt quay hiện tại thuộc về: ${allowedPlayer}`, "color: red;");
       }
     }
 
     function onMouseDown(e) {
-      if (!isDraggingAllowed) {
-        console.warn("Hành động bị chặn: Bạn chưa được bàn Tech cấp quyền quay!");
-        return;
-      }
+      if (!isDraggingAllowed) return;
       if (isSpinningFree) return;
       isDragging = true;
       isDraggingByMe = true;
@@ -235,7 +236,11 @@
       spinStartTime = 0;
       initVelocity = 0;
 
-      socket.emit('playerUpdatePhysics', { rotation: currentRotation, velocity: 0, isDraggingSync: true });
+      socket.emit('playerUpdatePhysics', {
+        rotation: currentRotation,
+        velocity: 0,
+        isDraggingSync: true
+      });
     }
 
     function onMouseMove(e) {
@@ -252,7 +257,11 @@
       dragHistory.push({ angle: mouseAngle, time: performance.now() });
       if (dragHistory.length > 5) dragHistory.shift();
 
-      socket.emit('playerUpdatePhysics', { rotation: currentRotation, velocity: 0, isDraggingSync: true });
+      socket.emit('playerUpdatePhysics', {
+        rotation: currentRotation,
+        velocity: 0,
+        isDraggingSync: true
+      });
     }
 
     function onMouseUp() {
@@ -317,6 +326,7 @@
 
     socket.on('playerSyncPhysics', (data) => {
       if (isDraggingByMe) return;
+
       if (data.spinStartTime) {
         baseRotation = data.baseRotation;
         initVelocity = data.initVelocity;
@@ -333,7 +343,9 @@
     });
 
     function calculateCurrentPhysics() {
-      if (!isSpinningFree) return { r: currentRotation, v: 0 };
+      if (!isSpinningFree) {
+        return { r: currentRotation, v: 0 };
+      }
       const t = (performance.now() - spinStartTime) / 1000;
       if (t < 0) return { r: baseRotation, v: initVelocity };
 
@@ -343,6 +355,7 @@
         const finalRotation = baseRotation + (initVelocity * (1 - Math.pow(friction, t * 60))) / (1 - friction) / 60;
         return { r: finalRotation, v: 0 };
       }
+
       const computedRotation = baseRotation + (initVelocity * (1 - Math.pow(friction, t * 60))) / (1 - friction) / 60;
       return { r: computedRotation, v: currentVelocity };
     }
@@ -357,7 +370,11 @@
         if (!isSoundPlaying) {
           isSoundPlaying = true;
           clickSound.currentTime = 0;
-          clickSound.play().then(() => { isSoundPlaying = false; }).catch(() => { isSoundPlaying = false; });
+          clickSound.play().then(() => {
+            isSoundPlaying = false;
+          }).catch(() => {
+            isSoundPlaying = false;
+          });
         }
       }
     }
@@ -376,14 +393,14 @@
         pointerAngleOffset = -Math.abs(remainder * pushIntensity * 6.0);
       }
       pointerAngleOffset = Math.max(-25, Math.min(0, pointerAngleOffset));
-      pointerImg.style.transform = `rotate(${180 + pointerAngleOffset}deg)`;
+      if(pointerImg) pointerImg.style.transform = `rotate(${180 + pointerAngleOffset}deg)`;
     }
 
     function renderLoop() {
       const state = calculateCurrentPhysics();
       if (isSpinningFree) currentRotation = state.r;
 
-      wheel.style.transform = `rotate(${currentRotation.toFixed(2)}deg) translateZ(0)`;
+      if(wheel) wheel.style.transform = `rotate(${currentRotation.toFixed(2)}deg) translateZ(0)`;
       updatePointerFlap(currentRotation);
 
       if (isDraggingByMe && isSpinningFree === false && state.v === 0 && !isDragging) {
@@ -396,11 +413,10 @@
     }
     requestAnimationFrame(renderLoop);
 
-    // ==========================================
-    // ĐỒNG BỘ MẠT NÓN, QUYỀN VÀ SOUNDBOARD TỪ TECH
-    // ==========================================
     socket.on('playerUpdateImage', (imageName) => {
-      if (imageName && wheel) wheel.src = imageName;
+      if (imageName && wheel) {
+        wheel.src = imageName;
+      }
     });
 
     socket.on('syncAllowedPlayer', (player) => {

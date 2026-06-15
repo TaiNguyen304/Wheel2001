@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vòng Quay Thí Sinh</title>
+  <title>Vòng Quay Thí Sinh - Player 1</title>
   <style>
     * {
       margin: 0;
@@ -106,17 +106,6 @@
       cursor: pointer;
       box-shadow: 0 0 25px #39ff14;
     }
-    
-    .status-badge {
-      background: rgba(0,0,0,0.85);
-      padding: 14px 28px;
-      border-radius: 8px;
-      border: 2px solid cyan;
-      margin-bottom: 15px;
-      font-size: 18px;
-      color: yellow;
-      text-align: center;
-    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.4/dist/socket.io.min.js"></script>
 </head>
@@ -140,29 +129,31 @@
   <audio id="spinSound" src="spin.mp3" preload="auto" loop></audio>
 
   <script>
-    // Thiết lập cấu hình kết nối máy chủ Socket
-    const socket = io();
+    const socket = io("https://wheel2001.onrender.com");
 
     const roomid = sessionStorage.getItem('roomid');
     const playerRole = sessionStorage.getItem('player');
     const playerPass = sessionStorage.getItem('password');
 
-    // TÊN ĐỊNH DANH BẮT BUỘC ĐỂ ĐỒNG BỘ QUYỀN VỚI TECH
     const myPlayerName = "Player 1";
-    let isDraggingAllowed = false; // Mặc định khóa tương tác khi chưa được Tech mở
+    let isDraggingAllowed = false; 
 
+    // FIX CHẶN TRUY CẬP: Sửa đúng tên sự kiện gửi lên server là 'playerVerifyLogin'
     if (!roomid || !playerRole) {
       window.location.href = 'index.html';
     } else {
-      socket.emit('verifyLogin', { roomid, playerRole, playerPassword: playerPass }, (res) => {
-        if (!res.success) {
+      socket.emit('playerVerifyLogin', { roomid, playerRole, password: playerPass }, (res) => {
+        if (!res || !res.success) {
+          console.error("[AUTH] Xác thực thất bại hoặc phòng không tồn tại!");
           window.location.href = 'index.html';
+        } else {
+          console.log("[AUTH] Thiết lập kết nối phòng thành công!");
         }
       });
     }
 
     const wheel = document.getElementById('wheel');
-    const pointerImg = document.getElementById('pointer');
+    const pointerImg = document.getElementById('pointerImg'); // Sửa lại ID trỏ chuẩn
 
     // Quản lý hệ thống âm thanh cục bộ
     const clickSound = new Audio('click.mp3');
@@ -174,7 +165,12 @@
     const soundboard_nhan_doi = new Audio('nhan_doi.mp3');
     const soundboard_vỗ_tay = new Audio('vỗ_tay.mp3');
 
-    // Hàm thực thi phát nhạc Soundboard từ mạng điều phối
+    function activateAudioStream() {
+      document.getElementById('audioOverlay').style.display = 'none';
+      // Phát và dừng thử để kích hoạt AudioContext trên trình duyệt
+      clickSound.play().then(() => { clickSound.pause(); }).catch(e => console.log(e));
+    }
+
     function playSoundboardEvent(soundName) {
       try {
         if (soundName === 'goc') { soundboard_goc.currentTime = 0; soundboard_goc.play(); }
@@ -189,7 +185,6 @@
       }
     }
 
-    // Các biến trạng thái tính toán động lực học nón
     let currentRotation = 0;
     let isDragging = false;
     let startAngle = 0;
@@ -217,23 +212,21 @@
       return Math.atan2(clientY - wheelY, clientX - wheelX) * (180 / Math.PI);
     }
 
-    // SỬA LỖI ĐỒNG BỘ: Hàm áp dụng quyền và log thông báo trạng thái trực quan
     function applyPermissionUI(allowedPlayer) {
+      const dragZone = document.getElementById('dragZone');
       if (allowedPlayer === myPlayerName) {
         isDraggingAllowed = true;
+        if(dragZone) dragZone.style.cursor = 'grab';
         console.log("%c[QUYỀN QUAY] Bạn ĐÃ ĐƯỢC TECH MỞ QUYỀN QUAY NÓN!", "color: green; font-size: 14px; font-weight: bold;");
       } else {
         isDraggingAllowed = false;
+        if(dragZone) dragZone.style.cursor = 'not-allowed';
         console.log(`%c[QUYỀN QUAY] Bị khóa. Lượt quay hiện tại thuộc về: ${allowedPlayer}`, "color: red;");
       }
     }
 
-    // SỬA LỖI TƯƠNG TÁC: Lồng biến chặn isDraggingAllowed lên đầu các hàm sự kiện chuột
     function onMouseDown(e) {
-      if (!isDraggingAllowed) {
-        console.warn("Hành động bị chặn: Bạn chưa được bàn Tech cấp quyền quay!");
-        return;
-      }
+      if (!isDraggingAllowed) return;
       if (isSpinningFree) return;
       isDragging = true;
       isDraggingByMe = true;
@@ -331,7 +324,6 @@
     window.addEventListener('touchmove', onMouseMove, { passive: false });
     window.addEventListener('touchend', onMouseUp);
 
-    // Xử lý các sự kiện mạng đồng bộ trạng thái vật lý từ người khác
     socket.on('playerSyncPhysics', (data) => {
       if (isDraggingByMe) return;
 
@@ -350,7 +342,6 @@
       }
     });
 
-    // Tính toán giả lập động cơ vật lý học động
     function calculateCurrentPhysics() {
       if (!isSpinningFree) {
         return { r: currentRotation, v: 0 };
@@ -369,7 +360,6 @@
       return { r: computedRotation, v: currentVelocity };
     }
 
-    // Quản lý tạo tiếng tạch khấc nón chạy ngầm bảo mật
     function manageSoundSafelyBackground() {
       let normalizedRotation = currentRotation % 360;
       if (normalizedRotation < 0) normalizedRotation += 360;
@@ -403,14 +393,14 @@
         pointerAngleOffset = -Math.abs(remainder * pushIntensity * 6.0);
       }
       pointerAngleOffset = Math.max(-25, Math.min(0, pointerAngleOffset));
-      pointerImg.style.transform = `rotate(${180 + pointerAngleOffset}deg)`;
+      if(pointerImg) pointerImg.style.transform = `rotate(${180 + pointerAngleOffset}deg)`;
     }
 
     function renderLoop() {
       const state = calculateCurrentPhysics();
       if (isSpinningFree) currentRotation = state.r;
 
-      wheel.style.transform = `rotate(${currentRotation.toFixed(2)}deg) translateZ(0)`;
+      if(wheel) wheel.style.transform = `rotate(${currentRotation.toFixed(2)}deg) translateZ(0)`;
       updatePointerFlap(currentRotation);
 
       if (isDraggingByMe && isSpinningFree === false && state.v === 0 && !isDragging) {
@@ -423,28 +413,20 @@
     }
     requestAnimationFrame(renderLoop);
 
-    // ==========================================
-    // LẮNG NGHE SỰ KIỆN TỪ TECH (VIẾT LẠI CHUẨN)
-    // ==========================================
-
-    // 1. Đổi hình mặt nón trực tuyến
     socket.on('playerUpdateImage', (imageName) => {
       if (imageName && wheel) {
         wheel.src = imageName;
       }
     });
 
-    // 2. Cấp phát và chặn quyền quay
     socket.on('syncAllowedPlayer', (player) => {
       applyPermissionUI(player);
     });
 
-    // 3. ĐỒNG BỘ PHÁT NHẠC SOUNDBOARD TỪ BÀN TECH
     socket.on('listenSoundboard', (soundName) => {
       if (soundName) playSoundboardEvent(soundName);
     });
 
-    // 4. Khởi tạo dữ liệu tức thời khi vừa đăng nhập thành công
     socket.on('initGameState', (state) => {
       if (state) {
         if (state.activeImage && wheel) wheel.src = state.activeImage;

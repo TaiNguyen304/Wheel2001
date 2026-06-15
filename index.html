@@ -243,7 +243,6 @@
         console.log('[SOCKET] Kết quả phản hồi từ server:', response);
 
         if (response && (response.success || response.status === "success" || response.ok)) {
-          // ĐÃ SỬA: Truyền thêm tham số mật khẩu vào hàm điều hướng
           executeRedirect(roomidRaw, playerRole, passwordRaw);
         } else {
           const errorMsg = response && response.message ? response.message : 'Thông tin phòng hoặc mật khẩu không chính xác!';
@@ -251,8 +250,6 @@
         }
       });
 
-      // ĐÃ SỬA: Tăng thời gian chờ lên 5 giây (phòng khi server Render khởi động chậm) 
-      // và KHÔNG tự ý ép buộc điều hướng sai lệch nếu chưa có phản hồi thành công từ server.
       setTimeout(() => {
         if (!callbackReceived) {
           console.warn('[TIMEOUT] Server phản hồi quá lâu hoặc không có callback.');
@@ -261,12 +258,15 @@
       }, 5000);
     }
 
-    // ĐÃ SỬA: Hàm bổ trợ thực hiện lưu đầy đủ bộ nhớ (gồm cả mật khẩu) và điều hướng trang
     function executeRedirect(room, role, password) {
+      // FIX ĐỒNG BỘ: Lưu đồng thời cả từ khóa cũ lẫn mới để đảm bảo các trang Player đều đọc chính xác
       sessionStorage.setItem('authenticatedRoomID', room);
-      sessionStorage.setItem('authenticatedRole', role);
+      sessionStorage.setItem('roomid', room);
       
-      // Lưu trữ mật khẩu dưới các dạng khóa phổ biến để trang PlayerX.html tải lên có thể đọc được ngay lập tức
+      sessionStorage.setItem('authenticatedRole', role);
+      sessionStorage.setItem('player', role);
+      sessionStorage.setItem('playerRole', role);
+      
       sessionStorage.setItem('authenticatedPassword', password);
       sessionStorage.setItem('playerPassword', password);
       sessionStorage.setItem('password', password);
