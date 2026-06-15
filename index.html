@@ -176,8 +176,7 @@
       <input type="password" id="passwordInput" maxlength="4" placeholder="Nhập mật khẩu...">
     </div>
     <button class="btn-submit" onclick="executeLoginVerify()">XÁC NHẬN ĐĂNG NHẬP</button>
-    <button class="btn-submit" style="background: blue; margin-top: 8px;" onclick="debugCheckRooms()">🔍 KIỂM TRA
-      SERVER</button>
+    <button class="btn-submit" style="background: blue; margin-top: 8px;" onclick="debugCheckRooms()">🔍 KIỂM TRA SERVER</button>
   </div>
 
   <div id="customAlert" class="popup-modal">
@@ -227,18 +226,16 @@
         return;
       }
 
-      // Giải pháp an toàn: Gửi cả định dạng Chuỗi (String) và Số (Number) để tương thích mọi kiểu code backend
       const payload = {
-        roomid: roomidRaw,             // Định dạng chuỗi: "196953"
-        roomidNum: Number(roomidRaw),   // Định dạng số: 196953
+        roomid: roomidRaw,             
+        roomidNum: Number(roomidRaw),   
         playerRole: playerRole,
-        password: passwordRaw,         // Định dạng chuỗi: "1234"
-        passwordNum: Number(passwordRaw) // Định dạng số: 1234
+        password: passwordRaw,         
+        passwordNum: Number(passwordRaw) 
       };
 
       console.log('[SOCKET] Đang gửi yêu cầu xác thực lên Server:', payload);
 
-      // Gửi dữ liệu. Nếu Server của bạn quên không viết Callback, cấu trúc setTimeout dưới đây sẽ tự động cứu vãn cấu trúc điều hướng
       let callbackReceived = false;
 
       socket.emit('playerVerifyLogin', payload, (response) => {
@@ -246,27 +243,33 @@
         console.log('[SOCKET] Kết quả phản hồi từ server:', response);
 
         if (response && (response.success || response.status === "success" || response.ok)) {
-          executeRedirect(roomidRaw, playerRole);
+          // ĐÃ SỬA: Truyền thêm tham số mật khẩu vào hàm điều hướng
+          executeRedirect(roomidRaw, playerRole, passwordRaw);
         } else {
           const errorMsg = response && response.message ? response.message : 'Thông tin phòng hoặc mật khẩu không chính xác!';
           showAlertPopup('❌ Đăng nhập thất bại: ' + errorMsg, false);
         }
       });
 
-      // PHƯƠNG ÁN DỰ PHÒNG: Nếu sau 1.5 giây server xử lý xong nhưng quên gọi callback phản hồi, 
-      // hệ thống sẽ tự động kích hoạt chuyển hướng cưỡng bức để người chơi vào thẳng web luôn.
+      // ĐÃ SỬA: Tăng thời gian chờ lên 5 giây (phòng khi server Render khởi động chậm) 
+      // và KHÔNG tự ý ép buộc điều hướng sai lệch nếu chưa có phản hồi thành công từ server.
       setTimeout(() => {
         if (!callbackReceived) {
-          console.warn('[TIMEOUT] Server không phản hồi callback. Tự động kích hoạt cơ chế vào thẳng trang người chơi!');
-          executeRedirect(roomidRaw, playerRole);
+          console.warn('[TIMEOUT] Server phản hồi quá lâu hoặc không có callback.');
+          showAlertPopup('⚠️ Máy chủ phản hồi quá lâu hoặc chưa được khởi tạo phòng từ Tech! Vui lòng thử lại.', false);
         }
-      }, 1500);
+      }, 5000);
     }
 
-    // Hàm bổ trợ thực hiện lưu bộ nhớ và điều hướng trang
-    function executeRedirect(room, role) {
+    // ĐÃ SỬA: Hàm bổ trợ thực hiện lưu đầy đủ bộ nhớ (gồm cả mật khẩu) và điều hướng trang
+    function executeRedirect(room, role, password) {
       sessionStorage.setItem('authenticatedRoomID', room);
       sessionStorage.setItem('authenticatedRole', role);
+      
+      // Lưu trữ mật khẩu dưới các dạng khóa phổ biến để trang PlayerX.html tải lên có thể đọc được ngay lập tức
+      sessionStorage.setItem('authenticatedPassword', password);
+      sessionStorage.setItem('playerPassword', password);
+      sessionStorage.setItem('password', password);
 
       const targetPage = role.replace(' ', '') + '.html';
       console.log('[REDIRECT] Đang chuyển hướng tự động tới trang:', targetPage);
