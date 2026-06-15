@@ -50,7 +50,8 @@
       font-size: 14px;
     }
 
-    select, input {
+    select,
+    input {
       width: 100%;
       padding: 12px;
       background: #262626;
@@ -61,7 +62,8 @@
       outline: none;
     }
 
-    select:focus, input:focus {
+    select:focus,
+    input:focus {
       border-color: #39ff14;
     }
 
@@ -170,7 +172,8 @@
       <input type="password" id="passwordInput" maxlength="4" placeholder="Nhập mật khẩu...">
     </div>
     <button class="btn-submit" onclick="executeLoginVerify()">XÁC NHẬN ĐĂNG NHẬP</button>
-    <button class="btn-submit" style="background: blue; margin-top: 8px;" onclick="debugCheckRooms()">🔍 KIỂM TRA SERVER</button>
+    <button class="btn-submit" style="background: blue; margin-top: 8px;" onclick="debugCheckRooms()">🔍 KIỂM TRA
+      SERVER</button>
   </div>
 
   <div id="customAlert" class="popup-modal">
@@ -190,15 +193,15 @@
     function showAlertPopup(message, isInfo = false) {
       const modal = document.getElementById('customAlert');
       const msgParagraph = document.getElementById('alertMessage');
-      
+
       msgParagraph.innerText = message;
-      
+
       if (isInfo) {
         modal.classList.add('info');
       } else {
         modal.classList.remove('info');
       }
-      
+
       modal.style.display = 'flex';
     }
 
@@ -224,14 +227,14 @@
       }
 
       console.log('[SOCKET] Đang gửi yêu cầu xác thực:', { roomid, playerRole, password });
-      
+
       // Gửi sự kiện kiểm tra thông tin lên server
       socket.emit('playerVerifyLogin', { roomid, playerRole, password }, (response) => {
         if (response.success) {
           // Nếu thành công, lưu trữ thông tin tạm thời vào sessionStorage để trang Player đọc dữ liệu
           sessionStorage.setItem('authenticatedRoomID', roomid);
           sessionStorage.setItem('authenticatedRole', playerRole);
-          
+
           // Chuyển hướng trực tiếp đến trang của Player tương ứng (ví dụ: Player1.html)
           const targetPage = playerRole.replace(' ', '') + '.html';
           window.location.href = targetPage;
@@ -245,27 +248,33 @@
     // Hàm Debug kiểm tra toàn bộ danh sách phòng trực tuyến trên Server
     function debugCheckRooms() {
       if (!socket.connected) {
-        showAlertPopup('❌ Không kết nối được tới máy chủ Socket!', false);
+        showAlertPopup('Không kết nối được tới server!', false);
         return;
       }
-      
       console.log('[DEBUG] Kiểm tra tất cả phòng lưu trên server...');
+
       socket.emit('debugGetAllRooms', (data) => {
-        console.log('[DEBUG] Dữ liệu phòng từ server:', data);
-        const roomCount = Object.keys(data).length;
-        
-        if (roomCount === 0) {
+        console.log('[DEBUG] Dữ liệu phòng từ server trả về:', data);
+
+        if (!data || Object.keys(data).length === 0) {
           showAlertPopup('❌ Không có phòng nào đang chạy trên máy chủ!', false);
-        } else {
-          let msg = `✓ Tìm thấy ${roomCount} phòng đang mở:\n\n`;
-          for (let id in data) {
-            msg += `Phòng: ${id}\n`;
-            msg += `  • Player 1: ${data[id]["Player 1"] ? "🔒 Đã đặt MK" : "Trống"}\n`;
-            msg += `  • Player 2: ${data[id]["Player 2"] ? "🔒 Đã đặt MK" : "Trống"}\n`;
-            msg += `  • Player 3: ${data[id]["Player 3"] ? "🔒 Đã đặt MK" : "Trống"}\n\n`;
-          }
-          showAlertPopup(msg, true); // Chuyển màu xanh lá bắt mắt khi lấy dữ liệu debug thành công
+          return;
         }
+
+        const roomCount = Object.keys(data).length;
+        let msg = `✓ Tìm thấy ${roomCount} phòng đang mở:\n\n`;
+
+        for (let id in data) {
+          // Đảm bảo dữ liệu phòng tồn tại để không bị lỗi undefined
+          const roomPasswords = data[id] || {};
+
+          msg += `Mã Phòng: ${id}\n`;
+          msg += `  • Player 1: ${roomPasswords["Player 1"] ? "🔒 Đã đặt MK" : "Trống"}\n`;
+          msg += `  • Player 2: ${roomPasswords["Player 2"] ? "🔒 Đã đặt MK" : "Trống"}\n`;
+          msg += `  • Player 3: ${roomPasswords["Player 3"] ? "🔒 Đã đặt MK" : "Trống"}\n\n`;
+        }
+
+        showAlertPopup(msg, true); // Hiển thị màu xanh lá (thành công)
       });
     }
 
