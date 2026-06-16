@@ -129,18 +129,37 @@
   <script>
     const socket = io("https://wheel2001.onrender.com");
 
-    const roomid = sessionStorage.getItem('roomid');
-    const playerRole = sessionStorage.getItem('player');
-    const playerPass = sessionStorage.getItem('password');
+    // Lấy credentials từ sessionStorage hoặc query string
+    let roomid = sessionStorage.getItem('roomid');
+    let playerRole = sessionStorage.getItem('player');
+    let playerPass = sessionStorage.getItem('password');
+    
+    // Nếu không có sessionStorage, lấy từ URL query string
+    if (!roomid || !playerRole || !playerPass) {
+      const params = new URLSearchParams(window.location.search);
+      roomid = params.get('roomid');
+      playerRole = params.get('player');
+      playerPass = params.get('password');
+      
+      // Lưu vào sessionStorage để dùng lại nếu page reload
+      if (roomid && playerRole && playerPass) {
+        sessionStorage.setItem('roomid', roomid);
+        sessionStorage.setItem('player', playerRole);
+        sessionStorage.setItem('password', playerPass);
+      }
+    }
 
     const myPlayerName = "Player 1"; // Đổi thành "Player 2" hoặc "Player 3" tương ứng với từng file
     let isDraggingAllowed = false; 
 
-    if (!roomid || !playerRole) {
+    if (!roomid || !playerRole || !playerPass) {
       window.location.href = 'index.html';
     } else {
-      socket.emit('playerVerifyLogin', { roomid, playerRole, password: playerPass }, (res) => {
-        if (!res || !res.success) {
+      socket.emit('verifyLogin', { roomid, player: playerRole, password: playerPass }, (response) => {
+        if (!response || !response.success) {
+          sessionStorage.removeItem('roomid');
+          sessionStorage.removeItem('player');
+          sessionStorage.removeItem('password');
           window.location.href = 'index.html';
         }
       });

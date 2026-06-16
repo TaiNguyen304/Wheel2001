@@ -245,7 +245,7 @@
         clearTimeout(timeoutId);
         console.log('[LOGIN] Server phản hồi:', response);
         loginAttempt = 0;
-        
+         
         if (response && response.success) {
           let fileMap = { 
             "Player 1": "Player1.html", 
@@ -253,7 +253,12 @@
             "Player 3": "Player3.html" 
           };
           console.log('[LOGIN] ✓ Đăng nhập thành công! Chuyển hướng tới:', fileMap[player]);
-          
+           
+          // Lưu credentials vào sessionStorage trước khi điều hướng
+          sessionStorage.setItem('roomid', roomid);
+          sessionStorage.setItem('password', password);
+          sessionStorage.setItem('player', player);
+           
           // Điều hướng an toàn với cả roomid, password và player thông qua chuỗi truy vấn (Query String) đúng chuẩn
           window.location.href = `${fileMap[player]}?roomid=${roomid}&password=${password}&player=${player}`;
         } else {
@@ -301,6 +306,14 @@
         }
       });
     }
+    
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+      if (e.keyCode === 123) e.preventDefault();
+      if ((e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
+        e.preventDefault();
+      }
+    });
   </script>
 </body>
 
