@@ -46,7 +46,7 @@
       height: 100%;
       object-fit: contain;
       user-select: none;
-      pointer-events: none;
+      pointer-events: none; /* Khóa tương tác chuột, Viewer không thể kéo nón */
       filter: drop-shadow(0 0 30px rgba(0, 0, 0, 0.5));
       will-change: transform;
       transform: translateZ(0);
@@ -157,7 +157,7 @@
     let lastClickAngleIndex = 0;
     let isSoundPlaying = false;
 
-    // Hàm thực hiện đăng ký và đồng bộ phòng chuẩn theo Server
+    // Đăng ký luồng dữ liệu của phòng với Server dưới tư cách là Viewer chính quy
     function registerAndSyncRoom() {
       if (!roomid) {
         if (errorToast) {
@@ -169,13 +169,14 @@
       }
 
       roomid = roomid.trim();
-      console.log(`[VIEWER] Đang tiến hành đồng bộ realtime phòng: ${roomid}`);
+      console.log(`[VIEWER] Tiến hành đồng bộ luồng phòng: ${roomid}`);
 
-      // Gửi đúng sự kiện 'playerRegisterRoom' giống Player để server xếp chung vào một roomid
+      // Phát sự kiện chính thức khai báo role là 'Viewer'
       socket.emit('playerRegisterRoom', { roomid: roomid, role: 'Viewer' }, (response) => {
         if (response && response.success) {
-          console.log("[VIEWER] Kết nối phòng thành công!", response.state);
-          // Đồng bộ tức thì mặt nón và góc quay hiện tại từ server trả về
+          console.log("[VIEWER] Đăng ký luồng phòng thành công!", response.state);
+          
+          // Cập nhật ngay lập tức mặt nón ban đầu và góc quay hiện tại từ server cấp xuống
           if (response.state) {
             if (response.state.activeImage && wheel) {
               wheel.src = response.state.activeImage;
@@ -185,12 +186,12 @@
             }
           }
         } else {
-          console.error("[VIEWER] Đăng ký phòng thất bại hoặc phòng không tồn tại.");
+          console.error("[VIEWER] Đăng ký phòng thất bại.");
         }
       });
     }
 
-    // Đăng ký lại mỗi khi socket kết nối hoặc re-connect
+    // Tự động đồng bộ lại khi kết nối / mất mạng kết nối lại
     socket.on('connect', () => {
       registerAndSyncRoom();
     });
@@ -256,7 +257,7 @@
       }
     }
 
-    // 🔄 LẮNG NGHE ĐỒNG BỘ VẬT LÝ QUAY TỪ SERVER (Do Player phát lên)
+    // 🔄 ĐỒNG BỘ CHUYỂN ĐỘNG VẬT LÝ XOAY NÓN TỪ SERVER TỚI VIEWER
     socket.on('playerSyncPhysics', (data) => {
       if (data.spinStartTime) {
         baseRotation = data.baseRotation;
@@ -334,8 +335,9 @@
     }
     requestAnimationFrame(renderLoop);
 
-    // 🖼️ ĐỒNG BỘ THAY ĐỔI MẶT NÓN KHI TECH/PLAYER ĐỔI 
+    // 🖼️ ĐỒNG BỘ THAY ĐỔI MẶT NÓN TỪ TECH HOẶC MÁY KHÁC 
     socket.on('playerUpdateImage', (imageName) => {
+      console.log("[VIEWER] Đồng bộ thành công mặt nón mới từ phòng:", imageName);
       if (imageName && wheel) {
         wheel.src = imageName;
       }
@@ -345,7 +347,7 @@
       if (soundName) playSoundboardEvent(soundName);
     });
 
-    // Sự kiện dự phòng khi server cập nhật lại toàn bộ game state
+    // Đồng bộ dự phòng khi cấu hình tổng phòng bị ép nạp lại từ Tech
     socket.on('initGameState', (state) => {
       if (state) {
         if (state.activeImage && wheel) wheel.src = state.activeImage;
