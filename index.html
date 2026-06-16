@@ -7,12 +7,12 @@
   <style>
     * {
       box-sizing: border-box;
-      font-family: Arial, sans-serif;
       font-weight: bold !important;
+      font-family: Arial, sans-serif;
     }
 
     body {
-      background: purple;
+      background: #0c0c0c;
       color: white;
       display: flex;
       align-items: center;
@@ -23,7 +23,7 @@
 
     .login-box {
       background: #181818;
-      border: 3px solid red;
+      border: 3px solid #39ff14;
       padding: 40px;
       border-radius: 16px;
       width: 440px;
@@ -32,11 +32,10 @@
     }
 
     h2 {
-      color: yellow;
+      color: #39ff14;
       margin-bottom: 25px;
       font-size: 22px;
       text-transform: uppercase;
-      font-weight: bold;
     }
 
     .form-item {
@@ -49,11 +48,9 @@
       margin-bottom: 7px;
       color: #bbb;
       font-size: 14px;
-      font-weight: bold;
     }
 
-    select,
-    input {
+    select, input {
       width: 100%;
       padding: 12px;
       background: #262626;
@@ -62,18 +59,16 @@
       border-radius: 8px;
       font-size: 16px;
       outline: none;
-      font-weight: bold;
     }
 
-    select:focus,
-    input:focus {
+    select:focus, input:focus {
       border-color: #39ff14;
     }
 
     .btn-submit {
       width: 100%;
-      background: green;
-      color: white;
+      background: #39ff14;
+      color: black;
       border: none;
       padding: 14px;
       font-size: 18px;
@@ -81,7 +76,6 @@
       cursor: pointer;
       transition: transform 0.1s;
       margin-top: 10px;
-      font-weight: bold;
     }
 
     .btn-submit:active {
@@ -112,10 +106,11 @@
       padding: 30px;
       border-radius: 12px;
       text-align: center;
-      width: 420px;
+      width: 420px; /* Tăng nhẹ kích thước để hiển thị danh sách phòng debug đẹp hơn */
       box-shadow: 0 0 20px rgba(255, 0, 0, 0.4);
     }
 
+    /* Đổi màu viền pop-up thông tin/debug thành màu xanh cho thân thiện */
     .popup-modal.info .popup-content {
       border-color: #39ff14;
       box-shadow: 0 0 20px rgba(57, 255, 20, 0.4);
@@ -126,9 +121,8 @@
       color: white;
       margin-bottom: 22px;
       line-height: 1.5;
-      text-align: left;
-      white-space: pre-line;
-      font-weight: bold;
+      text-align: left; /* Đổi thành căn trái để xuống dòng thông tin phòng dễ đọc */
+      white-space: pre-line; /* Giữ nguyên các ký tự xuống dòng \n khi hiển thị text */
     }
 
     .popup-content button {
@@ -140,7 +134,6 @@
       cursor: pointer;
       font-size: 15px;
       width: 100%;
-      font-weight: bold;
     }
 
     .popup-modal.info .popup-content button {
@@ -149,8 +142,8 @@
     }
 
     .popup-content button:hover {
-      background: orange !important;
-      color: white !important;
+      background: orange;
+      color: white;
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.4/dist/socket.io.min.js"></script>
@@ -177,105 +170,113 @@
       <input type="password" id="passwordInput" maxlength="4" placeholder="Nhập mật khẩu...">
     </div>
     <button class="btn-submit" onclick="executeLoginVerify()">XÁC NHẬN ĐĂNG NHẬP</button>
-    <button class="btn-submit" style="background: blue; margin-top: 8px;" onclick="debugCheckRooms()">🔍 KIỂM TRA SERVER</button>
+    <button class="btn-submit" style="background: aqua; margin-top: 8px;" onclick="debugCheckRooms()">🔍 KIỂM TRA SERVER</button>
   </div>
 
   <div id="customAlert" class="popup-modal">
     <div class="popup-content">
       <p id="alertMessage">Thông báo hệ thống!</p>
-      <button id="alertBtn"
-        style="background: red; color: white; font-weight: bold; border: none; padding: 10px 30px; border-radius: 6px; cursor: pointer; font-size: 15px; width: 100%; transition: background 0.2s;"
-        onclick="closeAlertPopup()">
-        ĐÓNG THÔNG BÁO
-      </button>
+      <button onclick="closeAlertPopup()">ĐÓNG THÔNG BÁO</button>
     </div>
   </div>
 
   <script>
-    const socket = io("https://wheel2001.onrender.com");
+    const socket = io("https://wheel2001.onrender.com", {
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: 5,
+      transports: ['websocket', 'polling']
+    });
 
-    function showAlertPopup(message, isInfo = false) {
+    // Hàm hiển thị thông báo tùy chỉnh (isInfo = true sẽ đổi giao diện sang màu xanh thay vì đỏ cảnh báo)
+    function showAlertPopup(msg, isInfo = false) {
       const modal = document.getElementById('customAlert');
-      const msgParagraph = document.getElementById('alertMessage');
-
-      msgParagraph.innerText = message;
-
+      document.getElementById('alertMessage').innerText = msg;
+      
       if (isInfo) {
         modal.classList.add('info');
       } else {
         modal.classList.remove('info');
       }
-
+      
       modal.style.display = 'flex';
     }
-
+    
     function closeAlertPopup() {
       document.getElementById('customAlert').style.display = 'none';
     }
 
+    let loginAttempt = 0;
+
     function executeLoginVerify() {
-      const playerRole = document.getElementById('playerSelect').value;
-      const roomidRaw = document.getElementById('roomIdInput').value.trim();
-      const passwordRaw = document.getElementById('passwordInput').value.trim();
+      const player = document.getElementById('playerSelect').value;
+      const roomid = document.getElementById('roomIdInput').value.trim();
+      const password = document.getElementById('passwordInput').value.trim();
 
-      if (roomidRaw.length !== 6 || isNaN(roomidRaw)) {
-        showAlertPopup('❌ Mã phòng phải nhập đủ 6 chữ số!', false);
+      if (roomid.length !== 6 || isNaN(roomid)) {
+        showAlertPopup("Mã phòng không hợp lệ! Vui lòng nhập đúng 6 chữ số.", false);
         return;
       }
-      if (passwordRaw.length !== 4 || isNaN(passwordRaw)) {
-        showAlertPopup('❌ Mật khẩu phải nhập đủ 4 chữ số!', false);
+      if (password.length !== 4 || isNaN(password)) {
+        showAlertPopup("Mật khẩu không hợp lệ! Vui lòng nhập đúng 4 chữ số.", false);
         return;
       }
 
-      const payload = {
-        roomid: roomidRaw,             
-        roomidNum: Number(roomidRaw),   
-        playerRole: playerRole,
-        password: passwordRaw,         
-        passwordNum: Number(passwordRaw) 
-      };
+      console.log('[LOGIN] Trạng thái kết nối:', socket.connected);
+      console.log('[LOGIN] Gửi xác thực:', { roomid, player, password });
+      
+      if (!socket.connected) {
+        showAlertPopup("Đang kết nối lại tới máy chủ... Vui lòng thử lại trong 2 giây.", false);
+        socket.connect();
+        setTimeout(executeLoginVerify, 2000);
+        return;
+      }
 
-      console.log('[SOCKET] Đang gửi yêu cầu xác thực lên Server:', payload);
+      loginAttempt++;
+      
+      const timeoutId = setTimeout(() => {
+        showAlertPopup("Máy chủ không phản hồi. Vui lòng kiểm tra kết nối và thử lại!", false);
+        console.error('[LOGIN] TIMEOUT - Không nhận được response từ server sau 10 giây');
+        loginAttempt = 0;
+      }, 10000);
 
-      let callbackReceived = false;
-
-      socket.emit('playerVerifyLogin', payload, (response) => {
-        callbackReceived = true;
-        console.log('[SOCKET] Kết quả phản hồi từ server:', response);
-
-        if (response && (response.success || response.status === "success" || response.ok)) {
-          executeRedirect(roomidRaw, playerRole, passwordRaw);
+      socket.emit('verifyLogin', { roomid, player, password }, (response) => {
+        clearTimeout(timeoutId);
+        console.log('[LOGIN] Server phản hồi:', response);
+        loginAttempt = 0;
+        
+        if (response && response.success) {
+          let fileMap = { 
+            "Player 1": "Player1.html", 
+            "Player 2": "Player2.html", 
+            "Player 3": "Player3.html" 
+          };
+          console.log('[LOGIN] ✓ Đăng nhập thành công! Chuyển hướng tới:', fileMap[player]);
+          
+          // Điều hướng an toàn với cả roomid, password và player thông qua chuỗi truy vấn (Query String) đúng chuẩn
+          window.location.href = `${fileMap[player]}?roomid=${roomid}&password=${password}&player=${player}`;
         } else {
-          const errorMsg = response && response.message ? response.message : 'Thông tin phòng hoặc mật khẩu không chính xác!';
-          showAlertPopup('❌ Đăng nhập thất bại: ' + errorMsg, false);
+          const errorMsg = response && response.msg ? response.msg : "Xác thực không thành công!";
+          console.error('[LOGIN] ✗ Lỗi:', errorMsg);
+          showAlertPopup(errorMsg, false);
         }
       });
-
-      setTimeout(() => {
-        if (!callbackReceived) {
-          console.warn('[TIMEOUT] Server phản hồi quá lâu hoặc không có callback.');
-          showAlertPopup('⚠️ Máy chủ phản hồi quá lâu hoặc chưa được khởi tạo phòng từ Tech! Vui lòng thử lại.', false);
-        }
-      }, 5000);
     }
 
-    function executeRedirect(room, role, password) {
-      // FIX ĐỒNG BỘ: Lưu đồng thời cả từ khóa cũ lẫn mới để đảm bảo các trang Player đều đọc chính xác
-      sessionStorage.setItem('authenticatedRoomID', room);
-      sessionStorage.setItem('roomid', room);
-      
-      sessionStorage.setItem('authenticatedRole', role);
-      sessionStorage.setItem('player', role);
-      sessionStorage.setItem('playerRole', role);
-      
-      sessionStorage.setItem('authenticatedPassword', password);
-      sessionStorage.setItem('playerPassword', password);
-      sessionStorage.setItem('password', password);
+    socket.on('connect', () => {
+      console.log('[SOCKET] ✓ Kết nối thành công! Socket ID:', socket.id);
+      document.title = '✓ Xác Thực Người Chơi';
+    });
 
-      const targetPage = role.replace(' ', '') + '.html';
-      console.log('[REDIRECT] Đang chuyển hướng tự động tới trang:', targetPage);
-      window.location.href = targetPage;
-    }
+    socket.on('disconnect', () => {
+      console.warn('[SOCKET] ✗ Mất kết nối từ máy chủ!');
+      document.title = '✗ Xác Thực Người Chơi';
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('[SOCKET] Lỗi kết nối:', error.message);
+    });
 
     function debugCheckRooms() {
       if (!socket.connected) {
@@ -283,45 +284,23 @@
         return;
       }
       console.log('[DEBUG] Kiểm tra tất cả phòng lưu trên server...');
-
       socket.emit('debugGetAllRooms', (data) => {
-        console.log('[DEBUG] Dữ liệu phòng từ server trả về:', data);
-
-        if (!data || Object.keys(data).length === 0) {
-          showAlertPopup('❌ Không có phòng nào đang chạy trên máy chủ!', false);
-          return;
-        }
-
+        console.log('[DEBUG] Phòng từ server:', data);
         const roomCount = Object.keys(data).length;
-        let msg = `✓ Tìm thấy ${roomCount} phòng đang mở:\n\n`;
-
-        for (let id in data) {
-          const roomPasswords = data[id] || {};
-          msg += `Mã Phòng: ${id}\n`;
-          msg += `  • Player 1: ${roomPasswords["Player 1"] ? "🔒 Đã đặt MK" : "Trống"}\n`;
-          msg += `  • Player 2: ${roomPasswords["Player 2"] ? "🔒 Đã đặt MK" : "Trống"}\n`;
-          msg += `  • Player 3: ${roomPasswords["Player 3"] ? "🔒 Đã đặt MK" : "Trống"}\n\n`;
+        if (roomCount === 0) {
+          showAlertPopup('❌ Không có phòng nào!\nBạn cần mở tech.html và bấm "KÍCH HOẠT KHỞI TẠO PHÒNG TỰ ĐỘNG"', false);
+        } else {
+          let msg = `✓ Tìm thấy ${roomCount} phòng:\n\n`;
+          for (let roomid in data) {
+            msg += `Phòng: ${roomid}\n`;
+            msg += `  • Player 1: ${data[roomid]["Player 1"] || "Trống"}\n`;
+            msg += `  • Player 2: ${data[roomid]["Player 2"] || "Trống"}\n`;
+            msg += `  • Player 3: ${data[roomid]["Player 3"] || "Trống"}\n\n`;
+          }
+          showAlertPopup(msg, true); // Gọi hiển thị thông tin với màu xanh lá
         }
-
-        showAlertPopup(msg, true);
       });
     }
-
-    socket.on('connect', () => {
-      console.log('[SOCKET] Kết nối máy chủ thành công. ID:', socket.id);
-    });
-
-    socket.on('connect_error', (error) => {
-      console.error('[SOCKET] Lỗi kết nối tới máy chủ:', error.message);
-    });
-
-    document.addEventListener('contextmenu', e => e.preventDefault());
-    document.addEventListener('keydown', e => {
-      if (e.keyCode === 123) e.preventDefault();
-      if ((e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
-        e.preventDefault();
-      }
-    });
   </script>
 </body>
 

@@ -5,7 +5,10 @@ const cors = require('cors');
 
 const app = express();
 app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
+app.use(express.static('.'));
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -34,6 +37,33 @@ function initRoomIfNotExist(roomid) {
 
 io.on('connection', (socket) => {
   let myRoomId = null;
+  let myPlayer = null;
+
+  // Xác thực từ query string khi player kết nối
+  const roomid = socket.handshake.query.roomid;
+  const password = socket.handshake.query.password;
+  const player = socket.handshake.query.player;
+
+  if (roomid && password && player) {
+    console.log(`[PLAYER CONNECT] Phòng: ${roomid}, Player: ${player}`);
+    initRoomIfNotExist(roomid);
+    
+    const expectedPass = rooms[roomid].passwords[player];
+    const clientPass = password ? String(password).trim() : "";
+    
+    if (expectedPass === clientPass) {
+      socket.join(roomid);
+      myRoomId = roomid;
+      myPlayer = player;
+      console.log(`[PLAYER CONNECT] ✓ ${player} tham gia phòng ${roomid} thành công`);
+      socket.emit('initGameState', {
+        ...rooms[roomid].wheelState,
+        allowedPlayer: rooms[roomid].allowedPlayer
+      });
+    } else {
+      console.log(`[PLAYER CONNECT] ✗ Xác thực thất bại cho ${player}`);
+    }
+  }
 
   socket.on('techCreateRoom', (data) => {
     const { roomid, passwords } = data;
