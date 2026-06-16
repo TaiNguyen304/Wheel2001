@@ -46,7 +46,7 @@
       height: 100%;
       object-fit: contain;
       user-select: none;
-      pointer-events: none; /* Khóa tương tác chuột vật lý */
+      pointer-events: none; /* Khóa tương tác chuột, Viewer không thể kéo nón */
       filter: drop-shadow(0 0 30px rgba(0, 0, 0, 0.5));
       will-change: transform;
       transform: translateZ(0);
@@ -157,7 +157,7 @@
     let lastClickAngleIndex = 0;
     let isSoundPlaying = false;
 
-    // Đăng ký nhận gói dữ liệu từ phòng
+    // Đăng ký luồng dữ liệu của phòng với Server dưới tư cách là Viewer chính quy
     function registerAndSyncRoom() {
       if (!roomid) {
         if (errorToast) {
@@ -169,18 +169,29 @@
       }
 
       roomid = roomid.trim();
-      console.log(`[VIEWER] Đang kết nối luồng phòng: ${roomid}`);
+      console.log(`[VIEWER] Tiến hành đồng bộ luồng phòng: ${roomid}`);
 
-      // Sử dụng đồng bộ sự kiện song song cả joinRoom và playerVerifyLogin để tránh lỗi kẹt luồng
-      socket.emit('joinRoom', { roomid: roomid, role: 'viewer' });
-      
-      socket.emit('playerVerifyLogin', { roomid: roomid, playerRole: 'viewer' }, (response) => {
+      // Phát sự kiện chính thức khai báo role là 'Viewer'
+      socket.emit('playerRegisterRoom', { roomid: roomid, role: 'Viewer' }, (response) => {
         if (response && response.success) {
-          console.log("[VIEWER] Luồng phòng đã kết nối thành công!");
+          console.log("[VIEWER] Đăng ký luồng phòng thành công!", response.state);
+          
+          // Cập nhật ngay lập tức mặt nón ban đầu và góc quay hiện tại từ server cấp xuống
+          if (response.state) {
+            if (response.state.activeImage && wheel) {
+              wheel.src = response.state.activeImage;
+            }
+            if (response.state.rotation !== undefined) {
+              currentRotation = response.state.rotation;
+            }
+          }
+        } else {
+          console.error("[VIEWER] Đăng ký phòng thất bại.");
         }
       });
     }
 
+    // Tự động đồng bộ lại khi kết nối / mất mạng kết nối lại
     socket.on('connect', () => {
       registerAndSyncRoom();
     });
@@ -246,7 +257,7 @@
       }
     }
 
-    // 🔄 ĐỒNG BỘ CHUYỂN ĐỘNG XOAY NÓN TỪ SERVER TỚI VIEWER
+    // 🔄 ĐỒNG BỘ CHUYỂN ĐỘNG VẬT LÝ XOAY NÓN TỪ SERVER TỚI VIEWER
     socket.on('playerSyncPhysics', (data) => {
       if (data.spinStartTime) {
         baseRotation = data.baseRotation;
@@ -256,7 +267,7 @@
         triggerSpinSoundTimeout();
       } else {
         if (data.rotation !== undefined) currentRotation = data.rotation;
-        if (data.velocity === 0 || !data.isDraggingSync) {
+        if (data.velocity === 0 || data.isDraggingSync) {
           isSpinningFree = false;
           spinStartTime = 0;
           initVelocity = 0;
@@ -324,16 +335,19 @@
     }
     requestAnimationFrame(renderLoop);
 
-    // 🖼️ ĐỒNG BỘ THAY ĐỔI MẶT NÓN TỪ TECH
+    // 🖼️ ĐỒNG BỘ THAY ĐỔI MẶT NÓN TỪ TECH HOẶC MÁY KHÁC 
     socket.on('playerUpdateImage', (imageName) => {
-      if (imageName && wheel) wheel.src = imageName;
+      console.log("[VIEWER] Đồng bộ thành công mặt nón mới từ phòng:", imageName);
+      if (imageName && wheel) {
+        wheel.src = imageName;
+      }
     });
 
     socket.on('listenSoundboard', (soundName) => {
       if (soundName) playSoundboardEvent(soundName);
     });
 
-    // ĐỒNG BỘ TRẠNG THÁI KHỞI TẠO BAN ĐẦU (GÓC XOAY VÀ ẢNH)
+    // Đồng bộ dự phòng khi cấu hình tổng phòng bị ép nạp lại từ Tech
     socket.on('initGameState', (state) => {
       if (state) {
         if (state.activeImage && wheel) wheel.src = state.activeImage;

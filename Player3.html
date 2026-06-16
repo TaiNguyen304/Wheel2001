@@ -129,37 +129,18 @@
   <script>
     const socket = io("https://wheel2001.onrender.com");
 
-    // Lấy credentials từ sessionStorage hoặc query string
-    let roomid = sessionStorage.getItem('roomid');
-    let playerRole = sessionStorage.getItem('player');
-    let playerPass = sessionStorage.getItem('password');
-    
-    // Nếu không có sessionStorage, lấy từ URL query string
-    if (!roomid || !playerRole || !playerPass) {
-      const params = new URLSearchParams(window.location.search);
-      roomid = params.get('roomid');
-      playerRole = params.get('player');
-      playerPass = params.get('password');
-      
-      // Lưu vào sessionStorage để dùng lại nếu page reload
-      if (roomid && playerRole && playerPass) {
-        sessionStorage.setItem('roomid', roomid);
-        sessionStorage.setItem('player', playerRole);
-        sessionStorage.setItem('password', playerPass);
-      }
-    }
+    const roomid = sessionStorage.getItem('roomid');
+    const playerRole = sessionStorage.getItem('player');
+    const playerPass = sessionStorage.getItem('password');
 
     const myPlayerName = "Player 3"; // Đổi thành "Player 2" hoặc "Player 3" tương ứng với từng file
     let isDraggingAllowed = false; 
 
-    if (!roomid || !playerRole || !playerPass) {
+    if (!roomid || !playerRole) {
       window.location.href = 'index.html';
     } else {
-      socket.emit('verifyLogin', { roomid, player: playerRole, password: playerPass }, (response) => {
-        if (!response || !response.success) {
-          sessionStorage.removeItem('roomid');
-          sessionStorage.removeItem('player');
-          sessionStorage.removeItem('password');
+      socket.emit('playerVerifyLogin', { roomid, playerRole, password: playerPass }, (res) => {
+        if (!res || !res.success) {
           window.location.href = 'index.html';
         }
       });
@@ -379,14 +360,16 @@
         initVelocity = data.initVelocity;
         spinStartTime = data.spinStartTime;
         isSpinningFree = true;
+        
+        // Đồng bộ kích hoạt bộ đếm phát spin.mp3 từ xa cho máy khác
         triggerSpinSoundTimeout();
       } else {
         if (data.rotation !== undefined) currentRotation = data.rotation;
-        if (data.velocity === 0 || !data.isDraggingSync) {
+        if (data.velocity === 0) {
           isSpinningFree = false;
           spinStartTime = 0;
           initVelocity = 0;
-          stopSpinSoundSafely();
+          stopSpinSoundSafely(); // Dừng phát khi có tín hiệu đứng yên
         }
       }
     });
