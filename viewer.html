@@ -147,9 +147,15 @@
     if (roomid) {
       roomid = roomid.trim();
       console.log(`[VIEWER] Đang kết nối realtime đồng bộ phòng: ${roomid}`);
+      
+      // Đăng ký phòng khi mở màn hình
       socket.emit('viewerRegisterRoom', { roomid: roomid });
+
+      // Khi socket kết nối thành công, yêu cầu lấy trạng thái mới nhất ngay lập tức để đồng bộ góc/mặt nón ban đầu
+      socket.on('connect', () => {
+        socket.emit('getLatestState', { roomid: roomid });
+      });
     } else {
-      // Hiển thị cảnh báo trực quan trên giao diện thay vì dùng Alert/Prompt phá hỏng màn hình
       if (errorToast) {
         errorToast.innerText = "⚠️ Thao tác thiếu thông số! Hãy thêm '?roomid=XXXXXX' vào địa chỉ URL để đồng bộ.";
         errorToast.style.display = 'block';
@@ -235,6 +241,7 @@
       }
     }
 
+    // ĐỒNG BỘ VẬT LÝ KHÔNG GIAN QUAY (Khi có người kéo nón hoặc nón đang tự xoay)
     socket.on('playerSyncPhysics', (data) => {
       if (data.spinStartTime) {
         baseRotation = data.baseRotation;
@@ -251,6 +258,17 @@
           stopSpinSoundSafely();
         }
       }
+    });
+
+    // ĐỒNG BỘ KHI NÓN DỪNG LẠI HẲN
+    socket.on('playerStopWheel', (data) => {
+      if (data && data.rotation !== undefined) {
+        currentRotation = data.rotation;
+      }
+      isSpinningFree = false;
+      spinStartTime = 0;
+      initVelocity = 0;
+      stopSpinSoundSafely();
     });
 
     function calculateCurrentPhysics() {
@@ -312,6 +330,7 @@
     }
     requestAnimationFrame(renderLoop);
 
+    // ĐỒNG BỘ HÌNH ẢNH MẶT NÓN (Khi thay đổi nón giữa chừng)
     socket.on('playerUpdateImage', (imageName) => {
       if (imageName && wheel) wheel.src = imageName;
     });
@@ -320,8 +339,13 @@
       if (soundName) playSoundboardEvent(soundName);
     });
 
+    // ĐỒNG BỘ TRẠNG THÁI KHỞI TẠO BAN ĐẦU
     socket.on('initGameState', (state) => {
-      if (state?.activeImage && wheel) wheel.src = state.activeImage;
+      if (state) {
+        if (state.activeImage && wheel) wheel.src = state.activeImage;
+        if (state.currentRotation !== undefined) currentRotation = state.currentRotation;
+        if (state.rotation !== undefined) currentRotation = state.rotation;
+      }
     });
 
     document.addEventListener('contextmenu', e => e.preventDefault());
