@@ -360,16 +360,14 @@
         initVelocity = data.initVelocity;
         spinStartTime = data.spinStartTime;
         isSpinningFree = true;
-        
-        // Đồng bộ kích hoạt bộ đếm phát spin.mp3 từ xa cho máy khác
         triggerSpinSoundTimeout();
       } else {
         if (data.rotation !== undefined) currentRotation = data.rotation;
-        if (data.velocity === 0) {
+        if (data.velocity === 0 || !data.isDraggingSync) {
           isSpinningFree = false;
           spinStartTime = 0;
           initVelocity = 0;
-          stopSpinSoundSafely(); // Dừng phát khi có tín hiệu đứng yên
+          stopSpinSoundSafely();
         }
       }
     });
