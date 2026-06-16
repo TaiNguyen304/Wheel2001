@@ -98,7 +98,6 @@
       box-shadow: 0 0 25px #00ffff;
     }
 
-    /* Vùng hiển thị lỗi cấu hình trực quan thay thế cho alert/prompt */
     .error-status-toast {
       position: fixed;
       bottom: 20px;
@@ -138,33 +137,63 @@
   <script>
     const socket = io("https://wheel2001.onrender.com");
 
-    // Đọc mã phòng từ URL (Ví dụ: viewer.html?roomid=123456)
     const urlParams = new URLSearchParams(window.location.search);
     let roomid = urlParams.get('roomid');
-
     const errorToast = document.getElementById('errorToast');
-
-    if (roomid) {
-      roomid = roomid.trim();
-      console.log(`[VIEWER] Đang kết nối realtime đồng bộ phòng: ${roomid}`);
-      
-      // Đăng ký phòng khi mở màn hình
-      socket.emit('viewerRegisterRoom', { roomid: roomid });
-
-      // Khi socket kết nối thành công, yêu cầu lấy trạng thái mới nhất ngay lập tức để đồng bộ góc/mặt nón ban đầu
-      socket.on('connect', () => {
-        socket.emit('getLatestState', { roomid: roomid });
-      });
-    } else {
-      if (errorToast) {
-        errorToast.innerText = "⚠️ Thao tác thiếu thông số! Hãy thêm '?roomid=XXXXXX' vào địa chỉ URL để đồng bộ.";
-        errorToast.style.display = 'block';
-      }
-      console.error("[VIEWER ERROR] Không tìm thấy mã phòng 'roomid' trên tham số URL.");
-    }
-
     const wheel = document.getElementById('wheel');
     const pointerImg = document.getElementById('pointerImg');
+
+    let currentRotation = 0;
+    let baseRotation = 0;
+    let initVelocity = 0;
+    let spinStartTime = 0;
+    let isSpinningFree = false;
+
+    let spinTimeoutToken = null;
+    let isSpinSoundPlaying = false;
+
+    const friction = 0.995;
+    const pinAngleStep = 15;
+    let lastClickAngleIndex = 0;
+    let isSoundPlaying = false;
+
+    // Hàm thực hiện đăng ký và đồng bộ phòng chuẩn theo Server
+    function registerAndSyncRoom() {
+      if (!roomid) {
+        if (errorToast) {
+          errorToast.innerText = "⚠️ Thao tác thiếu thông số! Hãy thêm '?roomid=XXXXXX' vào địa chỉ URL để đồng bộ.";
+          errorToast.style.display = 'block';
+        }
+        console.error("[VIEWER ERROR] Không tìm thấy mã phòng 'roomid' trên tham số URL.");
+        return;
+      }
+
+      roomid = roomid.trim();
+      console.log(`[VIEWER] Đang tiến hành đồng bộ realtime phòng: ${roomid}`);
+
+      // Gửi đúng sự kiện 'playerRegisterRoom' giống Player để server xếp chung vào một roomid
+      socket.emit('playerRegisterRoom', { roomid: roomid, role: 'Viewer' }, (response) => {
+        if (response && response.success) {
+          console.log("[VIEWER] Kết nối phòng thành công!", response.state);
+          // Đồng bộ tức thì mặt nón và góc quay hiện tại từ server trả về
+          if (response.state) {
+            if (response.state.activeImage && wheel) {
+              wheel.src = response.state.activeImage;
+            }
+            if (response.state.rotation !== undefined) {
+              currentRotation = response.state.rotation;
+            }
+          }
+        } else {
+          console.error("[VIEWER] Đăng ký phòng thất bại hoặc phòng không tồn tại.");
+        }
+      });
+    }
+
+    // Đăng ký lại mỗi khi socket kết nối hoặc re-connect
+    socket.on('connect', () => {
+      registerAndSyncRoom();
+    });
 
     // --- HỆ THỐNG ÂM THANH CHUẨN HOÁ ---
     const clickSound = new Audio('click.mp3');
@@ -205,20 +234,6 @@
       }
     }
 
-    let currentRotation = 0;
-    let baseRotation = 0;
-    let initVelocity = 0;
-    let spinStartTime = 0;
-    let isSpinningFree = false;
-
-    let spinTimeoutToken = null;
-    let isSpinSoundPlaying = false;
-
-    const friction = 0.995;
-    const pinAngleStep = 15;
-    let lastClickAngleIndex = 0;
-    let isSoundPlaying = false;
-
     function triggerSpinSoundTimeout() {
       clearTimeout(spinTimeoutToken);
       spinTimeoutToken = setTimeout(() => {
@@ -241,7 +256,7 @@
       }
     }
 
-    // ĐỒNG BỘ VẬT LÝ KHÔNG GIAN QUAY (Khi có người kéo nón hoặc nón đang tự xoay)
+    // 🔄 LẮNG NGHE ĐỒNG BỘ VẬT LÝ QUAY TỪ SERVER (Do Player phát lên)
     socket.on('playerSyncPhysics', (data) => {
       if (data.spinStartTime) {
         baseRotation = data.baseRotation;
@@ -251,24 +266,13 @@
         triggerSpinSoundTimeout();
       } else {
         if (data.rotation !== undefined) currentRotation = data.rotation;
-        if (data.velocity === 0) {
+        if (data.velocity === 0 || data.isDraggingSync) {
           isSpinningFree = false;
           spinStartTime = 0;
           initVelocity = 0;
           stopSpinSoundSafely();
         }
       }
-    });
-
-    // ĐỒNG BỘ KHI NÓN DỪNG LẠI HẲN
-    socket.on('playerStopWheel', (data) => {
-      if (data && data.rotation !== undefined) {
-        currentRotation = data.rotation;
-      }
-      isSpinningFree = false;
-      spinStartTime = 0;
-      initVelocity = 0;
-      stopSpinSoundSafely();
     });
 
     function calculateCurrentPhysics() {
@@ -315,14 +319,14 @@
         pointerAngleOffset = -Math.abs(remainder * pushIntensity * 6.0);
       }
       pointerAngleOffset = Math.max(-25, Math.min(0, pointerAngleOffset));
-      if(pointerImg) pointerImg.style.transform = `rotate(${180 + pointerAngleOffset}deg)`;
+      if (pointerImg) pointerImg.style.transform = `rotate(${180 + pointerAngleOffset}deg)`;
     }
 
     function renderLoop() {
       const state = calculateCurrentPhysics();
       if (isSpinningFree) currentRotation = state.r;
 
-      if(wheel) wheel.style.transform = `rotate(${currentRotation.toFixed(2)}deg) translateZ(0)`;
+      if (wheel) wheel.style.transform = `rotate(${currentRotation.toFixed(2)}deg) translateZ(0)`;
       updatePointerFlap(currentRotation);
       manageSoundSafelyBackground(currentRotation);
 
@@ -330,20 +334,21 @@
     }
     requestAnimationFrame(renderLoop);
 
-    // ĐỒNG BỘ HÌNH ẢNH MẶT NÓN (Khi thay đổi nón giữa chừng)
+    // 🖼️ ĐỒNG BỘ THAY ĐỔI MẶT NÓN KHI TECH/PLAYER ĐỔI 
     socket.on('playerUpdateImage', (imageName) => {
-      if (imageName && wheel) wheel.src = imageName;
+      if (imageName && wheel) {
+        wheel.src = imageName;
+      }
     });
 
     socket.on('listenSoundboard', (soundName) => {
       if (soundName) playSoundboardEvent(soundName);
     });
 
-    // ĐỒNG BỘ TRẠNG THÁI KHỞI TẠO BAN ĐẦU
+    // Sự kiện dự phòng khi server cập nhật lại toàn bộ game state
     socket.on('initGameState', (state) => {
       if (state) {
         if (state.activeImage && wheel) wheel.src = state.activeImage;
-        if (state.currentRotation !== undefined) currentRotation = state.currentRotation;
         if (state.rotation !== undefined) currentRotation = state.rotation;
       }
     });
