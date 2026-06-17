@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Player 3</title>
+  <title>Player 1</title>
   <style>
     * {
       margin: 0;
@@ -127,13 +127,13 @@
   </div>
 
   <script>
-    const socket = io("https://wheel2001.onrender.com");
+    const socket = io("https://wheel2001.onrender.com", { transports: ['websocket'] });
 
     const roomid = sessionStorage.getItem('roomid');
     const playerRole = sessionStorage.getItem('player');
     const playerPass = sessionStorage.getItem('password');
 
-    const myPlayerName = "Player 3"; // Đổi thành "Player 2" hoặc "Player 3" tương ứng với từng file
+    const myPlayerName = "Player 3";
     let isDraggingAllowed = false; 
 
     if (!roomid || !playerRole) {
@@ -149,7 +149,6 @@
     const wheel = document.getElementById('wheel');
     const pointerImg = document.getElementById('pointerImg');
 
-    // --- HỆ THỐNG ÂM THANH MỚI CẬP NHẬT ---
     const clickSound = new Audio('click.mp3');
     const spinSound = new Audio('spin.mp3');
     spinSound.loop = true;
@@ -170,10 +169,10 @@
 
     function activateAudioStream() {
       document.getElementById('audioOverlay').style.display = 'none';
-      clickSound.play().then(() => { clickSound.pause(); }).catch(e => console.log(e));
-      spinSound.play().then(() => { spinSound.pause(); }).catch(e => console.log(e));
+      clickSound.play().then(() => { clickSound.pause(); }).catch(() => {});
+      spinSound.play().then(() => { spinSound.pause(); }).catch(() => {});
       for (let key in soundboard) {
-        soundboard[key].play().then(() => { soundboard[key].pause(); }).catch(e => console.log(e));
+        soundboard[key].play().then(() => { soundboard[key].pause(); }).catch(() => {});
       }
     }
 
@@ -182,9 +181,7 @@
         try {
           soundboard[soundName].currentTime = 0;
           soundboard[soundName].play();
-        } catch (err) {
-          console.error("Lỗi phát âm thanh soundboard:", err);
-        }
+        } catch (err) {}
       }
     }
 
@@ -200,7 +197,6 @@
     let spinStartTime = 0;
     let isSpinningFree = false;
 
-    // Biến quản lý phát nhạc spin tự động sau 1 giây
     let spinTimeoutToken = null;
     let isSpinSoundPlaying = false;
 
@@ -306,10 +302,9 @@
       if (Math.abs(calculatedVelocity) > 40) {
         baseRotation = currentRotation;
         initVelocity = calculatedVelocity;
-        spinStartTime = performance.now();
+        spinStartTime = Date.now(); 
         isSpinningFree = true;
 
-        // Kích hoạt bộ đếm thời gian: Đúng 1 giây sau khi xoay tự do thì tự động phát spin.mp3
         triggerSpinSoundTimeout();
 
         socket.emit('playerUpdatePhysics', {
@@ -331,9 +326,9 @@
             spinSound.currentTime = 0;
             spinSound.play();
             isSpinSoundPlaying = true;
-          } catch (e) { console.log("Chưa tương tác âm thanh:", e); }
+          } catch (e) {}
         }
-      }, 1000); // 1 giây định thời
+      }, 1000); 
     }
 
     function stopSpinSoundSafely() {
@@ -361,7 +356,6 @@
         spinStartTime = data.spinStartTime;
         isSpinningFree = true;
         
-        // Đồng bộ kích hoạt bộ đếm phát spin.mp3 từ xa cho máy khác
         triggerSpinSoundTimeout();
       } else {
         if (data.rotation !== undefined) currentRotation = data.rotation;
@@ -369,22 +363,22 @@
           isSpinningFree = false;
           spinStartTime = 0;
           initVelocity = 0;
-          stopSpinSoundSafely(); // Dừng phát khi có tín hiệu đứng yên
+          stopSpinSoundSafely(); 
         }
       }
     });
 
     function calculateCurrentPhysics() {
-      if (!isSpinningFree) {
+      if (!isSpinningFree || spinStartTime === 0) {
         return { r: currentRotation, v: 0 };
       }
-      const t = (performance.now() - spinStartTime) / 1000;
+      const t = (Date.now() - spinStartTime) / 1000;
       if (t < 0) return { r: baseRotation, v: initVelocity };
 
       const currentVelocity = initVelocity * Math.pow(friction, t * 60);
       if (Math.abs(currentVelocity) < 0.2) {
         isSpinningFree = false;
-        stopSpinSoundSafely(); // Dừng khi nón ma sát về 0
+        stopSpinSoundSafely(); 
         const finalRotation = baseRotation + (initVelocity * (1 - Math.pow(friction, t * 60))) / (1 - friction) / 60;
         return { r: finalRotation, v: 0 };
       }
@@ -459,6 +453,18 @@
       if (state) {
         if (state.activeImage && wheel) wheel.src = state.activeImage;
         applyPermissionUI(state.allowedPlayer);
+
+        if (state.spinStartTime && state.spinStartTime > 0) {
+          baseRotation = state.baseRotation;
+          initVelocity = state.initVelocity;
+          spinStartTime = state.spinStartTime;
+          isSpinningFree = true;
+          triggerSpinSoundTimeout();
+        } else {
+          if (state.rotation !== undefined) {
+            currentRotation = state.rotation;
+          }
+        }
       }
     });
 
