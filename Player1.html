@@ -133,18 +133,19 @@
     const playerRole = sessionStorage.getItem('player');
     const playerPass = sessionStorage.getItem('password');
 
-    const myPlayerName = "Player 1";
+    const myPlayerName = "Player 1"; // Thay đổi tương ứng với từng file
     let isDraggingAllowed = false; 
 
-    if (!roomid || !playerRole) {
-      window.location.href = 'index.html';
-    } else {
-      socket.emit('playerVerifyLogin', { roomid, playerRole, password: playerPass }, (res) => {
-        if (!res || !res.success) {
-          window.location.href = 'index.html';
-        }
-      });
-    }
+    // Tự động khôi phục dữ liệu nếu bị ngắt kết nối do ngủ đông Tab
+    socket.on('connect', () => {
+      if (roomid && playerRole) {
+        socket.emit('playerVerifyLogin', { roomid, playerRole, password: playerPass }, (res) => {
+          if (!res || !res.success) {
+            window.location.href = 'index.html';
+          }
+        });
+      }
+    });
 
     const wheel = document.getElementById('wheel');
     const pointerImg = document.getElementById('pointerImg');
@@ -375,12 +376,14 @@
       const t = (Date.now() - spinStartTime) / 1000;
       if (t < 0) return { r: baseRotation, v: initVelocity };
 
+      // Chốt tọa độ giới hạn toán học (Asymptote target) để mọi tab dừng chung 1 điểm
+      const targetRotation = baseRotation + (initVelocity / ((1 - friction) * 60));
       const currentVelocity = initVelocity * Math.pow(friction, t * 60);
+
       if (Math.abs(currentVelocity) < 0.2) {
         isSpinningFree = false;
         stopSpinSoundSafely(); 
-        const finalRotation = baseRotation + (initVelocity * (1 - Math.pow(friction, t * 60))) / (1 - friction) / 60;
-        return { r: finalRotation, v: 0 };
+        return { r: targetRotation, v: 0 };
       }
 
       const computedRotation = baseRotation + (initVelocity * (1 - Math.pow(friction, t * 60))) / (1 - friction) / 60;
@@ -421,12 +424,14 @@
 
     function renderLoop() {
       const state = calculateCurrentPhysics();
-      if (isSpinningFree) currentRotation = state.r;
+      
+      // Luôn đồng bộ góc quay với physics engine để tránh bỏ lỡ frame cuối
+      currentRotation = state.r;
 
       if(wheel) wheel.style.transform = `rotate(${currentRotation.toFixed(2)}deg) translateZ(0)`;
       updatePointerFlap(currentRotation);
 
-      if (isDraggingByMe && isSpinningFree === false && state.v === 0 && !isDragging) {
+      if (isDraggingByMe && !isSpinningFree && state.v === 0 && !isDragging) {
         isDraggingByMe = false;
         spinStartTime = 0;
         isSoundPlaying = false;
@@ -463,6 +468,9 @@
         } else {
           if (state.rotation !== undefined) {
             currentRotation = state.rotation;
+            isSpinningFree = false;
+            spinStartTime = 0;
+            stopSpinSoundSafely();
           }
         }
       }
