@@ -113,12 +113,15 @@ io.on('connection', (socket) => {
     myRoomId = roomid;
     socket.join(roomid);
 
+    // Đồng bộ Role Viewer ở cấp độ joinRoom
     const checkRole = String(role).toLowerCase();
-
     if (checkRole === 'viewer') {
       socket.myRole = 'viewer';
       socket.emit('loginResult', { success: true, role: 'viewer' });
-      socket.emit('initGameState', rooms[roomid].wheelState);
+      socket.emit('initGameState', {
+        ...rooms[roomid].wheelState,
+        allowedPlayer: rooms[roomid].allowedPlayer
+      });
       return;
     }
 
@@ -169,6 +172,7 @@ io.on('connection', (socket) => {
       return;
     }
 
+    // Xác thực luồng cho Role Viewer
     if (playerRole && String(playerRole).toLowerCase() === 'viewer') {
       myRoomId = roomid;
       socket.join(roomid);
@@ -205,6 +209,8 @@ io.on('connection', (socket) => {
 
   socket.on('playerUpdatePhysics', (data) => {
     if (!myRoomId || !rooms[myRoomId]) return;
+    
+    // Viewer tuyệt đối không được phép gửi dữ liệu làm ghi đè vòng quay
     if (socket.myRole === 'viewer') return;
 
     const ws = rooms[myRoomId].wheelState;
@@ -228,6 +234,8 @@ io.on('connection', (socket) => {
 
   socket.on('playerStopWheel', (data) => {
     if (!myRoomId || !rooms[myRoomId]) return;
+    
+    // Viewer tuyệt đối không được phép dừng vòng quay
     if (socket.myRole === 'viewer') return;
 
     const ws = rooms[myRoomId].wheelState;

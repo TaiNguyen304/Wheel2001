@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Màn Hình Quan Sát Viewer</title>
+  <title>Viewer</title>
   <style>
     * {
       margin: 0;
@@ -46,7 +46,7 @@
       height: 100%;
       object-fit: contain;
       user-select: none;
-      pointer-events: none; /* Khóa tương tác chuột, Viewer không thể kéo nón */
+      pointer-events: none; /* Khóa tương tác chuột vật lý */
       filter: drop-shadow(0 0 30px rgba(0, 0, 0, 0.5));
       will-change: transform;
       transform: translateZ(0);
@@ -89,7 +89,7 @@
 
     .audio-init-overlay button {
       background: #ff00ff;
-      color: black;
+      color: white;
       border: none;
       padding: 25px 50px;
       font-size: 24px;
@@ -120,7 +120,7 @@
 <body>
 
   <div id="audioOverlay" class="audio-init-overlay">
-    <button onclick="activateAudioStream()">KÍCH HOẠT ÂM THANH MÀN HÌNH VIEWER</button>
+    <button onclick="activateAudioStream()">KÍCH HOẠT KẾT NỐI REALTIME & ÂM THANH</button>
   </div>
 
   <div id="errorToast" class="error-status-toast"></div>
@@ -135,7 +135,7 @@
   </div>
 
   <script>
-    const socket = io("https://wheel2001.onrender.com");
+    const socket = io("https://wheel2001.onrender.com", { transports: ['websocket'] });
 
     const urlParams = new URLSearchParams(window.location.search);
     let roomid = urlParams.get('roomid');
@@ -157,41 +157,31 @@
     let lastClickAngleIndex = 0;
     let isSoundPlaying = false;
 
-    // Đăng ký luồng dữ liệu của phòng với Server dưới tư cách là Viewer chính quy
+    // Đăng ký nhận gói dữ liệu từ phòng
     function registerAndSyncRoom() {
       if (!roomid) {
         if (errorToast) {
           errorToast.innerText = "⚠️ Thao tác thiếu thông số! Hãy thêm '?roomid=XXXXXX' vào địa chỉ URL để đồng bộ.";
           errorToast.style.display = 'block';
         }
-        console.error("[VIEWER ERROR] Không tìm thấy mã phòng 'roomid' trên tham số URL.");
         return;
       }
 
       roomid = roomid.trim();
-      console.log(`[VIEWER] Tiến hành đồng bộ luồng phòng: ${roomid}`);
 
-      // Phát sự kiện chính thức khai báo role là 'Viewer'
-      socket.emit('playerRegisterRoom', { roomid: roomid, role: 'Viewer' }, (response) => {
-        if (response && response.success) {
-          console.log("[VIEWER] Đăng ký luồng phòng thành công!", response.state);
-          
-          // Cập nhật ngay lập tức mặt nón ban đầu và góc quay hiện tại từ server cấp xuống
-          if (response.state) {
-            if (response.state.activeImage && wheel) {
-              wheel.src = response.state.activeImage;
-            }
-            if (response.state.rotation !== undefined) {
-              currentRotation = response.state.rotation;
-            }
+      // Sử dụng đồng bộ sự kiện song song cả joinRoom và playerVerifyLogin để đảm bảo vào đúng luồng
+      socket.emit('joinRoom', { roomid: roomid, role: 'viewer' });
+      
+      socket.emit('playerVerifyLogin', { roomid: roomid, playerRole: 'viewer' }, (response) => {
+        if (!response || !response.success) {
+          if (errorToast) {
+            errorToast.innerText = "⚠️ Phòng thi đấu không tồn tại hoặc chưa được khởi tạo!";
+            errorToast.style.display = 'block';
           }
-        } else {
-          console.error("[VIEWER] Đăng ký phòng thất bại.");
         }
       });
     }
 
-    // Tự động đồng bộ lại khi kết nối / mất mạng kết nối lại
     socket.on('connect', () => {
       registerAndSyncRoom();
     });
@@ -217,10 +207,10 @@
 
     function activateAudioStream() {
       document.getElementById('audioOverlay').style.display = 'none';
-      clickSound.play().then(() => { clickSound.pause(); }).catch(e => console.log(e));
-      spinSound.play().then(() => { spinSound.pause(); }).catch(e => console.log(e));
+      clickSound.play().then(() => { clickSound.pause(); }).catch(() => {});
+      spinSound.play().then(() => { spinSound.pause(); }).catch(() => {});
       for (let key in soundboard) {
-        soundboard[key].play().then(() => { soundboard[key].pause(); }).catch(e => console.log(e));
+        soundboard[key].play().then(() => { soundboard[key].pause(); }).catch(() => {});
       }
     }
 
@@ -229,9 +219,7 @@
         try {
           soundboard[soundName].currentTime = 0;
           soundboard[soundName].play();
-        } catch (err) {
-          console.error("Lỗi phát âm thanh soundboard:", err);
-        }
+        } catch (err) {}
       }
     }
 
@@ -243,7 +231,7 @@
             spinSound.currentTime = 0;
             spinSound.play();
             isSpinSoundPlaying = true;
-          } catch (e) { console.log(e); }
+          } catch (e) {}
         }
       }, 1000);
     }
@@ -257,7 +245,7 @@
       }
     }
 
-    // 🔄 ĐỒNG BỘ CHUYỂN ĐỘNG VẬT LÝ XOAY NÓN TỪ SERVER TỚI VIEWER
+    // 🔄 ĐỒNG BỘ CHUYỂN ĐỘNG XOAY NÓN TỪ SERVER TỚI VIEWER
     socket.on('playerSyncPhysics', (data) => {
       if (data.spinStartTime) {
         baseRotation = data.baseRotation;
@@ -276,24 +264,32 @@
       }
     });
 
+    // CHÚ Ý: Sửa lại Date.now() thay cho performance.now() để đồng bộ chuẩn hệ quy chiếu với Player
     function calculateCurrentPhysics() {
-      if (!isSpinningFree) return { r: currentRotation, v: 0 };
-      const t = (performance.now() - spinStartTime) / 1000;
+      if (!isSpinningFree || spinStartTime === 0) {
+        return { r: currentRotation, v: 0 };
+      }
+      
+      const t = (Date.now() - spinStartTime) / 1000;
       if (t < 0) return { r: baseRotation, v: initVelocity };
 
+      // Chốt tọa độ giới hạn toán học (Asymptote target) để mọi tab dừng chung 1 điểm
+      const targetRotation = baseRotation + (initVelocity / ((1 - friction) * 60));
       const currentVelocity = initVelocity * Math.pow(friction, t * 60);
+
       if (Math.abs(currentVelocity) < 0.2) {
         isSpinningFree = false;
         stopSpinSoundSafely();
-        const finalRotation = baseRotation + (initVelocity * (1 - Math.pow(friction, t * 60))) / (1 - friction) / 60;
-        return { r: finalRotation, v: 0 };
+        return { r: targetRotation, v: 0 };
       }
+
       const computedRotation = baseRotation + (initVelocity * (1 - Math.pow(friction, t * 60))) / (1 - friction) / 60;
       return { r: computedRotation, v: currentVelocity };
     }
 
-    function manageSoundSafelyBackground(rotationValue) {
-      let normalizedRotation = rotationValue % 360;
+    // Tách vòng lặp xử lý âm thanh ra ngầm định giống file Player
+    function manageSoundSafelyBackground() {
+      let normalizedRotation = currentRotation % 360;
       if (normalizedRotation < 0) normalizedRotation += 360;
       let currentAngleIndex = Math.floor(normalizedRotation / pinAngleStep);
 
@@ -306,6 +302,7 @@
         }
       }
     }
+    setInterval(manageSoundSafelyBackground, 30);
 
     function updatePointerFlap(rotationValue) {
       let normalizedRotation = rotationValue % 360;
@@ -325,33 +322,45 @@
 
     function renderLoop() {
       const state = calculateCurrentPhysics();
-      if (isSpinningFree) currentRotation = state.r;
+      
+      // Luôn đồng bộ góc quay
+      currentRotation = state.r;
 
       if (wheel) wheel.style.transform = `rotate(${currentRotation.toFixed(2)}deg) translateZ(0)`;
       updatePointerFlap(currentRotation);
-      manageSoundSafelyBackground(currentRotation);
 
       requestAnimationFrame(renderLoop);
     }
     requestAnimationFrame(renderLoop);
 
-    // 🖼️ ĐỒNG BỘ THAY ĐỔI MẶT NÓN TỪ TECH HOẶC MÁY KHÁC 
+    // 🖼️ ĐỒNG BỘ THAY ĐỔI MẶT NÓN TỪ TECH
     socket.on('playerUpdateImage', (imageName) => {
-      console.log("[VIEWER] Đồng bộ thành công mặt nón mới từ phòng:", imageName);
-      if (imageName && wheel) {
-        wheel.src = imageName;
-      }
+      if (imageName && wheel) wheel.src = imageName;
     });
 
     socket.on('listenSoundboard', (soundName) => {
       if (soundName) playSoundboardEvent(soundName);
     });
 
-    // Đồng bộ dự phòng khi cấu hình tổng phòng bị ép nạp lại từ Tech
+    // ĐỒNG BỘ TRẠNG THÁI KHỞI TẠO BAN ĐẦU (GÓC XOAY VÀ ẢNH)
     socket.on('initGameState', (state) => {
       if (state) {
         if (state.activeImage && wheel) wheel.src = state.activeImage;
-        if (state.rotation !== undefined) currentRotation = state.rotation;
+        
+        if (state.spinStartTime && state.spinStartTime > 0) {
+          baseRotation = state.baseRotation;
+          initVelocity = state.initVelocity;
+          spinStartTime = state.spinStartTime;
+          isSpinningFree = true;
+          triggerSpinSoundTimeout();
+        } else {
+          if (state.rotation !== undefined) {
+            currentRotation = state.rotation;
+            isSpinningFree = false;
+            spinStartTime = 0;
+            stopSpinSoundSafely();
+          }
+        }
       }
     });
 
