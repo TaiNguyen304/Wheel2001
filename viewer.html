@@ -289,6 +289,12 @@
 
     // Tách vòng lặp xử lý âm thanh ra ngầm định giống file Player
     function manageSoundSafelyBackground() {
+      // Tính toán vật lý chạy ngầm để viewer tự nhận biết nón dừng và tắt nhạc
+      const state = calculateCurrentPhysics();
+      
+      // Luôn cập nhật góc quay mới nhất
+      currentRotation = state.r;
+
       let normalizedRotation = currentRotation % 360;
       if (normalizedRotation < 0) normalizedRotation += 360;
       let currentAngleIndex = Math.floor(normalizedRotation / pinAngleStep);

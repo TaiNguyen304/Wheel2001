@@ -391,6 +391,22 @@
     }
 
     function manageSoundSafelyBackground() {
+      // 1. Ép tính toán vật lý chạy ngầm ngay cả khi tab bị ẩn
+      const state = calculateCurrentPhysics();
+      
+      // Luôn cập nhật góc quay mới nhất
+      currentRotation = state.r;
+
+      // 2. Gửi sự kiện dừng Nón lên Server kể cả khi tab không được focus
+      if (isDraggingByMe && !isSpinningFree && state.v === 0 && !isDragging) {
+        isDraggingByMe = false;
+        spinStartTime = 0;
+        isSoundPlaying = false;
+        stopSpinSoundSafely();
+        socket.emit('playerStopWheel', { rotation: currentRotation });
+      }
+
+      // 3. Quản lý âm thanh tách tách của kim nón
       let normalizedRotation = currentRotation % 360;
       if (normalizedRotation < 0) normalizedRotation += 360;
       let currentAngleIndex = Math.floor(normalizedRotation / pinAngleStep);
