@@ -101,6 +101,12 @@ io.on('connection', (socket) => {
     io.to(roomid).emit('listenSoundboard', soundName);
   });
 
+  socket.on('techStopSound', (data) => {
+    const roomid = data?.roomid || myRoomId;
+    if (!roomid) return;
+    io.to(roomid).emit('listenStopSound');
+  });
+
   socket.on('joinRoom', (data) => {
     const { roomid, role, password } = data;
     if (!roomid) return;

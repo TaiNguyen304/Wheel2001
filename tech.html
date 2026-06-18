@@ -287,6 +287,9 @@
       <button class="btn-blue-sound" onclick="broadcastSoundEvent('30s')">30s</button>
       <button class="btn-blue-sound" onclick="broadcastSoundEvent('10s')">10s</button>
     </div>
+    <div style="margin-top: 15px;">
+      <button class="btn-blue-sound" style="width: 100%; max-width: 300px; font-size: 16px; padding: 12px; text-transform: uppercase;" onclick="broadcastStopAllSounds()">Dừng âm thanh</button>
+    </div>
   </div>
 
   <div id="techPopupModal" class="popup-overlay">
@@ -424,6 +427,13 @@
       showPopup(`✓ DỮ LIỆU ĐANG LƯU TRÊN MÁY CHỦ:\n\n Mã phòng: ${currentActiveRoomID}\n\n Mật khẩu Player 1: ${roomPasswordsConfig["Player 1"]}\n Mật khẩu Player 2: ${roomPasswordsConfig["Player 2"]}\n Mật khẩu Player 3: ${roomPasswordsConfig["Player 3"]}`);
     }
 
+    function broadcastStopAllSounds() {
+      if (!currentActiveRoomID) return;
+      socket.emit('techStopSound', { roomid: currentActiveRoomID });
+      document.getElementById('statusLog').innerText = `Lệnh dừng toàn bộ âm thanh Soundboard.`;
+      document.getElementById('statusLog').style.color = 'blue';
+    }
+    
     document.addEventListener('contextmenu', e => e.preventDefault());
     document.addEventListener('keydown', e => {
       if (e.keyCode === 123) e.preventDefault();

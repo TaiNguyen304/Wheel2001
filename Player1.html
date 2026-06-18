@@ -470,6 +470,16 @@
       if (soundName) playSoundboardEvent(soundName);
     });
 
+    socket.on('listenStopSound', () => {
+      // Duyệt qua toàn bộ object soundboard để dừng và reset thời gian về 0
+      for (let key in soundboard) {
+        try {
+          soundboard[key].pause();
+          soundboard[key].currentTime = 0;
+        } catch (err) {}
+      }
+    });
+    
     socket.on('initGameState', (state) => {
       if (state) {
         if (state.activeImage && wheel) wheel.src = state.activeImage;
