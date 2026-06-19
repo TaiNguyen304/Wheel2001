@@ -84,11 +84,16 @@
       font-weight: bold;
     }
 
-    .btn-submit:active {
+    .btn-submit:disabled {
+      background: #555 !important;
+      cursor: not-allowed;
+    }
+
+    .btn-submit:active:not(:disabled) {
       transform: scale(0.97);
     }
 
-    .btn-submit:hover {
+    .btn-submit:hover:not(:disabled) {
       background: orange !important;
       color: white !important;
     }
@@ -176,28 +181,25 @@
       <label>Mật Khẩu (4 chữ số):</label>
       <input type="password" id="passwordInput" maxlength="4" placeholder="Nhập mật khẩu...">
     </div>
-    <button class="btn-submit" onclick="executeLoginVerify()">XÁC NHẬN ĐĂNG NHẬP</button>
+    <button class="btn-submit" id="submitBtn" onclick="executeLoginVerify()">XÁC NHẬN ĐĂNG NHẬP</button>
     <button class="btn-submit" style="background: blue; margin-top: 8px;" onclick="debugCheckRooms()">🔍 KIỂM TRA SERVER</button>
   </div>
 
   <div id="customAlert" class="popup-modal">
     <div class="popup-content">
       <p id="alertMessage">Thông báo hệ thống!</p>
-      <button id="alertBtn"
-        style="background: red; color: white; font-weight: bold; border: none; padding: 10px 30px; border-radius: 6px; cursor: pointer; font-size: 15px; width: 100%; transition: background 0.2s;"
-        onclick="closeAlertPopup()">
+      <button id="alertBtn" onclick="closeAlertPopup()">
         ĐÓNG THÔNG BÁO
       </button>
     </div>
   </div>
 
   <script>
-    const socket = io("https://wheel2001.onrender.com");
+    const socket = io("https://wheel2001.onrender.com", { transports: ['websocket'] });
 
     function showAlertPopup(message, isInfo = false) {
       const modal = document.getElementById('customAlert');
       const msgParagraph = document.getElementById('alertMessage');
-
       msgParagraph.innerText = message;
 
       if (isInfo) {
@@ -205,7 +207,6 @@
       } else {
         modal.classList.remove('info');
       }
-
       modal.style.display = 'flex';
     }
 
@@ -214,6 +215,13 @@
     }
 
     function executeLoginVerify() {
+      const submitBtn = document.getElementById('submitBtn');
+      
+      if (!socket.connected) {
+        showAlertPopup('❌ Máy chủ đang khởi động hoặc mất kết nối! Vui lòng đợi 10-15 giây rồi thử lại.', false);
+        return;
+      }
+
       const playerRole = document.getElementById('playerSelect').value;
       const roomidRaw = document.getElementById('roomIdInput').value.trim();
       const passwordRaw = document.getElementById('passwordInput').value.trim();
@@ -235,66 +243,67 @@
         passwordNum: Number(passwordRaw) 
       };
 
-      console.log('[SOCKET] Đang gửi yêu cầu xác thực lên Server:', payload);
+      // Đổi trạng thái nút bấm tránh gửi trùng lặp
+      submitBtn.disabled = true;
+      submitBtn.innerText = "⏳ ĐANG XÁC THỰC MÁY CHỦ...";
+      console.log('[SOCKET] Đang gửi dữ liệu xác thực:', payload);
 
       let callbackReceived = false;
 
       socket.emit('playerVerifyLogin', payload, (response) => {
         callbackReceived = true;
-        console.log('[SOCKET] Kết quả phản hồi từ server:', response);
+        submitBtn.disabled = false;
+        submitBtn.innerText = "XÁC NHẬN ĐĂNG NHẬP";
+        
+        console.log('[SOCKET] Server phản hồi:', response);
 
-        if (response && (response.success || response.status === "success" || response.ok)) {
+        if (response && response.success) {
           executeRedirect(roomidRaw, playerRole, passwordRaw);
         } else {
           const errorMsg = response && response.message ? response.message : 'Thông tin phòng hoặc mật khẩu không chính xác!';
-          showAlertPopup('❌ Đăng nhập thất bại: ' + errorMsg, false);
+          showAlertPopup('❌ Thất bại: ' + errorMsg, false);
         }
       });
 
+      // Tăng thời gian chờ lên 25 giây phòng trường hợp Render khởi động từ trạng thái ngủ đông
       setTimeout(() => {
         if (!callbackReceived) {
-          console.warn('[TIMEOUT] Server phản hồi quá lâu hoặc không có callback.');
-          showAlertPopup('⚠️ Máy chủ phản hồi quá lâu hoặc chưa được khởi tạo phòng từ Tech! Vui lòng thử lại.', false);
+          submitBtn.disabled = false;
+          submitBtn.innerText = "XÁC NHẬN ĐĂNG NHẬP";
+          console.warn('[TIMEOUT] Máy chủ phản hồi lâu.');
+          showAlertPopup('⚠️ Máy chủ phản hồi chậm hoặc đang trong quá trình đánh thức (Render Cold Start).\n\nVui lòng thử lại sau vài giây!', false);
         }
-      }, 5000);
+      }, 25000); 
     }
 
     function executeRedirect(room, role, password) {
-      // FIX ĐỒNG BỘ: Lưu đồng thời cả từ khóa cũ lẫn mới để đảm bảo các trang Player đều đọc chính xác
-      sessionStorage.setItem('authenticatedRoomID', room);
       sessionStorage.setItem('roomid', room);
+      sessionStorage.setItem('playerRole', role);
+      sessionStorage.setItem('password', password);
       
+      sessionStorage.setItem('authenticatedRoomID', room);
       sessionStorage.setItem('authenticatedRole', role);
       sessionStorage.setItem('player', role);
-      sessionStorage.setItem('playerRole', role);
-      
       sessionStorage.setItem('authenticatedPassword', password);
       sessionStorage.setItem('playerPassword', password);
-      sessionStorage.setItem('password', password);
 
-      const targetPage = role.replace(' ', '') + '.html';
-      console.log('[REDIRECT] Đang chuyển hướng tự động tới trang:', targetPage);
+      const targetPage = role.replace(/\s+/g, '') + '.html';
       window.location.href = targetPage;
     }
 
     function debugCheckRooms() {
       if (!socket.connected) {
-        showAlertPopup('Không kết nối được tới server!', false);
+        showAlertPopup('Không kết nối được tới server! Vui lòng kiểm tra lại mạng.', false);
         return;
       }
-      console.log('[DEBUG] Kiểm tra tất cả phòng lưu trên server...');
-
       socket.emit('debugGetAllRooms', (data) => {
-        console.log('[DEBUG] Dữ liệu phòng từ server trả về:', data);
-
         if (!data || Object.keys(data).length === 0) {
-          showAlertPopup('❌ Không có phòng nào đang chạy trên máy chủ!', false);
+          showAlertPopup('❌ Không có phòng nào đang hoạt động trên máy chủ!', false);
           return;
         }
 
         const roomCount = Object.keys(data).length;
         let msg = `✓ Tìm thấy ${roomCount} phòng đang mở:\n\n`;
-
         for (let id in data) {
           const roomPasswords = data[id] || {};
           msg += `Mã Phòng: ${id}\n`;
@@ -302,17 +311,12 @@
           msg += `  • Player 2: ${roomPasswords["Player 2"] ? "🔒 Đã đặt MK" : "Trống"}\n`;
           msg += `  • Player 3: ${roomPasswords["Player 3"] ? "🔒 Đã đặt MK" : "Trống"}\n\n`;
         }
-
         showAlertPopup(msg, true);
       });
     }
 
     socket.on('connect', () => {
-      console.log('[SOCKET] Kết nối máy chủ thành công. ID:', socket.id);
-    });
-
-    socket.on('connect_error', (error) => {
-      console.error('[SOCKET] Lỗi kết nối tới máy chủ:', error.message);
+      console.log('[SOCKET] Kết nối thành công tới server. ID:', socket.id);
     });
 
     document.addEventListener('contextmenu', e => e.preventDefault());

@@ -46,7 +46,8 @@
       height: 100%;
       object-fit: contain;
       user-select: none;
-      pointer-events: none; /* Khóa tương tác chuột vật lý */
+      pointer-events: none;
+      /* Khóa tương tác chuột vật lý */
       filter: drop-shadow(0 0 30px rgba(0, 0, 0, 0.5));
       will-change: transform;
       transform: translateZ(0);
@@ -171,7 +172,7 @@
 
       // Sử dụng đồng bộ sự kiện song song cả joinRoom và playerVerifyLogin để đảm bảo vào đúng luồng
       socket.emit('joinRoom', { roomid: roomid, role: 'viewer' });
-      
+
       socket.emit('playerVerifyLogin', { roomid: roomid, playerRole: 'viewer' }, (response) => {
         if (!response || !response.success) {
           if (errorToast) {
@@ -205,12 +206,15 @@
       "Lucky": new Audio('Lucky.mp3')
     };
 
+    soundboard["10s"].volume = 0.3;
+    soundboard["30s"].volume = 0.3;
+
     function activateAudioStream() {
       document.getElementById('audioOverlay').style.display = 'none';
-      clickSound.play().then(() => { clickSound.pause(); }).catch(() => {});
-      spinSound.play().then(() => { spinSound.pause(); }).catch(() => {});
+      clickSound.play().then(() => { clickSound.pause(); }).catch(() => { });
+      spinSound.play().then(() => { spinSound.pause(); }).catch(() => { });
       for (let key in soundboard) {
-        soundboard[key].play().then(() => { soundboard[key].pause(); }).catch(() => {});
+        soundboard[key].play().then(() => { soundboard[key].pause(); }).catch(() => { });
       }
     }
 
@@ -219,7 +223,7 @@
         try {
           soundboard[soundName].currentTime = 0;
           soundboard[soundName].play();
-        } catch (err) {}
+        } catch (err) { }
       }
     }
 
@@ -231,7 +235,7 @@
             spinSound.currentTime = 0;
             spinSound.play();
             isSpinSoundPlaying = true;
-          } catch (e) {}
+          } catch (e) { }
         }
       }, 1000);
     }
@@ -269,7 +273,7 @@
       if (!isSpinningFree || spinStartTime === 0) {
         return { r: currentRotation, v: 0 };
       }
-      
+
       const t = (Date.now() - spinStartTime) / 1000;
       if (t < 0) return { r: baseRotation, v: initVelocity };
 
@@ -291,7 +295,7 @@
     function manageSoundSafelyBackground() {
       // Tính toán vật lý chạy ngầm để viewer tự nhận biết nón dừng và tắt nhạc
       const state = calculateCurrentPhysics();
-      
+
       // Luôn cập nhật góc quay mới nhất
       currentRotation = state.r;
 
@@ -328,7 +332,7 @@
 
     function renderLoop() {
       const state = calculateCurrentPhysics();
-      
+
       // Luôn đồng bộ góc quay
       currentRotation = state.r;
 
@@ -354,15 +358,15 @@
         try {
           soundboard[key].pause();
           soundboard[key].currentTime = 0;
-        } catch (err) {}
+        } catch (err) { }
       }
     });
-    
+
     // ĐỒNG BỘ TRẠNG THÁI KHỞI TẠO BAN ĐẦU (GÓC XOAY VÀ ẢNH)
     socket.on('initGameState', (state) => {
       if (state) {
         if (state.activeImage && wheel) wheel.src = state.activeImage;
-        
+
         if (state.spinStartTime && state.spinStartTime > 0) {
           baseRotation = state.baseRotation;
           initVelocity = state.initVelocity;

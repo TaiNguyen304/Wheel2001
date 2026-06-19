@@ -134,7 +134,7 @@
     const playerPass = sessionStorage.getItem('password');
 
     const myPlayerName = "Player 3"; // Thay đổi tương ứng với từng file
-    let isDraggingAllowed = false; 
+    let isDraggingAllowed = false;
 
     // Tự động khôi phục dữ liệu nếu bị ngắt kết nối do ngủ đông Tab
     socket.on('connect', () => {
@@ -168,12 +168,15 @@
       "Lucky": new Audio('Lucky.mp3')
     };
 
+    soundboard["10s"].volume = 0.3;
+    soundboard["30s"].volume = 0.3;
+
     function activateAudioStream() {
       document.getElementById('audioOverlay').style.display = 'none';
-      clickSound.play().then(() => { clickSound.pause(); }).catch(() => {});
-      spinSound.play().then(() => { spinSound.pause(); }).catch(() => {});
+      clickSound.play().then(() => { clickSound.pause(); }).catch(() => { });
+      spinSound.play().then(() => { spinSound.pause(); }).catch(() => { });
       for (let key in soundboard) {
-        soundboard[key].play().then(() => { soundboard[key].pause(); }).catch(() => {});
+        soundboard[key].play().then(() => { soundboard[key].pause(); }).catch(() => { });
       }
     }
 
@@ -182,7 +185,7 @@
         try {
           soundboard[soundName].currentTime = 0;
           soundboard[soundName].play();
-        } catch (err) {}
+        } catch (err) { }
       }
     }
 
@@ -219,10 +222,10 @@
       const dragZone = document.getElementById('dragZone');
       if (allowedPlayer === myPlayerName) {
         isDraggingAllowed = true;
-        if(dragZone) dragZone.style.cursor = 'grab';
+        if (dragZone) dragZone.style.cursor = 'grab';
       } else {
         isDraggingAllowed = false;
-        if(dragZone) dragZone.style.cursor = 'not-allowed';
+        if (dragZone) dragZone.style.cursor = 'not-allowed';
       }
     }
 
@@ -303,7 +306,7 @@
       if (Math.abs(calculatedVelocity) > 40) {
         baseRotation = currentRotation;
         initVelocity = calculatedVelocity;
-        spinStartTime = Date.now(); 
+        spinStartTime = Date.now();
         isSpinningFree = true;
 
         triggerSpinSoundTimeout();
@@ -327,9 +330,9 @@
             spinSound.currentTime = 0;
             spinSound.play();
             isSpinSoundPlaying = true;
-          } catch (e) {}
+          } catch (e) { }
         }
-      }, 1000); 
+      }, 1000);
     }
 
     function stopSpinSoundSafely() {
@@ -356,7 +359,7 @@
         initVelocity = data.initVelocity;
         spinStartTime = data.spinStartTime;
         isSpinningFree = true;
-        
+
         triggerSpinSoundTimeout();
       } else {
         if (data.rotation !== undefined) currentRotation = data.rotation;
@@ -364,7 +367,7 @@
           isSpinningFree = false;
           spinStartTime = 0;
           initVelocity = 0;
-          stopSpinSoundSafely(); 
+          stopSpinSoundSafely();
         }
       }
     });
@@ -382,7 +385,7 @@
 
       if (Math.abs(currentVelocity) < 0.2) {
         isSpinningFree = false;
-        stopSpinSoundSafely(); 
+        stopSpinSoundSafely();
         return { r: targetRotation, v: 0 };
       }
 
@@ -393,7 +396,7 @@
     function manageSoundSafelyBackground() {
       // 1. Ép tính toán vật lý chạy ngầm ngay cả khi tab bị ẩn
       const state = calculateCurrentPhysics();
-      
+
       // Luôn cập nhật góc quay mới nhất
       currentRotation = state.r;
 
@@ -435,16 +438,16 @@
         pointerAngleOffset = -Math.abs(remainder * pushIntensity * 6.0);
       }
       pointerAngleOffset = Math.max(-25, Math.min(0, pointerAngleOffset));
-      if(pointerImg) pointerImg.style.transform = `rotate(${180 + pointerAngleOffset}deg)`;
+      if (pointerImg) pointerImg.style.transform = `rotate(${180 + pointerAngleOffset}deg)`;
     }
 
     function renderLoop() {
       const state = calculateCurrentPhysics();
-      
+
       // Luôn đồng bộ góc quay với physics engine để tránh bỏ lỡ frame cuối
       currentRotation = state.r;
 
-      if(wheel) wheel.style.transform = `rotate(${currentRotation.toFixed(2)}deg) translateZ(0)`;
+      if (wheel) wheel.style.transform = `rotate(${currentRotation.toFixed(2)}deg) translateZ(0)`;
       updatePointerFlap(currentRotation);
 
       if (isDraggingByMe && !isSpinningFree && state.v === 0 && !isDragging) {
@@ -476,10 +479,10 @@
         try {
           soundboard[key].pause();
           soundboard[key].currentTime = 0;
-        } catch (err) {}
+        } catch (err) { }
       }
     });
-    
+
     socket.on('initGameState', (state) => {
       if (state) {
         if (state.activeImage && wheel) wheel.src = state.activeImage;

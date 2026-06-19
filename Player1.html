@@ -168,6 +168,9 @@
       "Lucky": new Audio('Lucky.mp3')
     };
 
+    soundboard["10s"].volume = 0.3;
+    soundboard["30s"].volume = 0.3;
+
     function activateAudioStream() {
       document.getElementById('audioOverlay').style.display = 'none';
       clickSound.play().then(() => { clickSound.pause(); }).catch(() => {});
