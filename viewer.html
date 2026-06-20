@@ -152,11 +152,48 @@
 
     let spinTimeoutToken = null;
     let isSpinSoundPlaying = false;
-
-    const friction = 0.995;
     const pinAngleStep = 15;
-    let lastClickAngleIndex = 0;
     let isSoundPlaying = false;
+
+    // --- CƠ CHẾ ĐỒNG BỘ ĐỒNG HỒ ĐỊA LÝ TOÀN CẦU ---
+    let serverTimeOffset = 0;
+    function syncClockWithServer() {
+      const start = Date.now();
+      socket.emit('serverTimeSync', start, (data) => {
+        if (data) {
+          const end = Date.now();
+          const latency = (end - start) / 2;
+          serverTimeOffset = data.serverTimestamp - (data.clientTimestamp + latency);
+        }
+      });
+    }
+    setInterval(syncClockWithServer, 10000);
+
+    function getServerTime() {
+      return Date.now() + serverTimeOffset;
+    }
+
+    // --- KHỞI TẠO WEB WORKER CHẠY NGẦM ---
+    const physicsWorker = new Worker('worker.js');
+
+    physicsWorker.onmessage = function (e) {
+      if (e.data.type === 'TICK') {
+        physicsWorker.postMessage({
+          type: 'TICK_RESPONSE',
+          serverNow: getServerTime()
+        });
+      } 
+      else if (e.data.type === 'PHYSICS_UPDATE') {
+        currentRotation = e.data.rotation;
+        isSpinningFree = e.data.isSpinningFree;
+
+        if (e.data.triggerClick && !isSoundPlaying) {
+          isSoundPlaying = true;
+          clickSound.currentTime = 0;
+          clickSound.play().then(() => { isSoundPlaying = false; }).catch(() => { isSoundPlaying = false; });
+        }
+      }
+    };
 
     // Đăng ký nhận gói dữ liệu từ phòng
     function registerAndSyncRoom() {
@@ -169,8 +206,6 @@
       }
 
       roomid = roomid.trim();
-
-      // Sử dụng đồng bộ sự kiện song song cả joinRoom và playerVerifyLogin để đảm bảo vào đúng luồng
       socket.emit('joinRoom', { roomid: roomid, role: 'viewer' });
 
       socket.emit('playerVerifyLogin', { roomid: roomid, playerRole: 'viewer' }, (response) => {
@@ -184,6 +219,7 @@
     }
 
     socket.on('connect', () => {
+      syncClockWithServer();
       registerAndSyncRoom();
     });
 
@@ -257,8 +293,18 @@
         spinStartTime = data.spinStartTime;
         isSpinningFree = true;
         triggerSpinSoundTimeout();
+
+        physicsWorker.postMessage({
+          type: 'START_PHYSICS',
+          baseRotation: baseRotation,
+          initVelocity: initVelocity,
+          spinStartTime: spinStartTime
+        });
       } else {
-        if (data.rotation !== undefined) currentRotation = data.rotation;
+        if (data.rotation !== undefined) {
+          currentRotation = data.rotation;
+          physicsWorker.postMessage({ type: 'SYNC_STATIC', rotation: currentRotation });
+        }
         if (data.velocity === 0 || data.isDraggingSync) {
           isSpinningFree = false;
           spinStartTime = 0;
@@ -267,52 +313,6 @@
         }
       }
     });
-
-    // CHÚ Ý: Sửa lại Date.now() thay cho performance.now() để đồng bộ chuẩn hệ quy chiếu với Player
-    function calculateCurrentPhysics() {
-      if (!isSpinningFree || spinStartTime === 0) {
-        return { r: currentRotation, v: 0 };
-      }
-
-      const t = (Date.now() - spinStartTime) / 1000;
-      if (t < 0) return { r: baseRotation, v: initVelocity };
-
-      // Chốt tọa độ giới hạn toán học (Asymptote target) để mọi tab dừng chung 1 điểm
-      const targetRotation = baseRotation + (initVelocity / ((1 - friction) * 60));
-      const currentVelocity = initVelocity * Math.pow(friction, t * 60);
-
-      if (Math.abs(currentVelocity) < 0.2) {
-        isSpinningFree = false;
-        stopSpinSoundSafely();
-        return { r: targetRotation, v: 0 };
-      }
-
-      const computedRotation = baseRotation + (initVelocity * (1 - Math.pow(friction, t * 60))) / (1 - friction) / 60;
-      return { r: computedRotation, v: currentVelocity };
-    }
-
-    // Tách vòng lặp xử lý âm thanh ra ngầm định giống file Player
-    function manageSoundSafelyBackground() {
-      // Tính toán vật lý chạy ngầm để viewer tự nhận biết nón dừng và tắt nhạc
-      const state = calculateCurrentPhysics();
-
-      // Luôn cập nhật góc quay mới nhất
-      currentRotation = state.r;
-
-      let normalizedRotation = currentRotation % 360;
-      if (normalizedRotation < 0) normalizedRotation += 360;
-      let currentAngleIndex = Math.floor(normalizedRotation / pinAngleStep);
-
-      if (currentAngleIndex !== lastClickAngleIndex) {
-        lastClickAngleIndex = currentAngleIndex;
-        if (!isSoundPlaying) {
-          isSoundPlaying = true;
-          clickSound.currentTime = 0;
-          clickSound.play().then(() => { isSoundPlaying = false; }).catch(() => { isSoundPlaying = false; });
-        }
-      }
-    }
-    setInterval(manageSoundSafelyBackground, 30);
 
     function updatePointerFlap(rotationValue) {
       let normalizedRotation = rotationValue % 360;
@@ -331,19 +331,12 @@
     }
 
     function renderLoop() {
-      const state = calculateCurrentPhysics();
-
-      // Luôn đồng bộ góc quay
-      currentRotation = state.r;
-
       if (wheel) wheel.style.transform = `rotate(${currentRotation.toFixed(2)}deg) translateZ(0)`;
       updatePointerFlap(currentRotation);
-
       requestAnimationFrame(renderLoop);
     }
     requestAnimationFrame(renderLoop);
 
-    // 🖼️ ĐỒNG BỘ THAY ĐỔI MẶT NÓN TỪ TECH
     socket.on('playerUpdateImage', (imageName) => {
       if (imageName && wheel) wheel.src = imageName;
     });
@@ -353,7 +346,6 @@
     });
 
     socket.on('listenStopSound', () => {
-      // Duyệt qua toàn bộ object soundboard để dừng và reset thời gian về 0
       for (let key in soundboard) {
         try {
           soundboard[key].pause();
@@ -362,7 +354,6 @@
       }
     });
 
-    // ĐỒNG BỘ TRẠNG THÁI KHỞI TẠO BAN ĐẦU (GÓC XOAY VÀ ẢNH)
     socket.on('initGameState', (state) => {
       if (state) {
         if (state.activeImage && wheel) wheel.src = state.activeImage;
@@ -373,12 +364,20 @@
           spinStartTime = state.spinStartTime;
           isSpinningFree = true;
           triggerSpinSoundTimeout();
+
+          physicsWorker.postMessage({
+            type: 'START_PHYSICS',
+            baseRotation: baseRotation,
+            initVelocity: initVelocity,
+            spinStartTime: spinStartTime
+          });
         } else {
           if (state.rotation !== undefined) {
             currentRotation = state.rotation;
             isSpinningFree = false;
             spinStartTime = 0;
             stopSpinSoundSafely();
+            physicsWorker.postMessage({ type: 'SYNC_STATIC', rotation: currentRotation });
           }
         }
       }
@@ -391,7 +390,7 @@
         e.preventDefault();
       }
     });
-  </script>
+</script>
 </body>
 
 </html>
