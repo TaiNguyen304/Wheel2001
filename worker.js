@@ -8,6 +8,7 @@ let isSpinningFree = false;
 const friction = 0.995;
 const pinAngleStep = 15;
 let lastClickAngleIndex = 0;
+let targetSeconds = 20;
 
 self.onmessage = function (e) {
   const data = e.data;

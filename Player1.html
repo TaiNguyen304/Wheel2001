@@ -25,13 +25,94 @@
       font-family: Arial, sans-serif;
     }
 
+    /* Đặt vị trí tương đối cho app để làm gốc tọa độ cho bảng điều khiển */
     .app {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      flex-direction: column;
     }
 
+    /* Đổi sang absolute để cố định bên trái, không đẩy lệch vòng quay ở trung tâm */
+    .control-panel {
+      position: absolute;
+      left: 40px;
+      top: 50%;
+      transform: translateY(-50%);
+      background-color: #000000;
+      border: 3px solid #ff00cc;
+      border-radius: 12px;
+      padding: 25px;
+      width: 280px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      box-shadow: 0 0 20px rgba(255, 0, 204, 0.4);
+      z-index: 20; /* Đảm bảo nằm trên nền */
+    }
+
+    .panel-label {
+      font-size: 16px;
+      color: #ffffff;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .time-input {
+      width: 100%;
+      background: white;
+      border: 2px solid #ff00cc;
+      border-radius: 6px;
+      color: green;
+      padding: 10px;
+      text-align: center;
+      font-size: 20px;
+      outline: none;
+    }
+
+    /* Nút quay quy định cho Player 1 */
+    .btn-spin {
+      width: 100%;
+      padding: 15px;
+      font-size: 22px;
+      border: none;
+      border-radius: 8px;
+      cursor: not-allowed;
+      text-transform: uppercase;
+      transition: all 0.2s ease;
+
+      /* Trạng thái Khóa mặc định */
+      background-color: #000000;
+      color: #ffffff;
+      border: 2px solid #555555;
+    }
+
+    /* Trạng thái Mở khi có quyền */
+    .btn-spin.active {
+      cursor: pointer;
+      background-color: #ff0000;
+      /* Đỏ ff0000 */
+      color: #ffffff;
+      /* Chữ đậm trắng */
+      border: 2px solid #ff0000;
+      box-shadow: 0 0 15px rgba(255, 0, 0, 0.6);
+    }
+
+    /* Trạng thái Hover khi có quyền */
+    .btn-spin.active:hover {
+      background-color: #ffa500;
+      /* Màu cam ffa500 */
+      color: #ffffff;
+      /* Chữ đậm trắng */
+      border: 2px solid #ffa500;
+      box-shadow: 0 0 25px #ffa500;
+    }
+
+    /* Vòng quay luôn giữ vị trí chính giữa màn hình tuyệt đối */
     .wheel-container {
       position: relative;
       width: 820px;
@@ -39,6 +120,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      z-index: 10;
     }
 
     #wheel {
@@ -59,7 +141,7 @@
       width: 90px;
       height: 90px;
       transform: translateX(-50%);
-      z-index: 5;
+      z-index: 15;
       pointer-events: none;
       user-select: none;
     }
@@ -78,7 +160,7 @@
       width: 100%;
       height: 100%;
       border-radius: 50%;
-      z-index: 10;
+      z-index: 12;
       cursor: not-allowed;
     }
 
@@ -117,6 +199,13 @@
   </div>
 
   <div class="app">
+    <div class="control-panel">
+      <div class="panel-label">Thời gian quay (10s - 20s)</div>
+      <input type="number" id="spinDurationInput" class="time-input" min="10" max="20" value="20"
+        onchange="validateSpinDuration(this)">
+      <button id="spinBtn" class="btn-spin" onclick="executeTriggerSpinButton()">QUAY</button>
+    </div>
+
     <div class="wheel-container">
       <div class="pointer-wrapper">
         <img id="pointerImg" class="pointer" src="pointer.png" />
@@ -134,10 +223,11 @@
     const playerPass = sessionStorage.getItem('password');
 
     const myPlayerName = "Player 1"; // Thay đổi tương ứng với từng file Player 2, Player 3
-    let isDraggingAllowed = false; 
+    let isDraggingAllowed = false;
+    let currentAllowedPlayer = ""; // Biến lưu trữ người chơi đang có quyền thực tế từ Tech
 
     // --- CƠ CHẾ ĐỒNG BỘ ĐỒNG HỒ ĐỊA LÝ TOÀN CẦU ---
-    let serverTimeOffset = 0; 
+    let serverTimeOffset = 0;
     function syncClockWithServer() {
       const start = Date.now();
       socket.emit('serverTimeSync', start, (data) => {
@@ -148,7 +238,6 @@
         }
       });
     }
-    // Định kỳ đồng bộ lại mỗi 10 giây tránh trôi thời gian do lag mạng
     setInterval(syncClockWithServer, 10000);
 
     function getServerTime() {
@@ -164,19 +253,20 @@
           type: 'TICK_RESPONSE',
           serverNow: getServerTime()
         });
-      } 
+      }
       else if (e.data.type === 'PHYSICS_UPDATE') {
         currentRotation = e.data.rotation;
         isSpinningFree = e.data.isSpinningFree;
 
-        // Xử lý âm thanh tách tách trên main thread
+        // Cập nhật trạng thái nút bấm dựa trên việc nón có đang quay tự do hay không
+        refreshSpinButtonUI();
+
         if (e.data.triggerClick && !isSoundPlaying) {
           isSoundPlaying = true;
           clickSound.currentTime = 0;
           clickSound.play().then(() => { isSoundPlaying = false; }).catch(() => { isSoundPlaying = false; });
         }
 
-        // Tự động kiểm tra chốt điểm dừng đẩy lên Server
         if (isDraggingByMe && !isSpinningFree && e.data.velocity === 0 && !isDragging) {
           isDraggingByMe = false;
           spinStartTime = 0;
@@ -186,7 +276,6 @@
       }
     };
 
-    // Tự động khôi phục dữ liệu nếu bị ngắt kết nối do ngủ đông Tab
     socket.on('connect', () => {
       syncClockWithServer();
       if (roomid && playerRole) {
@@ -203,7 +292,7 @@
 
     const clickSound = new Audio('click.mp3');
     const spinSound = new Audio('spin.mp3');
-    spinSound.loop = true;
+    spinSound.loop = false;
 
     const soundboard = {
       "10s": new Audio('10s.mp3'),
@@ -224,10 +313,10 @@
 
     function activateAudioStream() {
       document.getElementById('audioOverlay').style.display = 'none';
-      clickSound.play().then(() => { clickSound.pause(); }).catch(() => {});
-      spinSound.play().then(() => { spinSound.pause(); }).catch(() => {});
+      clickSound.play().then(() => { clickSound.pause(); }).catch(() => { });
+      spinSound.play().then(() => { spinSound.pause(); }).catch(() => { });
       for (let key in soundboard) {
-        soundboard[key].play().then(() => { soundboard[key].pause(); }).catch(() => {});
+        soundboard[key].play().then(() => { soundboard[key].pause(); }).catch(() => { });
       }
     }
 
@@ -236,7 +325,7 @@
         try {
           soundboard[soundName].currentTime = 0;
           soundboard[soundName].play();
-        } catch (err) {}
+        } catch (err) { }
       }
     }
 
@@ -256,6 +345,7 @@
     let isSpinSoundPlaying = false;
     const pinAngleStep = 15;
     let isSoundPlaying = false;
+    let targetSeconds = 20;
 
     function getMouseAngle(e) {
       const rect = wheel.getBoundingClientRect();
@@ -266,15 +356,40 @@
       return Math.atan2(clientY - wheelY, clientX - wheelX) * (180 / Math.PI);
     }
 
+    // Hàm quản lý UI độc lập cho nút bấm và drag-zone
+    function refreshSpinButtonUI() {
+      const spinBtn = document.getElementById('spinBtn');
+      if (!spinBtn) return;
+
+      // Nếu nón đang quay -> Khóa nút ngay lập tức
+      if (isSpinningFree) {
+        spinBtn.classList.remove('active');
+        spinBtn.disabled = true;
+      } else {
+        // Nếu nón dừng -> Xét quyền được cấp từ bộ điều khiển
+        if (currentAllowedPlayer === myPlayerName) {
+          spinBtn.classList.add('active');
+          spinBtn.disabled = false;
+        } else {
+          spinBtn.classList.remove('active');
+          spinBtn.disabled = true;
+        }
+      }
+    }
+
     function applyPermissionUI(allowedPlayer) {
+      currentAllowedPlayer = allowedPlayer; // Lưu lại trạng thái quyền toàn cục
       const dragZone = document.getElementById('dragZone');
+      
       if (allowedPlayer === myPlayerName) {
         isDraggingAllowed = true;
-        if(dragZone) dragZone.style.cursor = 'grab';
+        if (dragZone) dragZone.style.cursor = 'grab';
       } else {
         isDraggingAllowed = false;
-        if(dragZone) dragZone.style.cursor = 'not-allowed';
+        if (dragZone) dragZone.style.cursor = 'not-allowed';
       }
+      
+      refreshSpinButtonUI();
     }
 
     function onMouseDown(e) {
@@ -358,10 +473,11 @@
       if (Math.abs(calculatedVelocity) > 40) {
         baseRotation = currentRotation;
         initVelocity = calculatedVelocity;
-        spinStartTime = getServerTime(); // Sử dụng mốc thời gian Server Toàn Cầu
+        spinStartTime = getServerTime(); 
         isSpinningFree = true;
 
         triggerSpinSoundTimeout();
+        refreshSpinButtonUI();
 
         physicsWorker.postMessage({
           type: 'START_PHYSICS',
@@ -389,9 +505,9 @@
             spinSound.currentTime = 0;
             spinSound.play();
             isSpinSoundPlaying = true;
-          } catch (e) {}
+          } catch (e) { }
         }
-      }, 1000); 
+      }, 1000);
     }
 
     function stopSpinSoundSafely() {
@@ -413,13 +529,23 @@
     socket.on('playerSyncPhysics', (data) => {
       if (isDraggingByMe) return;
 
-      if (data.spinStartTime) {
+      if (data.spinStartTime && data.spinStartTime > 0) {
         baseRotation = data.baseRotation;
         initVelocity = data.initVelocity;
         spinStartTime = data.spinStartTime;
         isSpinningFree = true;
-        
+
+        // ĐỒNG BỘ THỜI GIAN QUAY: Nhận số giây thực tế từ người quay gửi lên (nếu không có thì mặc định 15)
+        if (data.targetSeconds) {
+          targetSeconds = data.targetSeconds;
+          
+          // Nếu trên màn hình của bạn có ô Input hiển thị số giây, cập nhật nó luôn để trực quan
+          const durationInput = document.getElementById('spinDurationInput');
+          if (durationInput) durationInput.value = data.targetSeconds;
+        }
+
         triggerSpinSoundTimeout();
+        refreshSpinButtonUI();
 
         physicsWorker.postMessage({
           type: 'START_PHYSICS',
@@ -436,7 +562,8 @@
           isSpinningFree = false;
           spinStartTime = 0;
           initVelocity = 0;
-          stopSpinSoundSafely(); 
+          stopSpinSoundSafely();
+          refreshSpinButtonUI();
         }
       }
     });
@@ -454,11 +581,11 @@
         pointerAngleOffset = -Math.abs(remainder * pushIntensity * 6.0);
       }
       pointerAngleOffset = Math.max(-25, Math.min(0, pointerAngleOffset));
-      if(pointerImg) pointerImg.style.transform = `rotate(${180 + pointerAngleOffset}deg)`;
+      if (pointerImg) pointerImg.style.transform = `rotate(${180 + pointerAngleOffset}deg)`;
     }
 
     function renderLoop() {
-      if(wheel) wheel.style.transform = `rotate(${currentRotation.toFixed(2)}deg) translateZ(0)`;
+      if (wheel) wheel.style.transform = `rotate(${currentRotation.toFixed(2)}deg) translateZ(0)`;
       updatePointerFlap(currentRotation);
       requestAnimationFrame(renderLoop);
     }
@@ -481,10 +608,10 @@
         try {
           soundboard[key].pause();
           soundboard[key].currentTime = 0;
-        } catch (err) {}
+        } catch (err) { }
       }
     });
-    
+
     socket.on('initGameState', (state) => {
       if (state) {
         if (state.activeImage && wheel) wheel.src = state.activeImage;
@@ -496,6 +623,7 @@
           spinStartTime = state.spinStartTime;
           isSpinningFree = true;
           triggerSpinSoundTimeout();
+          refreshSpinButtonUI();
 
           physicsWorker.postMessage({
             type: 'START_PHYSICS',
@@ -509,11 +637,63 @@
             isSpinningFree = false;
             spinStartTime = 0;
             stopSpinSoundSafely();
+            refreshSpinButtonUI();
             physicsWorker.postMessage({ type: 'SYNC_STATIC', rotation: currentRotation });
           }
         }
       }
     });
+
+    function validateSpinDuration(input) {
+      let val = parseInt(input.value);
+      if (isNaN(val) || val < 10) val = 10;
+      if (val > 20) val = 20;
+      input.value = val;
+    }
+
+    // Hàm kích hoạt lệnh quay tự động từ nút bấm, đồng bộ phân phối toàn cầu
+    function executeTriggerSpinButton() {
+      if (!isDraggingAllowed || isSpinningFree) return;
+
+      const durationInput = document.getElementById('spinDurationInput');
+      const duration = parseInt(durationInput.value) || 20;
+
+      const targetSeconds = duration;
+      const totalTicks = targetSeconds * 60; 
+
+      const minDegrees = 1850;
+      const calculatedVelocity = (minDegrees * (1 - 0.995) * 60) / (1 - Math.pow(0.995, totalTicks)) + (Math.random() * 5);
+
+      const startRotation = currentRotation;
+      const startTime = getServerTime();
+
+      isDraggingByMe = true;
+      spinStartTime = startTime;
+      baseRotation = startRotation;
+      initVelocity = calculatedVelocity;
+      isSpinningFree = true;
+
+      triggerSpinSoundTimeout();
+      refreshSpinButtonUI(); // Khóa ngay lập tức nút bấm tại local máy player
+
+      // SỬA LỖI TẠI ĐÂY: Gửi lên bằng emit 'playerUpdatePhysics' để Server đồng bộ cho cả Viewer và Host
+      socket.emit('playerUpdatePhysics', {
+        baseRotation: baseRotation,
+        initVelocity: initVelocity,
+        spinStartTime: spinStartTime,
+        rotation: baseRotation,
+        targetSeconds: targetSeconds
+      });
+
+      // Đưa vào worker cục bộ để chạy chuyển động mượt mà luôn
+      physicsWorker.postMessage({
+        type: 'START_PHYSICS',
+        baseRotation: baseRotation,
+        initVelocity: initVelocity,
+        spinStartTime: spinStartTime,
+        targetSeconds: targetSeconds
+      });
+    }
 
     document.addEventListener('contextmenu', e => e.preventDefault());
     document.addEventListener('keydown', e => {
@@ -522,7 +702,7 @@
         e.preventDefault();
       }
     });
-</script>
+  </script>
 </body>
 
 </html>

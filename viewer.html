@@ -154,6 +154,7 @@
     let isSpinSoundPlaying = false;
     const pinAngleStep = 15;
     let isSoundPlaying = false;
+    let targetSeconds = 20;
 
     // --- CƠ CHẾ ĐỒNG BỘ ĐỒNG HỒ ĐỊA LÝ TOÀN CẦU ---
     let serverTimeOffset = 0;
@@ -226,7 +227,7 @@
     // --- HỆ THỐNG ÂM THANH CHUẨN HOÁ ---
     const clickSound = new Audio('click.mp3');
     const spinSound = new Audio('spin.mp3');
-    spinSound.loop = true;
+    spinSound.loop = false;
 
     const soundboard = {
       "10s": new Audio('10s.mp3'),
@@ -287,13 +288,22 @@
 
     // 🔄 ĐỒNG BỘ CHUYỂN ĐỘNG XOAY NÓN TỪ SERVER TỚI VIEWER
     socket.on('playerSyncPhysics', (data) => {
-      if (data.spinStartTime) {
+      // TRƯỜNG HỢP 1: Bắt đầu trạng thái QUAY TỰ DO (Có thời gian bắt đầu quay)
+      if (data.spinStartTime && data.spinStartTime > 0) {
         baseRotation = data.baseRotation;
         initVelocity = data.initVelocity;
         spinStartTime = data.spinStartTime;
         isSpinningFree = true;
+
+        // ĐỒNG BỘ THỜI GIAN QUAY: Nhận số giây thực tế (10 - 20s) được truyền từ người quay
+        if (data.targetSeconds) {
+          targetSeconds = data.targetSeconds;
+        }
+
+        // Kích hoạt chuỗi âm thanh chạy theo thời gian mới
         triggerSpinSoundTimeout();
 
+        // Đẩy tham số vào Web Worker để tính toán tọa độ mượt mà
         physicsWorker.postMessage({
           type: 'START_PHYSICS',
           baseRotation: baseRotation,
@@ -301,10 +311,13 @@
           spinStartTime: spinStartTime
         });
       } else {
+        // TRƯỜNG HỢP 2: Trạng thái nón DỪNG hoặc ĐANG BỊ KÉO TAY (Static / Dragging)
         if (data.rotation !== undefined) {
           currentRotation = data.rotation;
           physicsWorker.postMessage({ type: 'SYNC_STATIC', rotation: currentRotation });
         }
+        
+        // Nếu vận tốc bằng 0 hoặc đang có lệnh đồng bộ kéo chuột vật lý
         if (data.velocity === 0 || data.isDraggingSync) {
           isSpinningFree = false;
           spinStartTime = 0;
@@ -363,13 +376,20 @@
           initVelocity = state.initVelocity;
           spinStartTime = state.spinStartTime;
           isSpinningFree = true;
+
+          // ĐỒNG BỘ THỜI GIAN KHI VIEWER F5 GIỮA CHỪNG
+          if (state.targetSeconds) {
+            targetSeconds = state.targetSeconds;
+          }
+
           triggerSpinSoundTimeout();
 
           physicsWorker.postMessage({
             type: 'START_PHYSICS',
             baseRotation: baseRotation,
             initVelocity: initVelocity,
-            spinStartTime: spinStartTime
+            spinStartTime: spinStartTime,
+            targetSeconds: targetSeconds
           });
         } else {
           if (state.rotation !== undefined) {

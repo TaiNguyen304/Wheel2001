@@ -33,6 +33,7 @@ function initRoomIfNotExist(roomid) {
         baseRotation: 0,
         initVelocity: 0,
         spinStartTime: 0,
+        targetSeconds: 20, // <-- Thêm mặc định thời gian quay
         isDraggingSync: false
       }
     };
@@ -214,29 +215,27 @@ io.on('connection', (socket) => {
   });
 
   socket.on('playerUpdatePhysics', (data) => {
-    if (!myRoomId || !rooms[myRoomId]) return;
-    
-    // Viewer tuyệt đối không được phép gửi dữ liệu làm ghi đè vòng quay
-    if (socket.myRole === 'viewer') return;
+  if (!myRoomId || !rooms[myRoomId]) return;
+  if (socket.myRole === 'viewer') return;
 
-    const ws = rooms[myRoomId].wheelState;
+  const ws = rooms[myRoomId].wheelState;
+  if (data.spinStartTime) {
+    ws.baseRotation = data.baseRotation;
+    ws.initVelocity = data.initVelocity;
+    ws.spinStartTime = data.spinStartTime;
+    ws.targetSeconds = data.targetSeconds || 20;
+    ws.velocity = data.initVelocity;
+    ws.isDraggingSync = false;
+  } else {
+    ws.rotation = data.rotation;
+    ws.velocity = data.velocity ?? 0;
+    ws.spinStartTime = 0;
+    ws.isDraggingSync = data.isDraggingSync || false;
+  }
+  if (data.rotation !== undefined) ws.rotation = data.rotation;
 
-    if (data.spinStartTime) {
-      ws.baseRotation = data.baseRotation;
-      ws.initVelocity = data.initVelocity;
-      ws.spinStartTime = data.spinStartTime;
-      ws.velocity = data.initVelocity;
-      ws.isDraggingSync = false;
-    } else {
-      ws.rotation = data.rotation;
-      ws.velocity = data.velocity ?? 0;
-      ws.spinStartTime = 0;
-      ws.isDraggingSync = data.isDraggingSync || false;
-    }
-    if (data.rotation !== undefined) ws.rotation = data.rotation;
-
-    socket.broadcast.to(myRoomId).emit('playerSyncPhysics', data);
-  });
+  socket.broadcast.to(myRoomId).emit('playerSyncPhysics', data);
+});
 
   socket.on('playerStopWheel', (data) => {
     if (!myRoomId || !rooms[myRoomId]) return;
