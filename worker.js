@@ -1,4 +1,4 @@
-// worker.js - Xử lý tính toán logic vật lý ngầm không phụ thuộc vào Tab ẩn/hiện
+// worker.js - Xử lý tính toán logic vật lý ngầm chuẩn hóa toàn cầu
 let timer = null;
 let currentRotation = 0;
 let baseRotation = 0;
@@ -8,7 +8,7 @@ let isSpinningFree = false;
 const friction = 0.995;
 const pinAngleStep = 15;
 let lastClickAngleIndex = 0;
-let targetSeconds = 20;
+let targetSeconds = 20; // Sẽ được cập nhật động
 
 self.onmessage = function (e) {
   const data = e.data;
@@ -17,6 +17,10 @@ self.onmessage = function (e) {
     baseRotation = data.baseRotation;
     initVelocity = data.initVelocity;
     spinStartTime = data.spinStartTime;
+    // CẬP NHẬT: Nhận cấu hình thời gian quay thực tế từ main thread gửi vào
+    if (data.targetSeconds) {
+      targetSeconds = data.targetSeconds;
+    }
     isSpinningFree = true;
     if (!timer) startLoop();
   } 
@@ -41,11 +45,19 @@ function calculatePhysics(serverNow) {
   const t = (serverNow - spinStartTime) / 1000;
   if (t < 0) return { r: baseRotation, v: initVelocity };
 
-  const targetRotation = baseRotation + (initVelocity / ((1 - friction) * 60));
-  const currentVelocity = initVelocity * Math.pow(friction, t * 60);
-
-  if (Math.abs(currentVelocity) < 0.2) {
+  // Kiểm tra nếu thời gian trôi qua vượt quá thời gian thiết lập quay nón
+  if (t >= targetSeconds) {
     isSpinningFree = false;
+    const finalRotation = baseRotation + (initVelocity * (1 - Math.pow(friction, targetSeconds * 60))) / (1 - friction) / 60;
+    return { r: finalRotation, v: 0 };
+  }
+
+  const currentVelocity = initVelocity * Math.pow(friction, t * 60);
+  
+  // Điều kiện dừng an toàn dựa trên vận tốc cận 0
+  if (Math.abs(currentVelocity) < 0.1) {
+    isSpinningFree = false;
+    const targetRotation = baseRotation + (initVelocity / ((1 - friction) * 60));
     return { r: targetRotation, v: 0 };
   }
 
@@ -55,10 +67,7 @@ function calculatePhysics(serverNow) {
 
 function startLoop() {
   timer = setInterval(() => {
-    // Kích hoạt Main Thread đẩy dữ liệu thời gian đã đồng bộ về để tính toán
-    self.postMessage({
-      type: 'TICK'
-    });
+    self.postMessage({ type: 'TICK' });
   }, 30);
 }
 
