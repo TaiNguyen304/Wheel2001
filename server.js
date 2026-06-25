@@ -33,7 +33,7 @@ function initRoomIfNotExist(roomid) {
         baseRotation: 0,
         initVelocity: 0,
         spinStartTime: 0,
-        targetSeconds: 20, // <-- Thêm mặc định thời gian quay
+        targetSeconds: 20, 
         isDraggingSync: false
       }
     };
@@ -42,6 +42,17 @@ function initRoomIfNotExist(roomid) {
 
 io.on('connection', (socket) => {
   let myRoomId = null;
+
+  // --- BỔ SUNG: CƠ CHẾ ĐỒNG BỘ ĐỒNG HỒ ĐỊA LÝ TOÀN CẦU ---
+  // Lắng nghe và phản hồi ngay lập tức thời gian của server để các máy tự tính độ lệch pha (latency)
+  socket.on('serverTimeSync', (clientTimestamp, callback) => {
+    if (typeof callback === 'function') {
+      callback({
+        serverTimestamp: Date.now(),
+        clientTimestamp: clientTimestamp
+      });
+    }
+  });
 
   socket.on('techCreateRoom', (data) => {
     const { roomid, passwords } = data;
@@ -120,14 +131,14 @@ io.on('connection', (socket) => {
     myRoomId = roomid;
     socket.join(roomid);
 
-    // Đồng bộ Role Viewer ở cấp độ joinRoom
     const checkRole = String(role).toLowerCase();
     if (checkRole === 'viewer') {
       socket.myRole = 'viewer';
       socket.emit('loginResult', { success: true, role: 'viewer' });
       socket.emit('initGameState', {
         ...rooms[roomid].wheelState,
-        allowedPlayer: rooms[roomid].allowedPlayer
+        allowedPlayer: rooms[roomid].allowedPlayer,
+        serverNow: Date.now()
       });
       return;
     }
@@ -149,7 +160,8 @@ io.on('connection', (socket) => {
       socket.emit('loginResult', { success: true, role: 'player', playerRole: targetRole });
       socket.emit('initGameState', {
         ...rooms[roomid].wheelState,
-        allowedPlayer: rooms[roomid].allowedPlayer
+        allowedPlayer: rooms[roomid].allowedPlayer,
+        serverNow: Date.now()
       });
     } else {
       socket.emit('loginResult', { success: false, message: 'Xác thực thông tin cấu hình phòng thất bại!' });
@@ -179,7 +191,6 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Xác thực luồng cho Role Viewer
     if (playerRole && String(playerRole).toLowerCase() === 'viewer') {
       myRoomId = roomid;
       socket.join(roomid);
@@ -189,7 +200,8 @@ io.on('connection', (socket) => {
 
       socket.emit('initGameState', {
         ...rooms[roomid].wheelState,
-        allowedPlayer: rooms[roomid].allowedPlayer
+        allowedPlayer: rooms[roomid].allowedPlayer,
+        serverNow: Date.now()
       });
       return;
     }
@@ -205,7 +217,8 @@ io.on('connection', (socket) => {
 
       socket.emit('initGameState', {
         ...rooms[roomid].wheelState,
-        allowedPlayer: rooms[roomid].allowedPlayer
+        allowedPlayer: rooms[roomid].allowedPlayer,
+        serverNow: Date.now()
       });
     } else {
       if (typeof callback === 'function') {
@@ -214,33 +227,33 @@ io.on('connection', (socket) => {
     }
   });
 
+  // 1. Trong sự kiện playerUpdatePhysics
   socket.on('playerUpdatePhysics', (data) => {
-  if (!myRoomId || !rooms[myRoomId]) return;
-  if (socket.myRole === 'viewer') return;
+    if (!myRoomId || !rooms[myRoomId]) return;
+    if (socket.myRole === 'viewer') return;
 
-  const ws = rooms[myRoomId].wheelState;
-  if (data.spinStartTime) {
-    ws.baseRotation = data.baseRotation;
-    ws.initVelocity = data.initVelocity;
-    ws.spinStartTime = data.spinStartTime;
-    ws.targetSeconds = data.targetSeconds || 20;
-    ws.velocity = data.initVelocity;
-    ws.isDraggingSync = false;
-  } else {
-    ws.rotation = data.rotation;
-    ws.velocity = data.velocity ?? 0;
-    ws.spinStartTime = 0;
-    ws.isDraggingSync = data.isDraggingSync || false;
-  }
-  if (data.rotation !== undefined) ws.rotation = data.rotation;
+    const ws = rooms[myRoomId].wheelState;
+    if (data.spinStartTime) {
+      ws.baseRotation = data.baseRotation;
+      ws.initVelocity = data.initVelocity;
+      ws.spinStartTime = data.spinStartTime;
+      ws.targetSeconds = data.targetSeconds || 20;
+      ws.velocity = data.initVelocity;
+      ws.isDraggingSync = false;
+      ws.serverSpinStartTime = Date.now(); // <-- THÊM DÒNG NÀY: Lưu mốc thời gian chuẩn của Server
+    } else {
+      ws.rotation = data.rotation;
+      ws.velocity = data.velocity ?? 0;
+      ws.spinStartTime = 0;
+      ws.isDraggingSync = data.isDraggingSync || false;
+    }
+    if (data.rotation !== undefined) ws.rotation = data.rotation;
 
-  socket.broadcast.to(myRoomId).emit('playerSyncPhysics', data);
-});
+    socket.broadcast.to(myRoomId).emit('playerSyncPhysics', data);
+  });
 
   socket.on('playerStopWheel', (data) => {
     if (!myRoomId || !rooms[myRoomId]) return;
-    
-    // Viewer tuyệt đối không được phép dừng vòng quay
     if (socket.myRole === 'viewer') return;
 
     const ws = rooms[myRoomId].wheelState;

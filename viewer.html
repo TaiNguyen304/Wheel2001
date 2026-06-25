@@ -287,23 +287,25 @@
     }
 
     // 🔄 ĐỒNG BỘ CHUYỂN ĐỘNG XOAY NÓN TỪ SERVER TỚI VIEWER
+    // 🔄 ĐỒNG BỘ CHUYỂN ĐỘNG XOAY NÓN TỪ SERVER TỚI VIEWER
     socket.on('playerSyncPhysics', (data) => {
       // TRƯỜNG HỢP 1: Bắt đầu trạng thái QUAY TỰ DO (Có thời gian bắt đầu quay)
       if (data.spinStartTime && data.spinStartTime > 0) {
         baseRotation = data.baseRotation;
         initVelocity = data.initVelocity;
-        spinStartTime = data.spinStartTime;
+        
+        // SỬA TẠI ĐÂY: Khớp mốc thời gian bắt đầu quay bằng CHÍNH thời gian hiện tại của máy mình
+        // Giúp biến t luôn luôn lớn hơn hoặc bằng 0, loại bỏ hoàn toàn việc bị đứng hình nón
+        spinStartTime = getServerTime(); 
+        
         isSpinningFree = true;
 
-        // ĐỒNG BỘ THỜI GIAN QUAY: Nhận số giây thực tế (10 - 20s) được truyền từ người quay
         if (data.targetSeconds) {
           targetSeconds = data.targetSeconds;
         }
 
-        // Kích hoạt chuỗi âm thanh chạy theo thời gian mới
         triggerSpinSoundTimeout();
 
-        // Đẩy tham số vào Web Worker để tính toán tọa độ mượt mà
         physicsWorker.postMessage({
           type: 'START_PHYSICS',
           baseRotation: baseRotation,
@@ -318,7 +320,6 @@
           physicsWorker.postMessage({ type: 'SYNC_STATIC', rotation: currentRotation });
         }
         
-        // Nếu vận tốc bằng 0 hoặc đang có lệnh đồng bộ kéo chuột vật lý
         if (data.velocity === 0 || data.isDraggingSync) {
           isSpinningFree = false;
           spinStartTime = 0;
@@ -368,6 +369,7 @@
       }
     });
 
+    // 🔄 XỬ LÝ KHI VIEWER VÀO PHÒNG HOẶC ẤN F5 GIỮA CHỪNG
     socket.on('initGameState', (state) => {
       if (state) {
         if (state.activeImage && wheel) wheel.src = state.activeImage;
@@ -375,13 +377,18 @@
         if (state.spinStartTime && state.spinStartTime > 0) {
           baseRotation = state.baseRotation;
           initVelocity = state.initVelocity;
-          spinStartTime = state.spinStartTime;
           isSpinningFree = true;
 
-          // ĐỒNG BỘ THỜI GIAN KHI VIEWER F5 GIỮA CHỪNG
           if (state.targetSeconds) {
             targetSeconds = state.targetSeconds;
           }
+
+          // SỬA TẠI ĐÂY: Tính toán khoảng thời gian nón đã quay dựa thuần túy trên đồng hồ Server
+          let serverElapsed = state.serverNow - state.serverSpinStartTime;
+          if (serverElapsed < 0 || !serverElapsed) serverElapsed = 0;
+
+          // Khớp mốc thời gian lùi lại tương ứng với thời gian đã trôi qua để Worker chạy tiếp mượt mà
+          spinStartTime = getServerTime() - serverElapsed;
 
           triggerSpinSoundTimeout();
 

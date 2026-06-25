@@ -527,19 +527,19 @@
     window.addEventListener('touchend', onMouseUp);
 
     socket.on('playerSyncPhysics', (data) => {
-      if (isDraggingByMe) return;
+      if (isDraggingByMe) return; // Nếu là chính mình đang quay/kéo thì không ghi đè
 
       if (data.spinStartTime && data.spinStartTime > 0) {
         baseRotation = data.baseRotation;
         initVelocity = data.initVelocity;
-        spinStartTime = data.spinStartTime;
+        
+        // SỬA TẠI ĐÂY: Đồng bộ tương đối dựa theo thời gian máy local tiếp nhận gói tin
+        spinStartTime = getServerTime();
+        
         isSpinningFree = true;
 
-        // ĐỒNG BỘ THỜI GIAN QUAY: Nhận số giây thực tế từ người quay gửi lên (nếu không có thì mặc định 15)
         if (data.targetSeconds) {
           targetSeconds = data.targetSeconds;
-          
-          // Nếu trên màn hình của bạn có ô Input hiển thị số giây, cập nhật nó luôn để trực quan
           const durationInput = document.getElementById('spinDurationInput');
           if (durationInput) durationInput.value = data.targetSeconds;
         }
@@ -620,8 +620,13 @@
         if (state.spinStartTime && state.spinStartTime > 0) {
           baseRotation = state.baseRotation;
           initVelocity = state.initVelocity;
-          spinStartTime = state.spinStartTime;
           isSpinningFree = true;
+          
+          // SỬA TẠI ĐÂY: Xử lý bù trừ thời gian lệch tâm khi F5 giữa chừng
+          let serverElapsed = state.serverNow - state.serverSpinStartTime;
+          if (serverElapsed < 0 || !serverElapsed) serverElapsed = 0;
+          spinStartTime = getServerTime() - serverElapsed;
+
           triggerSpinSoundTimeout();
           refreshSpinButtonUI();
 
