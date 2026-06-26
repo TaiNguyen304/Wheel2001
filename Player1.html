@@ -666,8 +666,8 @@
       const targetSeconds = duration;
       const totalTicks = targetSeconds * 60; 
 
-      const minDegrees = 1850;
-      const calculatedVelocity = (minDegrees * (1 - 0.995) * 60) / (1 - Math.pow(0.995, totalTicks)) + (Math.random() * 5);
+      const randomDegrees = 1800 + Math.random() * 3600;
+      const calculatedVelocity = (randomDegrees * (1 - 0.995) * 60) / (1 - Math.pow(0.995, totalTicks));
 
       const startRotation = currentRotation;
       const startTime = getServerTime();
