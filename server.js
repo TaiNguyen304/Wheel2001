@@ -33,7 +33,7 @@ function initRoomIfNotExist(roomid) {
         baseRotation: 0,
         initVelocity: 0,
         spinStartTime: 0,
-        targetSeconds: 20, 
+        targetSeconds: 20,
         isDraggingSync: false
       }
     };
@@ -57,9 +57,9 @@ io.on('connection', (socket) => {
   socket.on('techCreateRoom', (data) => {
     const { roomid, passwords } = data;
     if (!roomid) return;
-    
+
     initRoomIfNotExist(roomid);
-    myRoomId = roomid; 
+    myRoomId = roomid;
     socket.join(roomid);
 
     rooms[roomid].passwords = {
@@ -74,7 +74,7 @@ io.on('connection', (socket) => {
     const imageName = data?.imageName || data;
 
     if (!roomid || !rooms[roomid]) return;
-    
+
     rooms[roomid].wheelState.activeImage = imageName;
     io.to(roomid).emit('playerUpdateImage', imageName);
   });
@@ -83,7 +83,7 @@ io.on('connection', (socket) => {
     const roomid = data?.roomid || myRoomId;
 
     if (!roomid || !rooms[roomid]) return;
-    
+
     const ws = rooms[roomid].wheelState;
     ws.rotation = 0;
     ws.velocity = 0;
@@ -100,7 +100,7 @@ io.on('connection', (socket) => {
     const player = data && Object.prototype.hasOwnProperty.call(data, 'player') ? data.player : data;
 
     if (!roomid || !rooms[roomid]) return;
-    
+
     rooms[roomid].allowedPlayer = player;
     io.to(roomid).emit('syncAllowedPlayer', player);
   });
@@ -171,7 +171,7 @@ io.on('connection', (socket) => {
   socket.on('playerVerifyLogin', (data, callback) => {
     const roomid = data?.roomid !== undefined ? String(data.roomid).trim() : "";
     const playerRole = data?.playerRole;
-    
+
     let clientPass = "";
     if (data?.password !== undefined) {
       clientPass = String(data.password).trim();
@@ -212,7 +212,7 @@ io.on('connection', (socket) => {
       myRoomId = roomid;
       socket.join(roomid);
       socket.myRole = playerRole;
-      
+
       if (typeof callback === 'function') callback({ success: true, playerRole: playerRole });
 
       socket.emit('initGameState', {
@@ -237,7 +237,10 @@ io.on('connection', (socket) => {
       ws.baseRotation = data.baseRotation;
       ws.initVelocity = data.initVelocity;
       ws.spinStartTime = data.spinStartTime;
-      ws.targetSeconds = data.targetSeconds || 20;
+      let secureTargetSeconds = data.targetSeconds || 20;
+      if (secureTargetSeconds < 15) secureTargetSeconds = 15;
+      if (secureTargetSeconds > 25) secureTargetSeconds = 25;
+      ws.targetSeconds = secureTargetSeconds;
       ws.velocity = data.initVelocity;
       ws.isDraggingSync = false;
       ws.serverSpinStartTime = Date.now(); // <-- THÊM DÒNG NÀY: Lưu mốc thời gian chuẩn của Server
@@ -257,14 +260,14 @@ io.on('connection', (socket) => {
     if (socket.myRole === 'viewer') return;
 
     const ws = rooms[myRoomId].wheelState;
-    
+
     ws.rotation = data.rotation;
     ws.velocity = 0;
     ws.baseRotation = 0;
     ws.initVelocity = 0;
     ws.spinStartTime = 0;
     ws.isDraggingSync = false;
-    
+
     io.to(myRoomId).emit('playerSyncPhysics', { rotation: data.rotation, velocity: 0, spinStartTime: 0 });
   });
 
