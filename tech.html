@@ -259,6 +259,37 @@
     </div>
   </div>
 
+  <div class="panel-box" style="background: #e8f4ff;">
+    <div class="panel-title">Quản lý Kim chỉ thị (Pointers)</div>
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+      
+      <div style="border: 1px dashed #aaa; padding: 10px; border-radius: 8px;">
+        <div style="margin-bottom: 8px;">Kim 1 (Gốc - Dưới)</div>
+        <button class="btn-green-white" style="padding: 8px 15px; font-size: 14px;" onclick="setPointerState('p1', true)">HIỆN</button>
+        <button class="btn-system-reset" style="padding: 8px 15px; font-size: 14px; margin: 0;" onclick="setPointerState('p1', false)">ẨN</button>
+      </div>
+
+      <div style="border: 1px dashed #aaa; padding: 10px; border-radius: 8px;">
+        <div style="margin-bottom: 8px;">Kim 2 (Đối diện - Đỉnh)</div>
+        <button class="btn-green-white" style="padding: 8px 15px; font-size: 14px;" onclick="setPointerState('p2', true)">HIỆN</button>
+        <button class="btn-system-reset" style="padding: 8px 15px; font-size: 14px; margin: 0;" onclick="setPointerState('p2', false)">ẨN</button>
+      </div>
+
+      <div style="border: 1px dashed #aaa; padding: 10px; border-radius: 8px;">
+        <div style="margin-bottom: 8px;">Kim 3 (Trái Kim 2)</div>
+        <button class="btn-green-white" style="padding: 8px 15px; font-size: 14px;" onclick="setPointerState('p3', true)">HIỆN</button>
+        <button class="btn-system-reset" style="padding: 8px 15px; font-size: 14px; margin: 0;" onclick="setPointerState('p3', false)">ẨN</button>
+      </div>
+
+      <div style="border: 1px dashed #aaa; padding: 10px; border-radius: 8px;">
+        <div style="margin-bottom: 8px;">Kim 4 (Phải Kim 2)</div>
+        <button class="btn-green-white" style="padding: 8px 15px; font-size: 14px;" onclick="setPointerState('p4', true)">HIỆN</button>
+        <button class="btn-system-reset" style="padding: 8px 15px; font-size: 14px; margin: 0;" onclick="setPointerState('p4', false)">ẨN</button>
+      </div>
+
+    </div>
+  </div>
+
   <div class="panel-box">
     <div class="panel-title">Giao diện nón thi đấu</div>
     <div class="grid-layout">
@@ -268,6 +299,23 @@
       <button class="btn-purple-face" onclick="changeRoomWheelImage('vong4.png')">Mặt Nón 4</button>
       <button class="btn-purple-face" onclick="changeRoomWheelImage('vong5.png')">Mặt Nón 5</button>
       <button class="btn-purple-face" onclick="changeRoomWheelImage('vong6.png')">Mặt Nón 6</button>
+      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong7.png')">Mặt Nón 7</button>
+      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong8.png')">Mặt Nón 8</button>
+      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong9.png')">Mặt Nón 9</button>
+      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong10.png')">Mặt Nón 10</button>
+      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong11.png')">Mặt Nón 11</button>
+      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong12.png')">Mặt Nón 12</button>
+      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong13.png')">Mặt Nón 13</button>
+      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong14.png')">Mặt Nón 14</button>
+      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong15.png')">Mặt Nón 15</button>
+      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong16.png')">Mặt Nón 16</button>
+      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong17.png')">Mặt Nón 17</button>
+      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong18.png')">Mặt Nón 18</button>
+      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong19.png')">Mặt Nón 19</button>
+      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong20.png')">Mặt Nón 20</button>
+      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong21.png')">Mặt Nón 21</button>
+      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong22.png')">Mặt Nón 22</button>
+      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong23.png')">Mặt Nón 23</button>
     </div>
     <button class="btn-system-reset" onclick="triggerResetWheelZero()">Đưa nón về góc 0</button>
   </div>
@@ -373,7 +421,6 @@
       document.getElementById('statusLog').style.color = 'green';
     }
 
-    // ĐÃ SỬA: Gửi kèm roomid trực tiếp để Server nhận diện chính xác phòng
     function dispatchPlayerPermission(player) {
       if (!currentActiveRoomID) {
         document.getElementById('statusLog').innerText = "LỖI: Bạn phải tạo phòng trước khi phân quyền!";
@@ -385,7 +432,6 @@
       document.getElementById('statusLog').style.color = 'orange';
     }
 
-    // ĐÃ SỬA: Gửi kèm roomid trực tiếp khi thay đổi giao diện mặt nón
     function changeRoomWheelImage(imageName) {
       if (!currentActiveRoomID) {
         document.getElementById('statusLog').innerText = "LỖI: Bạn phải tạo phòng trước khi chọn mặt nón!";
@@ -397,7 +443,6 @@
       document.getElementById('statusLog').style.color = 'purple';
     }
 
-    // ĐÃ SỬA: Gửi kèm roomid khi reset nón
     function triggerResetWheelZero() {
       if (!currentActiveRoomID) return;
       socket.emit('techResetWheel', { roomid: currentActiveRoomID });
@@ -405,7 +450,6 @@
       document.getElementById('statusLog').style.color = 'green';
     }
 
-    // ĐÃ SỬA: Gửi kèm roomid khi phát nhạc soundboard
     function broadcastSoundEvent(soundName) {
       if (!currentActiveRoomID) return;
       socket.emit('techPlaySound', { roomid: currentActiveRoomID, soundName: soundName });
@@ -431,6 +475,27 @@
       if (!currentActiveRoomID) return;
       socket.emit('techStopSound', { roomid: currentActiveRoomID });
       document.getElementById('statusLog').innerText = `Lệnh dừng toàn bộ âm thanh Soundboard.`;
+      document.getElementById('statusLog').style.color = 'blue';
+    }
+    
+    let currentPointers = { p1: true, p2: true, p3: true, p4: true };
+
+    function setPointerState(ptrConfig, isVisible) {
+      if (!currentActiveRoomID) {
+        document.getElementById('statusLog').innerText = "LỖI: Bạn phải tạo phòng trước khi cấu hình Kim!";
+        document.getElementById('statusLog').style.color = 'red';
+        return;
+      }
+      
+      currentPointers[ptrConfig] = isVisible;
+      
+      socket.emit('techUpdatePointers', { 
+        roomid: currentActiveRoomID, 
+        pointerState: currentPointers 
+      });
+      
+      let ptrName = ptrConfig === 'p1' ? 'Kim 1' : ptrConfig === 'p2' ? 'Kim 2' : ptrConfig === 'p3' ? 'Kim 3' : 'Kim 4';
+      document.getElementById('statusLog').innerText = `Đã đồng bộ: ${isVisible ? 'Hiện' : 'Ẩn'} ${ptrName}`;
       document.getElementById('statusLog').style.color = 'blue';
     }
     

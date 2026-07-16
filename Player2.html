@@ -94,11 +94,11 @@
     /* Trạng thái Mở khi có quyền */
     .btn-spin.active {
       cursor: pointer;
-      background-color: yellow;
-      /* Đỏ ff0000 */
-      color: black;
-      /* Chữ đậm trắng */
-      border: 2px solid yellow;
+      background-color: #ffff00;
+      /* Vàng ffff00 */
+      color: #000000;
+      /* Chữ đậm đen */
+      border: 2px solid #ffff00;
       box-shadow: 0 0 15px rgba(255, 255, 0, 0.6);
     }
 
@@ -123,6 +123,17 @@
       z-index: 10;
     }
 
+    .wheel-rotator {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      will-change: transform;
+      transform: translateZ(0);
+    }
+
     #wheel {
       width: 100%;
       height: 100%;
@@ -130,8 +141,6 @@
       user-select: none;
       pointer-events: none;
       filter: drop-shadow(0 0 30px rgba(0, 0, 0, 0.5));
-      will-change: transform;
-      transform: translateZ(0);
     }
 
     .pointer-wrapper {
@@ -207,10 +216,26 @@
     </div>
 
     <div class="wheel-container">
-      <div class="pointer-wrapper">
-        <img id="pointerImg" class="pointer" src="pointer.png" />
+      <div class="all-pointers-container" style="position: absolute; top: 50%; left: 50%; z-index: 15; pointer-events: none;">
+        <div id="pointer1" style="position: absolute; transform: translate(-50%, -50%) rotate(180deg) translateY(-355px);">
+          <img src="pointer.png" style="width: 90px; height: 90px; object-fit: contain;" />
+        </div>
+        <div id="pointer2" style="position: absolute; transform: translate(-50%, -50%) rotate(0deg) translateY(-355px);">
+          <img src="pointer2.png" style="width: 90px; height: 90px; object-fit: contain;" />
+        </div>
+        <div id="pointer3" style="position: absolute; transform: translate(-50%, -50%) rotate(-30deg) translateY(-355px);">
+          <img src="pointer1.png" style="width: 90px; height: 90px; object-fit: contain;" />
+        </div>
+        <div id="pointer4" style="position: absolute; transform: translate(-50%, -50%) rotate(30deg) translateY(-355px);">
+          <img src="pointer3.png" style="width: 90px; height: 90px; object-fit: contain;" />
+        </div>
       </div>
-      <img id="wheel" src="wheel-template.png" />
+      
+      <div id="wheel-rotator" class="wheel-rotator">
+        <img id="wheel" src="wheel-template.png" />
+        <svg id="dotsSvg" viewBox="0 0 820 820" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 11;"></svg>
+      </div>
+
       <div class="drag-zone" id="dragZone"></div>
     </div>
   </div>
@@ -222,7 +247,7 @@
     const playerRole = sessionStorage.getItem('player');
     const playerPass = sessionStorage.getItem('password');
 
-    const myPlayerName = "Player 2"; // Thay đổi tương ứng với từng file Player 2, Player 3
+    const myPlayerName = "Player 2"; // CHÚ Ý: Đổi thành "Player 2" hoặc "Player 3" tương ứng với từng file
     let isDraggingAllowed = false;
     let currentAllowedPlayer = ""; // Biến lưu trữ người chơi đang có quyền thực tế từ Tech
 
@@ -288,7 +313,28 @@
     });
 
     const wheel = document.getElementById('wheel');
+    const wheelRotator = document.getElementById('wheel-rotator');
     const pointerImg = document.getElementById('pointerImg');
+    const dotsSvg = document.getElementById('dotsSvg');
+
+    // Khởi tạo 48 chấm tròn màu oải hương (#E6E6FA) cách nhau 7.5 độ, bán kính 398px sát rìa nón
+    if (dotsSvg) {
+      const cx = 410;
+      const cy = 410;
+      const r = 355;
+      for (let i = 0; i < 48; i++) {
+        const angleRad = (i * 7.5) * Math.PI / 180;
+        const x = cx + r * Math.cos(angleRad);
+        const y = cy + r * Math.sin(angleRad);
+
+        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        circle.setAttribute("cx", x);
+        circle.setAttribute("cy", y);
+        circle.setAttribute("r", "5");
+        circle.setAttribute("fill", "#E6E6FA");
+        dotsSvg.appendChild(circle);
+      }
+    }
 
     const clickSound = new Audio('click.mp3');
     const spinSound = new Audio('spin.mp3');
@@ -310,6 +356,37 @@
 
     soundboard["10s"].volume = 0.3;
     soundboard["30s"].volume = 0.3;
+
+    // --- HÀM TỰ ĐỘNG CROP VÀ BO TRÒN THEO MẶT NÓN ---
+    function applyWheelCropStyle(imageName) {
+      if (!wheel) return;
+      if (!imageName) {
+        wheel.style.objectFit = "contain";
+        wheel.style.borderRadius = "0%";
+        wheel.style.width = "100%";
+        wheel.style.height = "100%";
+        return;
+      }
+
+      // Tìm số thứ tự vòng nằm sau chữ 'vong' trong chuỗi (Ví dụ: vong7.png, vong23.png)
+      const match = imageName.match(/vong(\d+)/i);
+      if (match) {
+        const roundNumber = parseInt(match[1], 10);
+        if (roundNumber >= 7 && roundNumber <= 23) {
+          // Cắt ảnh chữ nhật về 1:1 từ tâm, bo tròn và thu nhỏ kích thước xuống còn 90%
+          wheel.style.objectFit = "cover";
+          wheel.style.borderRadius = "0%";
+          wheel.style.width = "90%";
+          wheel.style.height = "90%";
+          return;
+        }
+      }
+      // Các mặt nón khác giữ nguyên tỉ lệ thiết kế cũ (100% kích thước)
+      wheel.style.objectFit = "contain";
+      wheel.style.borderRadius = "0%";
+      wheel.style.width = "100%";
+      wheel.style.height = "100%";
+    }
 
     function activateAudioStream() {
       document.getElementById('audioOverlay').style.display = 'none';
@@ -568,31 +645,24 @@
       }
     });
 
+    // Khoá góc kim cố định hướng thẳng vào tâm
     function updatePointerFlap(rotationValue) {
-      let normalizedRotation = rotationValue % 360;
-      if (normalizedRotation < 0) normalizedRotation += 360;
-      let remainder = normalizedRotation % pinAngleStep;
-      if (remainder > pinAngleStep / 2) remainder -= pinAngleStep;
-
-      let pointerAngleOffset = 0;
-      const contactZone = 6;
-      if (Math.abs(remainder) < contactZone) {
-        let pushIntensity = (contactZone - Math.abs(remainder)) / contactZone;
-        pointerAngleOffset = -Math.abs(remainder * pushIntensity * 6.0);
-      }
-      pointerAngleOffset = Math.max(-25, Math.min(0, pointerAngleOffset));
-      if (pointerImg) pointerImg.style.transform = `rotate(${180 + pointerAngleOffset}deg)`;
+      if (pointerImg) pointerImg.style.transform = `rotate(180deg)`;
     }
 
     function renderLoop() {
-      if (wheel) wheel.style.transform = `rotate(${currentRotation.toFixed(2)}deg) translateZ(0)`;
+      if (wheelRotator) wheelRotator.style.transform = `rotate(${currentRotation.toFixed(2)}deg) translateZ(0)`;
       updatePointerFlap(currentRotation);
       requestAnimationFrame(renderLoop);
     }
     requestAnimationFrame(renderLoop);
 
+    // CHỈNH SỬA TẠI ĐÂY: Áp dụng crop khi nhận lệnh thay đổi ảnh
     socket.on('playerUpdateImage', (imageName) => {
-      if (imageName && wheel) wheel.src = imageName;
+      if (imageName && wheel) {
+        wheel.src = imageName;
+        applyWheelCropStyle(imageName);
+      }
     });
 
     socket.on('syncAllowedPlayer', (player) => {
@@ -612,29 +682,63 @@
       }
     });
 
+    socket.on('syncPointerState', (pointerState) => {
+      if (pointerState) {
+        const p1 = document.getElementById('pointer1');
+        const p2 = document.getElementById('pointer2');
+        const p3 = document.getElementById('pointer3');
+        const p4 = document.getElementById('pointer4');
+        
+        // Thêm điều kiện if để tránh lỗi Javascript khi DOM chưa kịp load
+        if (p1) p1.style.display = pointerState.p1 ? 'block' : 'none';
+        if (p2) p2.style.display = pointerState.p2 ? 'block' : 'none';
+        if (p3) p3.style.display = pointerState.p3 ? 'block' : 'none';
+        if (p4) p4.style.display = pointerState.p4 ? 'block' : 'none';
+      }
+    });
+
+    // CHỈNH SỬA TẠI ĐÂY: Áp dụng crop khi khởi tạo hoặc tải lại trang giữa trận đấu
     socket.on('initGameState', (state) => {
       if (state) {
-        if (state.activeImage && wheel) wheel.src = state.activeImage;
-        applyPermissionUI(state.allowedPlayer);
+        if (state.activeImage && wheel) {
+          wheel.src = state.activeImage;
+          applyWheelCropStyle(state.activeImage);
+        }
+
+        // Đã dời đoạn này lên đúng vị trí ngay sau khi xử lý vòng quay
+        if (state.pointerState) {
+          const p1 = document.getElementById('pointer1');
+          const p2 = document.getElementById('pointer2');
+          const p3 = document.getElementById('pointer3');
+          const p4 = document.getElementById('pointer4');
+          
+          if (p1) p1.style.display = state.pointerState.p1 ? 'block' : 'none';
+          if (p2) p2.style.display = state.pointerState.p2 ? 'block' : 'none';
+          if (p3) p3.style.display = state.pointerState.p3 ? 'block' : 'none';
+          if (p4) p4.style.display = state.pointerState.p4 ? 'block' : 'none';
+        }
 
         if (state.spinStartTime && state.spinStartTime > 0) {
           baseRotation = state.baseRotation;
           initVelocity = state.initVelocity;
           isSpinningFree = true;
-          
-          // SỬA TẠI ĐÂY: Xử lý bù trừ thời gian lệch tâm khi F5 giữa chừng
+
+          if (state.targetSeconds) {
+            targetSeconds = state.targetSeconds;
+          }
+
           let serverElapsed = state.serverNow - state.serverSpinStartTime;
           if (serverElapsed < 0 || !serverElapsed) serverElapsed = 0;
-          spinStartTime = getServerTime() - serverElapsed;
 
+          spinStartTime = getServerTime() - serverElapsed;
           triggerSpinSoundTimeout();
-          refreshSpinButtonUI();
 
           physicsWorker.postMessage({
             type: 'START_PHYSICS',
             baseRotation: baseRotation,
             initVelocity: initVelocity,
-            spinStartTime: spinStartTime
+            spinStartTime: spinStartTime,
+            targetSeconds: targetSeconds
           });
         } else {
           if (state.rotation !== undefined) {
@@ -642,7 +746,6 @@
             isSpinningFree = false;
             spinStartTime = 0;
             stopSpinSoundSafely();
-            refreshSpinButtonUI();
             physicsWorker.postMessage({ type: 'SYNC_STATIC', rotation: currentRotation });
           }
         }
@@ -681,7 +784,6 @@
       triggerSpinSoundTimeout();
       refreshSpinButtonUI(); // Khóa ngay lập tức nút bấm tại local máy player
 
-      // SỬA LỖI TẠI ĐÂY: Gửi lên bằng emit 'playerUpdatePhysics' để Server đồng bộ cho cả Viewer và Host
       socket.emit('playerUpdatePhysics', {
         baseRotation: baseRotation,
         initVelocity: initVelocity,
@@ -690,7 +792,6 @@
         targetSeconds: targetSeconds
       });
 
-      // Đưa vào worker cục bộ để chạy chuyển động mượt mà luôn
       physicsWorker.postMessage({
         type: 'START_PHYSICS',
         baseRotation: baseRotation,
