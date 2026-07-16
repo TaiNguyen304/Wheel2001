@@ -34,7 +34,8 @@ function initRoomIfNotExist(roomid) {
         initVelocity: 0,
         spinStartTime: 0,
         targetSeconds: 20,
-        isDraggingSync: false
+        isDraggingSync: false,
+        pointerState: { p1: true, p2: true, p3: true, p4: true }
       }
     };
   }
@@ -43,6 +44,13 @@ function initRoomIfNotExist(roomid) {
 io.on('connection', (socket) => {
   let myRoomId = null;
 
+  socket.on('techUpdatePointers', (data) => {
+    const roomid = data?.roomid || myRoomId;
+    if (!roomid || !rooms[roomid]) return;
+
+    rooms[roomid].wheelState.pointerState = data.pointerState;
+    io.to(roomid).emit('syncPointerState', data.pointerState);
+  });
   // --- BỔ SUNG: CƠ CHẾ ĐỒNG BỘ ĐỒNG HỒ ĐỊA LÝ TOÀN CẦU ---
   // Lắng nghe và phản hồi ngay lập tức thời gian của server để các máy tự tính độ lệch pha (latency)
   socket.on('serverTimeSync', (clientTimestamp, callback) => {
