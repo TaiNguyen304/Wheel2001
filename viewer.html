@@ -138,24 +138,30 @@
 
   <div class="app">
     <div class="wheel-container">
-      <div class="all-pointers-container" style="position: absolute; top: 50%; left: 50%; z-index: 15; pointer-events: none;">
-        <div id="pointer1" style="position: absolute; transform: translate(-50%, -50%) rotate(180deg) translateY(-355px);">
+      <div class="all-pointers-container"
+        style="position: absolute; top: 50%; left: 50%; z-index: 15; pointer-events: none;">
+        <div id="pointer1"
+          style="position: absolute; transform: translate(-50%, -50%) rotate(180deg) translateY(-355px);">
           <img src="pointer.png" style="width: 90px; height: 90px; object-fit: contain;" />
         </div>
-        <div id="pointer2" style="position: absolute; transform: translate(-50%, -50%) rotate(0deg) translateY(-355px);">
+        <div id="pointer2"
+          style="position: absolute; transform: translate(-50%, -50%) rotate(0deg) translateY(-355px);">
           <img src="pointer2.png" style="width: 90px; height: 90px; object-fit: contain;" />
         </div>
-        <div id="pointer3" style="position: absolute; transform: translate(-50%, -50%) rotate(-30deg) translateY(-355px);">
+        <div id="pointer3"
+          style="position: absolute; transform: translate(-50%, -50%) rotate(-30deg) translateY(-355px);">
           <img src="pointer1.png" style="width: 90px; height: 90px; object-fit: contain;" />
         </div>
-        <div id="pointer4" style="position: absolute; transform: translate(-50%, -50%) rotate(30deg) translateY(-355px);">
+        <div id="pointer4"
+          style="position: absolute; transform: translate(-50%, -50%) rotate(30deg) translateY(-355px);">
           <img src="pointer3.png" style="width: 90px; height: 90px; object-fit: contain;" />
         </div>
       </div>
 
       <div id="wheel-rotator" class="wheel-rotator">
         <img id="wheel" src="wheel-template.png" />
-        <svg id="dotsSvg" viewBox="0 0 820 820" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 11;"></svg>
+        <svg id="dotsSvg" viewBox="0 0 820 820"
+          style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 11;"></svg>
       </div>
     </div>
   </div>
@@ -210,27 +216,50 @@
         wheel.style.borderRadius = "0%";
         wheel.style.width = "100%";
         wheel.style.height = "100%";
+        wheel.style.border = "none";
+        wheel.style.backgroundColor = "transparent";
+        wheel.style.clipPath = "none";
+        wheel.style.boxShadow = "none";
         return;
       }
 
-      // Tìm số thứ tự vòng nằm sau chữ 'vong' trong chuỗi (Ví dụ: vong7.png, vong23.png)
+      // Tìm số thứ tự vòng nằm sau chữ 'vong' trong chuỗi
       const match = imageName.match(/vong(\d+)/i);
       if (match) {
         const roundNumber = parseInt(match[1], 10);
         if (roundNumber >= 7 && roundNumber <= 23) {
-          // Cắt ảnh chữ nhật về 1:1 từ tâm, bo tròn và thu nhỏ kích thước xuống còn 80%
+          // 1. Phục hồi 100% hình ảnh mặt Nón, KHÔNG cắt xén, giữ chuẩn 90% kích thước
           wheel.style.objectFit = "cover";
-          wheel.style.borderRadius = "0%";
           wheel.style.width = "90%";
           wheel.style.height = "90%";
+
+          // 2. Bo tròn khung chứa ảnh
+          wheel.style.borderRadius = "50%";
+
+          // 3. MẤU CHỐT GIẢI QUYẾT: Đổ màu nền trùng màu viền.
+          // Màu này sẽ lấp đầy toàn bộ phần rìa trong suốt của file PNG, kết nối hoàn hảo nón và viền!
+          wheel.style.backgroundColor = "#5898d5";
+
+          // 4. Tạo độ dày cho viền. 
+          // (Lưu ý: CSS border không nhận giá trị %, nên mình để mặc định 15px. Bạn có thể tăng giảm số 15px - 20px này để tương đương với độ dày 5% mà bạn muốn nhé).
+          wheel.style.border = "0px solid #5898d5";
+
+          // Xóa toàn bộ các hiệu ứng cũ gây lỗi mất góc ảnh
+          wheel.style.clipPath = "none";
+          wheel.style.boxShadow = "none";
           return;
         }
       }
-      // Các mặt nón giữ nguyên tỉ lệ thiết kế cũ (100% kích thước)
+
+      // Các mặt nón khác giữ nguyên mặc định
       wheel.style.objectFit = "contain";
       wheel.style.borderRadius = "0%";
       wheel.style.width = "100%";
       wheel.style.height = "100%";
+      wheel.style.border = "none";
+      wheel.style.backgroundColor = "transparent";
+      wheel.style.clipPath = "none";
+      wheel.style.boxShadow = "none";
     }
 
     // --- CƠ CHẾ ĐỒNG BỘ ĐỒNG HỒ ĐỊA LÝ TOÀN CẦU ---
@@ -368,7 +397,7 @@
       if (data.spinStartTime && data.spinStartTime > 0) {
         baseRotation = data.baseRotation;
         initVelocity = data.initVelocity;
-        
+
         // Đồng bộ thời gian bắt đầu quay dựa theo sai số đồng hồ toàn cầu
         spinStartTime = getServerTime() - (getServerTime() - data.spinStartTime);
         isSpinningFree = true;
@@ -442,7 +471,7 @@
         const p2 = document.getElementById('pointer2');
         const p3 = document.getElementById('pointer3');
         const p4 = document.getElementById('pointer4');
-        
+
         // Thêm điều kiện if để tránh lỗi Javascript khi DOM chưa kịp load
         if (p1) p1.style.display = pointerState.p1 ? 'block' : 'none';
         if (p2) p2.style.display = pointerState.p2 ? 'block' : 'none';
@@ -454,6 +483,10 @@
     // CHỈNH SỬA TẠI ĐÂY: Áp dụng crop khi khởi tạo hoặc tải lại trang giữa trận đấu
     socket.on('initGameState', (state) => {
       if (state) {
+        if (state.spinMusic && spinSound) {
+          spinSound.src = state.spinMusic;
+        }
+
         if (state.activeImage && wheel) {
           wheel.src = state.activeImage;
           applyWheelCropStyle(state.activeImage);
@@ -465,7 +498,7 @@
           const p2 = document.getElementById('pointer2');
           const p3 = document.getElementById('pointer3');
           const p4 = document.getElementById('pointer4');
-          
+
           if (p1) p1.style.display = state.pointerState.p1 ? 'block' : 'none';
           if (p2) p2.style.display = state.pointerState.p2 ? 'block' : 'none';
           if (p3) p3.style.display = state.pointerState.p3 ? 'block' : 'none';
@@ -503,6 +536,12 @@
             physicsWorker.postMessage({ type: 'SYNC_STATIC', rotation: currentRotation });
           }
         }
+      }
+    });
+
+    socket.on('syncSpinMusic', (musicFile) => {
+      if (musicFile && spinSound) {
+        spinSound.src = musicFile;
       }
     });
 
