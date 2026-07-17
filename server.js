@@ -28,6 +28,7 @@ function initRoomIfNotExist(roomid) {
       allowedPlayer: null,
       wheelState: {
         activeImage: 'wheel-template.png',
+        spinMusic: 'spin.mp3',
         rotation: 0,
         velocity: 0,
         baseRotation: 0,
@@ -77,6 +78,14 @@ io.on('connection', (socket) => {
     };
   });
 
+  socket.on('techChangeSpinMusic', (data) => {
+    const roomid = data?.roomid || myRoomId;
+    const musicFile = data?.musicFile;
+    if (!roomid || !rooms[roomid]) return;
+
+    rooms[roomid].wheelState.spinMusic = musicFile;
+    io.to(roomid).emit('syncSpinMusic', musicFile);
+  });
   socket.on('techChangeImage', (data) => {
     const roomid = data?.roomid || myRoomId;
     const imageName = data?.imageName || data;
