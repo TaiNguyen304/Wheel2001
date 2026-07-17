@@ -148,7 +148,7 @@
       background: orange;
       color: white;
     }
-    
+
     .btn-system-reset {
       background: red;
       color: white;
@@ -228,8 +228,15 @@
     }
 
     @keyframes popupShow {
-      from { transform: scale(0.85); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
+      from {
+        transform: scale(0.85);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.4/dist/socket.io.min.js"></script>
@@ -243,8 +250,10 @@
   <div class="panel-box" style="background: #f4faf4;">
     <div class="panel-title">Quản lý định danh phòng thi đấu</div>
     <div class="btn-row">
-      <button class="btn-green-white" style="background: green; border-color: #39ff14;" onclick="actionInitializeRoomAndPasswords()">KÍCH HOẠT KHỞI TẠO PHÒNG TỰ ĐỘNG</button>
-      <button class="btn-green-white" style="background: green; border-color: #39ff14;" onclick="verifyDataSentToServer()">🔍 KIỂM TRA DỮ LIỆU</button>
+      <button class="btn-green-white" style="background: green; border-color: #39ff14;"
+        onclick="actionInitializeRoomAndPasswords()">KÍCH HOẠT KHỞI TẠO PHÒNG TỰ ĐỘNG</button>
+      <button class="btn-green-white" style="background: green; border-color: #39ff14;"
+        onclick="verifyDataSentToServer()">🔍 KIỂM TRA DỮ LIỆU</button>
     </div>
     <div id="roomCredentialsDisplay" class="info-box" style="display:none;"></div>
   </div>
@@ -262,34 +271,53 @@
   <div class="panel-box" style="background: #e8f4ff;">
     <div class="panel-title">Quản lý Kim chỉ thị (Pointers)</div>
     <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
-      
+
       <div style="border: 1px dashed #aaa; padding: 10px; border-radius: 8px;">
         <div style="margin-bottom: 8px;">Kim 1 (Gốc - Dưới)</div>
-        <button class="btn-green-white" style="padding: 8px 15px; font-size: 14px;" onclick="setPointerState('p1', true)">HIỆN</button>
-        <button class="btn-system-reset" style="padding: 8px 15px; font-size: 14px; margin: 0;" onclick="setPointerState('p1', false)">ẨN</button>
+        <button class="btn-green-white" style="padding: 8px 15px; font-size: 14px;"
+          onclick="setPointerState('p1', true)">HIỆN</button>
+        <button class="btn-system-reset" style="padding: 8px 15px; font-size: 14px; margin: 0;"
+          onclick="setPointerState('p1', false)">ẨN</button>
       </div>
 
       <div style="border: 1px dashed #aaa; padding: 10px; border-radius: 8px;">
         <div style="margin-bottom: 8px;">Kim 2 (Đối diện - Đỉnh)</div>
-        <button class="btn-green-white" style="padding: 8px 15px; font-size: 14px;" onclick="setPointerState('p2', true)">HIỆN</button>
-        <button class="btn-system-reset" style="padding: 8px 15px; font-size: 14px; margin: 0;" onclick="setPointerState('p2', false)">ẨN</button>
+        <button class="btn-green-white" style="padding: 8px 15px; font-size: 14px;"
+          onclick="setPointerState('p2', true)">HIỆN</button>
+        <button class="btn-system-reset" style="padding: 8px 15px; font-size: 14px; margin: 0;"
+          onclick="setPointerState('p2', false)">ẨN</button>
       </div>
 
       <div style="border: 1px dashed #aaa; padding: 10px; border-radius: 8px;">
         <div style="margin-bottom: 8px;">Kim 3 (Trái Kim 2)</div>
-        <button class="btn-green-white" style="padding: 8px 15px; font-size: 14px;" onclick="setPointerState('p3', true)">HIỆN</button>
-        <button class="btn-system-reset" style="padding: 8px 15px; font-size: 14px; margin: 0;" onclick="setPointerState('p3', false)">ẨN</button>
+        <button class="btn-green-white" style="padding: 8px 15px; font-size: 14px;"
+          onclick="setPointerState('p3', true)">HIỆN</button>
+        <button class="btn-system-reset" style="padding: 8px 15px; font-size: 14px; margin: 0;"
+          onclick="setPointerState('p3', false)">ẨN</button>
       </div>
 
       <div style="border: 1px dashed #aaa; padding: 10px; border-radius: 8px;">
         <div style="margin-bottom: 8px;">Kim 4 (Phải Kim 2)</div>
-        <button class="btn-green-white" style="padding: 8px 15px; font-size: 14px;" onclick="setPointerState('p4', true)">HIỆN</button>
-        <button class="btn-system-reset" style="padding: 8px 15px; font-size: 14px; margin: 0;" onclick="setPointerState('p4', false)">ẨN</button>
+        <button class="btn-green-white" style="padding: 8px 15px; font-size: 14px;"
+          onclick="setPointerState('p4', true)">HIỆN</button>
+        <button class="btn-system-reset" style="padding: 8px 15px; font-size: 14px; margin: 0;"
+          onclick="setPointerState('p4', false)">ẨN</button>
       </div>
 
     </div>
   </div>
 
+  <div style="margin-bottom: 20px; border: 2px solid #ff00cc; padding: 12px; border-radius: 8px; background: #fff;">
+    <label for="spinMusicSelect" style="font-size: 16px; color: #333; margin-right: 10px;">Cấu hình Nhạc quay
+      Nón:</label>
+    <select id="spinMusicSelect"
+      style="padding: 8px 15px; font-size: 16px; font-weight: bold; border-radius: 6px; border: 2px solid #ff00cc; color: #000;"
+      onchange="changeSpinMusic(this.value)">
+      <option value="spin.mp3">Nhạc 1 (spin.mp3)</option>
+      <option value="spin2.mp3">Nhạc 2 (spin2.mp3)</option>
+      <option value="spin3.mp3">Nhạc 3 (spin3.mp3)</option>
+    </select>
+  </div>
   <div class="panel-box">
     <div class="panel-title">Giao diện nón thi đấu</div>
     <div class="grid-layout">
@@ -336,7 +364,9 @@
       <button class="btn-blue-sound" onclick="broadcastSoundEvent('10s')">10s</button>
     </div>
     <div style="margin-top: 15px;">
-      <button class="btn-blue-sound" style="width: 100%; max-width: 300px; font-size: 16px; padding: 12px; text-transform: uppercase;" onclick="broadcastStopAllSounds()">Dừng âm thanh</button>
+      <button class="btn-blue-sound"
+        style="width: 100%; max-width: 300px; font-size: 16px; padding: 12px; text-transform: uppercase;"
+        onclick="broadcastStopAllSounds()">Dừng âm thanh</button>
     </div>
   </div>
 
@@ -367,7 +397,7 @@
     socket.on('connect', () => {
       document.getElementById('statusLog').innerText = "Máy chủ Socket.io kết nối thành công!";
       document.getElementById('statusLog').style.color = 'green';
-      
+
       // Nếu mất kết nối và kết nối lại, tự động rejoin room để giữ trạng thái ổn định
       if (currentActiveRoomID) {
         socket.emit('techCreateRoom', {
@@ -395,27 +425,40 @@
 
     function actionInitializeRoomAndPasswords() {
       currentActiveRoomID = Math.floor(100000 + Math.random() * 900000).toString();
-      
+
       roomPasswordsConfig["Player 1"] = Math.floor(1000 + Math.random() * 9000).toString();
       roomPasswordsConfig["Player 2"] = Math.floor(1000 + Math.random() * 9000).toString();
       roomPasswordsConfig["Player 3"] = Math.floor(1000 + Math.random() * 9000).toString();
-      
+
       renderRoomCredentialsBox();
       pushRoomConfigurationToServer();
     }
 
+    // Thêm hàm này vào cuối phần script của file Tech
+    function changeSpinMusic(musicFile) {
+      if (!currentActiveRoomID) {
+        document.getElementById('statusLog').innerText = "LỖI: Bạn phải tạo phòng trước khi cấu hình nhạc quay!";
+        document.getElementById('statusLog').style.color = 'red';
+        return;
+      }
+      socket.emit('techChangeSpinMusic', { roomid: currentActiveRoomID, musicFile: musicFile });
+      document.getElementById('statusLog').innerText = `Đã đổi nhạc quay Nón thành: ${musicFile}`;
+      document.getElementById('statusLog').style.color = 'blue';
+    }
+
+    // Cập nhật lại hàm pushRoomConfigurationToServer để tự động sync cấu hình nhạc hiện tại khi khởi tạo phòng
     function pushRoomConfigurationToServer() {
       if (!currentActiveRoomID) return;
       
-      console.log('[TECH] Gửi dữ liệu lên server:', {
-        roomid: currentActiveRoomID,
-        passwords: roomPasswordsConfig
-      });
+      const currentMusic = document.getElementById('spinMusicSelect').value;
       
       socket.emit('techCreateRoom', {
         roomid: currentActiveRoomID,
         passwords: roomPasswordsConfig
       });
+      
+      // Đồng bộ luôn bài nhạc đang được chọn
+      socket.emit('techChangeSpinMusic', { roomid: currentActiveRoomID, musicFile: currentMusic });
       
       document.getElementById('statusLog').innerText = `Phòng ${currentActiveRoomID} và Mật khẩu đã được đồng bộ an toàn lên Server!`;
       document.getElementById('statusLog').style.color = 'green';
@@ -467,7 +510,7 @@
         roomid: currentActiveRoomID,
         passwords: roomPasswordsConfig
       });
-      
+
       showPopup(`✓ DỮ LIỆU ĐANG LƯU TRÊN MÁY CHỦ:\n\n Mã phòng: ${currentActiveRoomID}\n\n Mật khẩu Player 1: ${roomPasswordsConfig["Player 1"]}\n Mật khẩu Player 2: ${roomPasswordsConfig["Player 2"]}\n Mật khẩu Player 3: ${roomPasswordsConfig["Player 3"]}`);
     }
 
@@ -477,7 +520,7 @@
       document.getElementById('statusLog').innerText = `Lệnh dừng toàn bộ âm thanh Soundboard.`;
       document.getElementById('statusLog').style.color = 'blue';
     }
-    
+
     let currentPointers = { p1: true, p2: true, p3: true, p4: true };
 
     function setPointerState(ptrConfig, isVisible) {
@@ -486,19 +529,19 @@
         document.getElementById('statusLog').style.color = 'red';
         return;
       }
-      
+
       currentPointers[ptrConfig] = isVisible;
-      
-      socket.emit('techUpdatePointers', { 
-        roomid: currentActiveRoomID, 
-        pointerState: currentPointers 
+
+      socket.emit('techUpdatePointers', {
+        roomid: currentActiveRoomID,
+        pointerState: currentPointers
       });
-      
+
       let ptrName = ptrConfig === 'p1' ? 'Kim 1' : ptrConfig === 'p2' ? 'Kim 2' : ptrConfig === 'p3' ? 'Kim 3' : 'Kim 4';
       document.getElementById('statusLog').innerText = `Đã đồng bộ: ${isVisible ? 'Hiện' : 'Ẩn'} ${ptrName}`;
       document.getElementById('statusLog').style.color = 'blue';
     }
-    
+
     document.addEventListener('contextmenu', e => e.preventDefault());
     document.addEventListener('keydown', e => {
       if (e.keyCode === 123) e.preventDefault();
