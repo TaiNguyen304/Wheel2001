@@ -86,6 +86,14 @@ io.on('connection', (socket) => {
     rooms[roomid].wheelState.spinMusic = musicFile;
     io.to(roomid).emit('syncSpinMusic', musicFile);
   });
+
+  socket.on('controlSlotState', (data) => {
+    // data gồm: { id, file, action, angle }
+    const roomid = socket.roomid; // Hoặc cách lấy roomid hiện tại của server bạn
+
+    // Phát trực tiếp cập nhật tới mọi client trong phòng bao gồm Player và Viewer
+    io.to(roomid).emit('syncSlotState', data);
+  });
   socket.on('techChangeImage', (data) => {
     const roomid = data?.roomid || myRoomId;
     const imageName = data?.imageName || data;
