@@ -36,7 +36,8 @@ function initRoomIfNotExist(roomid) {
         spinStartTime: 0,
         targetSeconds: 20,
         isDraggingSync: false,
-        pointerState: { p1: true, p2: true, p3: true, p4: true }
+        pointerState: { p1: true, p2: true, p3: true, p4: true },
+        slots: {}
       }
     };
   }
@@ -88,15 +89,23 @@ io.on('connection', (socket) => {
   });
 
   socket.on('controlSlotState', (data) => {
-    // SỬA TẠI ĐÂY: Lấy roomid từ payload gửi lên hoặc từ biến myRoomId lưu cục bộ
-    const roomid = data?.roomid || myRoomId; 
+    const roomid = data?.roomid || myRoomId;
+    if (!roomid) return;
 
-    // Bổ sung kiểm tra an toàn, nếu không có phòng thì chặn lại
-    if (!roomid) return; 
+    // --- THÊM LOGIC LƯU TRẠNG THÁI CHO VIEWER ---
+    if (rooms[roomid]) {
+      if (data.action === 'show') {
+        rooms[roomid].wheelState.slots[data.id] = data; // Lưu lại khi hiện
+      } else if (data.action === 'hide') {
+        delete rooms[roomid].wheelState.slots[data.id]; // Xóa đi khi ẩn
+      }
+    }
+    // ------------------------------------------
 
-    // Phát trực tiếp cập nhật tới mọi client trong phòng bao gồm Player và Viewer
+    // Phát trực tiếp cập nhật tới mọi client
     io.to(roomid).emit('syncSlotState', data);
   });
+  
   socket.on('techChangeImage', (data) => {
     const roomid = data?.roomid || myRoomId;
     const imageName = data?.imageName || data;
