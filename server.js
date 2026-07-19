@@ -88,8 +88,11 @@ io.on('connection', (socket) => {
   });
 
   socket.on('controlSlotState', (data) => {
-    // data gồm: { id, file, action, angle }
-    const roomid = socket.roomid; // Hoặc cách lấy roomid hiện tại của server bạn
+    // SỬA TẠI ĐÂY: Lấy roomid từ payload gửi lên hoặc từ biến myRoomId lưu cục bộ
+    const roomid = data?.roomid || myRoomId; 
+
+    // Bổ sung kiểm tra an toàn, nếu không có phòng thì chặn lại
+    if (!roomid) return; 
 
     // Phát trực tiếp cập nhật tới mọi client trong phòng bao gồm Player và Viewer
     io.to(roomid).emit('syncSlotState', data);
