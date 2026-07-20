@@ -37,6 +37,7 @@ function initRoomIfNotExist(roomid) {
         targetSeconds: 20,
         isDraggingSync: false,
         pointerState: { p1: true, p2: true, p3: true, p4: true },
+        pointerColorState: { p2: 'default', p3: 'default', p4: 'default' },
         slots: {}
       }
     };
@@ -105,7 +106,21 @@ io.on('connection', (socket) => {
     // Phát trực tiếp cập nhật tới mọi client
     io.to(roomid).emit('syncSlotState', data);
   });
-  
+
+  // Phía Server xử lý khi tech gửi lệnh đổi màu kim:
+  socket.on('techUpdatePointerColor', (data) => {
+    // data gồm { pointerId: 'p2', colorState: 'purple' }
+    const room = rooms[roomid];
+
+    if (room && room.wheelState && room.wheelState.pointerColorState) {
+      // Lưu trạng thái màu vào chính xác vị trí trong wheelState
+      room.wheelState.pointerColorState[data.pointerId] = data.colorState;
+
+      // Phát quảng bá về cho tất cả các Player và Viewer trong phòng
+      io.to(roomid).emit('syncPointerColorState', data);
+    }
+  });
+
   socket.on('techChangeImage', (data) => {
     const roomid = data?.roomid || myRoomId;
     const imageName = data?.imageName || data;
