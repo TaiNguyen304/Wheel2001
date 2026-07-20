@@ -109,14 +109,12 @@ io.on('connection', (socket) => {
 
   // Phía Server xử lý khi tech gửi lệnh đổi màu kim:
   socket.on('techUpdatePointerColor', (data) => {
-    // data gồm { pointerId: 'p2', colorState: 'purple' }
+    const roomid = data?.roomid || myRoomId; // Lấy roomid từ dữ liệu truyền lên hoặc từ socket session
+    if (!roomid) return;
+
     const room = rooms[roomid];
-
     if (room && room.wheelState && room.wheelState.pointerColorState) {
-      // Lưu trạng thái màu vào chính xác vị trí trong wheelState
       room.wheelState.pointerColorState[data.pointerId] = data.colorState;
-
-      // Phát quảng bá về cho tất cả các Player và Viewer trong phòng
       io.to(roomid).emit('syncPointerColorState', data);
     }
   });
