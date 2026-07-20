@@ -51,7 +51,8 @@
       align-items: center;
       gap: 20px;
       box-shadow: 0 0 20px rgba(255, 0, 204, 0.4);
-      z-index: 20; /* Đảm bảo nằm trên nền */
+      z-index: 20;
+      /* Đảm bảo nằm trên nền */
     }
 
     .panel-label {
@@ -216,24 +217,32 @@
     </div>
 
     <div class="wheel-container">
-      <div class="all-pointers-container" style="position: absolute; top: 50%; left: 50%; z-index: 15; pointer-events: none;">
-        <div id="pointer1" style="position: absolute; transform: translate(-50%, -50%) rotate(180deg) translateY(-355px);">
+      <div class="all-pointers-container"
+        style="position: absolute; top: 50%; left: 50%; z-index: 15; pointer-events: none;">
+        <div id="pointer1"
+          style="position: absolute; transform: translate(-50%, -50%) rotate(180deg) translateY(-355px);">
           <img src="pointer.png" style="width: 90px; height: 90px; object-fit: contain;" />
         </div>
-        <div id="pointer2" style="position: absolute; transform: translate(-50%, -50%) rotate(0deg) translateY(-355px);">
+        <div id="pointer2"
+          style="position: absolute; transform: translate(-50%, -50%) rotate(0deg) translateY(-355px);">
           <img src="pointer2.png" style="width: 90px; height: 90px; object-fit: contain;" />
         </div>
-        <div id="pointer3" style="position: absolute; transform: translate(-50%, -50%) rotate(-30deg) translateY(-355px);">
+        <div id="pointer3"
+          style="position: absolute; transform: translate(-50%, -50%) rotate(-30deg) translateY(-355px);">
           <img src="pointer1.png" style="width: 90px; height: 90px; object-fit: contain;" />
         </div>
-        <div id="pointer4" style="position: absolute; transform: translate(-50%, -50%) rotate(30deg) translateY(-355px);">
+        <div id="pointer4"
+          style="position: absolute; transform: translate(-50%, -50%) rotate(30deg) translateY(-355px);">
           <img src="pointer3.png" style="width: 90px; height: 90px; object-fit: contain;" />
         </div>
       </div>
-      
+
       <div id="wheel-rotator" class="wheel-rotator">
         <img id="wheel" src="wheel-template.png" />
-        <svg id="dotsSvg" viewBox="0 0 820 820" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 11;"></svg>
+        <div id="slots-container"
+          style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></div>
+        <svg id="dotsSvg" viewBox="0 0 820 820"
+          style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 11;"></svg>
       </div>
 
       <div class="drag-zone" id="dragZone"></div>
@@ -251,6 +260,13 @@
     let isDraggingAllowed = false;
     let currentAllowedPlayer = ""; // Biến lưu trữ người chơi đang có quyền thực tế từ Tech
 
+    // Khai báo danh sách ảnh mặc định của các kim để fallback khi cần
+    const defaultPointerImages = {
+      p2: 'pointer2.png',
+      p3: 'pointer1.png',
+      p4: 'pointer3.png'
+    };
+    
     // --- CƠ CHẾ ĐỒNG BỘ ĐỒNG HỒ ĐỊA LÝ TOÀN CẦU ---
     let serverTimeOffset = 0;
     function syncClockWithServer() {
@@ -480,7 +496,7 @@
     function applyPermissionUI(allowedPlayer) {
       currentAllowedPlayer = allowedPlayer; // Lưu lại trạng thái quyền toàn cục
       const dragZone = document.getElementById('dragZone');
-      
+
       if (allowedPlayer === myPlayerName) {
         isDraggingAllowed = true;
         if (dragZone) dragZone.style.cursor = 'grab';
@@ -488,7 +504,7 @@
         isDraggingAllowed = false;
         if (dragZone) dragZone.style.cursor = 'not-allowed';
       }
-      
+
       refreshSpinButtonUI();
     }
 
@@ -573,7 +589,7 @@
       if (Math.abs(calculatedVelocity) > 40) {
         baseRotation = currentRotation;
         initVelocity = calculatedVelocity;
-        spinStartTime = getServerTime(); 
+        spinStartTime = getServerTime();
         isSpinningFree = true;
 
         triggerSpinSoundTimeout();
@@ -632,10 +648,10 @@
       if (data.spinStartTime && data.spinStartTime > 0) {
         baseRotation = data.baseRotation;
         initVelocity = data.initVelocity;
-        
+
         // SỬA TẠI ĐÂY: Đồng bộ tương đối dựa theo thời gian máy local tiếp nhận gói tin
         spinStartTime = getServerTime();
-        
+
         isSpinningFree = true;
 
         if (data.targetSeconds) {
@@ -711,7 +727,7 @@
         const p2 = document.getElementById('pointer2');
         const p3 = document.getElementById('pointer3');
         const p4 = document.getElementById('pointer4');
-        
+
         // Thêm điều kiện if để tránh lỗi Javascript khi DOM chưa kịp load
         if (p1) p1.style.display = pointerState.p1 ? 'block' : 'none';
         if (p2) p2.style.display = pointerState.p2 ? 'block' : 'none';
@@ -738,7 +754,7 @@
           const p2 = document.getElementById('pointer2');
           const p3 = document.getElementById('pointer3');
           const p4 = document.getElementById('pointer4');
-          
+
           if (p1) p1.style.display = state.pointerState.p1 ? 'block' : 'none';
           if (p2) p2.style.display = state.pointerState.p2 ? 'block' : 'none';
           if (p3) p3.style.display = state.pointerState.p3 ? 'block' : 'none';
@@ -776,6 +792,22 @@
             physicsWorker.postMessage({ type: 'SYNC_STATIC', rotation: currentRotation });
           }
         }
+
+        if (state.pointerColorState) {
+          for (let pId in state.pointerColorState) {
+            const targetPointerDiv = document.getElementById(pId === 'p2' ? 'pointer2' : pId === 'p3' ? 'pointer3' : 'pointer4');
+            if (targetPointerDiv) {
+              const imgEl = targetPointerDiv.querySelector('img');
+              if (imgEl) {
+                if (state.pointerColorState[pId] === 'purple') {
+                  imgEl.src = 'pointer4.png';
+                } else {
+                  imgEl.src = defaultPointerImages[pId];
+                }
+              }
+            }
+          }
+        }
       }
     });
 
@@ -785,6 +817,82 @@
       }
     });
 
+    // Hàm dùng chung để render Thẻ đúng kích thước và vị trí
+    function renderSlot(data) {
+      const container = document.getElementById('slots-container');
+      if (!container) return;
+
+      const oldElement = document.getElementById(`slot_element_${data.id}`);
+      if (oldElement) oldElement.remove();
+
+      if (data.action === 'show') {
+        const wrapper = document.createElement('div');
+        wrapper.id = `slot_element_${data.id}`;
+
+        wrapper.style.position = 'absolute';
+        wrapper.style.width = '820px';
+        wrapper.style.height = '820px';
+        wrapper.style.transform = `rotate(${data.angle}deg)`;
+        wrapper.style.zIndex = '12';
+        wrapper.style.pointerEvents = 'none';
+
+        const imgEl = document.createElement('img');
+        imgEl.src = data.file;
+
+        imgEl.style.position = 'absolute';
+        imgEl.style.left = '410px';
+        imgEl.style.transform = 'translateX(-50%)';
+
+        const isCardCheck = data.isCard || (data.id && data.id.startsWith('t_'));
+
+        if (isCardCheck) {
+          // KHÔNG dùng object-fit để tránh ảnh tự căn giữa khung
+          imgEl.style.objectFit = 'fill';
+          // Đẩy sát lên Rìa nón (cách mép ngoài cùng của nón 820px chỉ 10px - 15px)
+          imgEl.style.top = '75px';
+          imgEl.style.width = '60px';
+          imgEl.style.height = '80px';
+        } else {
+          // Giữ nguyên cấu hình chuẩn của các Ô
+          imgEl.style.objectFit = 'contain';
+          const isGroup2 = ['o3000', 'o4000', 'oqd'].includes(data.id) || data.id.endsWith('2') || data.id.endsWith('_2');
+          if (isGroup2) {
+            imgEl.style.top = '60px';
+            imgEl.style.width = '120px';
+            imgEl.style.height = '370px';
+          } else {
+            imgEl.style.top = '0px';
+            imgEl.style.width = '100px';
+            imgEl.style.height = '330px';
+          }
+        }
+
+        wrapper.appendChild(imgEl);
+        container.appendChild(wrapper);
+      }
+    }
+
+    socket.on('syncPointerColorState', (data) => {
+      if (data && data.pointerId) {
+        const targetPointerDiv = document.getElementById(data.pointerId === 'p2' ? 'pointer2' : data.pointerId === 'p3' ? 'pointer3' : 'pointer4');
+        if (targetPointerDiv) {
+          const imgEl = targetPointerDiv.querySelector('img');
+          if (imgEl) {
+            if (data.colorState === 'purple') {
+              imgEl.src = 'pointer4.png';
+            } else {
+              imgEl.src = defaultPointerImages[data.pointerId];
+            }
+          }
+        }
+      }
+    });
+
+    // Lắng nghe lệnh trực tiếp từ Tech
+    socket.on('syncSlotState', (data) => {
+      renderSlot(data);
+    });
+    
     function validateSpinDuration(input) {
       let val = parseInt(input.value);
       if (isNaN(val) || val < 15) val = 15;
@@ -800,7 +908,7 @@
       const duration = parseInt(durationInput.value) || 20;
 
       const targetSeconds = duration;
-      const totalTicks = targetSeconds * 60; 
+      const totalTicks = targetSeconds * 60;
 
       const randomDegrees = 1800 + Math.random() * 3600;
       const calculatedVelocity = (randomDegrees * (1 - 0.995) * 60) / (1 - Math.pow(0.995, totalTicks));

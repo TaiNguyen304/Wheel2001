@@ -282,26 +282,38 @@
 
       <div style="border: 1px dashed #aaa; padding: 10px; border-radius: 8px;">
         <div style="margin-bottom: 8px;">Kim 2 (Đối diện - Đỉnh)</div>
-        <button class="btn-green-white" style="padding: 8px 15px; font-size: 14px;"
-          onclick="setPointerState('p2', true)">HIỆN</button>
-        <button class="btn-system-reset" style="padding: 8px 15px; font-size: 14px; margin: 0;"
-          onclick="setPointerState('p2', false)">ẨN</button>
+        <div style="margin-bottom: 6px;">
+          <button class="btn-green-white" style="padding: 6px 12px; font-size: 13px;" onclick="setPointerState('p2', true)">HIỆN</button>
+          <button class="btn-system-reset" style="padding: 6px 12px; font-size: 13px; margin: 0;" onclick="setPointerState('p2', false)">ẨN</button>
+        </div>
+        <div>
+          <button class="btn-green-white" style="background: blue; border-color: #0055cc; padding: 6px 12px; font-size: 13px;" onclick="setPointerColor('p2', 'default')">Đèn màu</button>
+          <button class="btn-purple-face" style="padding: 6px 12px; font-size: 13px;" onclick="setPointerColor('p2', 'purple')">Đèn tím</button>
+        </div>
       </div>
 
       <div style="border: 1px dashed #aaa; padding: 10px; border-radius: 8px;">
         <div style="margin-bottom: 8px;">Kim 3 (Trái Kim 2)</div>
-        <button class="btn-green-white" style="padding: 8px 15px; font-size: 14px;"
-          onclick="setPointerState('p3', true)">HIỆN</button>
-        <button class="btn-system-reset" style="padding: 8px 15px; font-size: 14px; margin: 0;"
-          onclick="setPointerState('p3', false)">ẨN</button>
+        <div style="margin-bottom: 6px;">
+          <button class="btn-green-white" style="padding: 6px 12px; font-size: 13px;" onclick="setPointerState('p3', true)">HIỆN</button>
+          <button class="btn-system-reset" style="padding: 6px 12px; font-size: 13px; margin: 0;" onclick="setPointerState('p3', false)">ẨN</button>
+        </div>
+        <div>
+          <button class="btn-green-white" style="background: blue; border-color: #0055cc; padding: 6px 12px; font-size: 13px;" onclick="setPointerColor('p3', 'default')">Đèn màu</button>
+          <button class="btn-purple-face" style="padding: 6px 12px; font-size: 13px;" onclick="setPointerColor('p3', 'purple')">Đèn tím</button>
+        </div>
       </div>
 
       <div style="border: 1px dashed #aaa; padding: 10px; border-radius: 8px;">
         <div style="margin-bottom: 8px;">Kim 4 (Phải Kim 2)</div>
-        <button class="btn-green-white" style="padding: 8px 15px; font-size: 14px;"
-          onclick="setPointerState('p4', true)">HIỆN</button>
-        <button class="btn-system-reset" style="padding: 8px 15px; font-size: 14px; margin: 0;"
-          onclick="setPointerState('p4', false)">ẨN</button>
+        <div style="margin-bottom: 6px;">
+          <button class="btn-green-white" style="padding: 6px 12px; font-size: 13px;" onclick="setPointerState('p4', true)">HIỆN</button>
+          <button class="btn-system-reset" style="padding: 6px 12px; font-size: 13px; margin: 0;" onclick="setPointerState('p4', false)">ẨN</button>
+        </div>
+        <div>
+          <button class="btn-green-white" style="background: blue; border-color: #0055cc; padding: 6px 12px; font-size: 13px;" onclick="setPointerColor('p4', 'default')">Đèn màu</button>
+          <button class="btn-purple-face" style="padding: 6px 12px; font-size: 13px;" onclick="setPointerColor('p4', 'purple')">Đèn tím</button>
+        </div>
       </div>
 
     </div>
@@ -348,6 +360,62 @@
     <button class="btn-system-reset" onclick="triggerResetWheelZero()">Đưa nón về góc 0</button>
   </div>
 
+  <div class="panel-box" style="margin-top: 20px;">
+    <div class="panel-title">Điều khiển ô trên Nón</div>
+    <div
+      style="display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto; padding-right: 5px; text-align: left;">
+
+      <script>
+        // Danh sách định nghĩa 17 ô và 2 thẻ 
+        const slotsData = [
+          { id: 'pn1', name: 'Ô Phần thưởng (Kiểu 1)', file: 'Ô Phần thưởng 1.png', angles: [307.5] },
+          { id: 'bm1_1', name: 'Ô bí mật 1 (Kiểu 1)', file: 'Ô Bí Mật 1.png', angles: [37.5] },
+          { id: 'bm2_1', name: 'Ô bí mật 2 (Kiểu 1)', file: 'Ô Bí Mật 1.png', angles: [217.5] },
+          { id: 'st1', name: 'Ô Siêu tốc (Kiểu 1)', file: 'Ô Siêu Tốc 1.png', angles: [37.5] },
+          { id: 'dd1', name: 'Ô Đổi điểm (Kiểu 1)', file: 'Ô Đổi điểm 1.png', angles: [37.5] },
+          { id: 'o1000', name: 'Ô 1.000', file: 'Ô 1000.png', angles: [262.5] },
+          { id: 'o2000', name: 'Ô 2.000', file: 'Ô 2000.png', angles: [232.5] },
+          { id: 'o100k_1', name: 'Ô 100.000 (Kiểu 1)', file: 'Ô 100000 1.png', angles: [172.5] },
+          { id: 'pn2', name: 'Ô Phần thưởng (Kiểu 2)', file: 'Ô Phần thưởng 2.png', angles: [172.5, 202.5] },
+          { id: 'bm1_2', name: 'Ô bí mật 1 (Kiểu 2)', file: 'Ô Bí Mật 2.png', angles: [172.5, 202.5] },
+          { id: 'bm2_2', name: 'Ô bí mật 2 (Kiểu 2)', file: 'Ô Bí Mật 2.png', angles: [262.5, 337.5] },
+          { id: 'st2', name: 'Ô Siêu tốc (Kiểu 2)', file: 'Ô Siêu Tốc 2.png', angles: [172.5, 202.5] },
+          { id: 'dd2', name: 'Ô Đổi điểm (Kiểu 2)', file: 'Ô Đổi điểm 2.png', angles: [172.5, 202.5] },
+          { id: 'o3000', name: 'Ô 3.000', file: 'Ô 3000.png', angles: [37.5, 157.5] },
+          { id: 'o4000', name: 'Ô 4.000', file: 'Ô 4000.png', angles: [37.5, 157.5] },
+          { id: 'oqd', name: 'Ô Quy đổi', file: 'Ô Quy đổi.png', angles: [262.5, 337.5] },
+          { id: 'o100k_2', name: 'Ô 100.000 (Kiểu 2)', file: 'Ô 100000 2.png', angles: [127.5, 142.5] },
+          { id: 't_ch', name: 'Thẻ Cơ hội', file: 'Thẻ Cơ hội.png', angles: [7.5, 22.5, 82.5], isCard: true },
+          { id: 't_qn', name: 'Thẻ Quyền năng', file: 'Thẻ Quyền năng.png', angles: [112.5, 277.5, 292.5], isCard: true }
+        ];
+
+        // Hàm xử lý gửi trạng thái qua Socket.io
+        function toggleSlot(id, file, action) {
+          let selectedAngle = parseFloat(document.getElementById(`angle_${id}`).value);
+          socket.emit('controlSlotState', { id, file, action, angle: selectedAngle });
+        }
+
+        // Render các dòng điều khiển ra HTML
+        slotsData.forEach(slot => {
+          document.write(`
+          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eee; padding: 8px 0;">
+            <span style="font-size: 14px; width: 220px;">${slot.name}</span>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <label style="font-size: 13px; color: #555;">Góc: 
+                <select id="angle_${slot.id}" style="padding: 4px; font-weight: bold;">
+                  ${slot.angles.map(a => `<option value="${a}">${a}°</option>`).join('')}
+                </select>
+              </label>
+              <button class="btn-green-white" style="padding: 6px 12px; font-size: 13px; background: green;" onclick="toggleSlot('${slot.id}', '${slot.file}', 'show')">HIỆN</button>
+              <button class="btn-green-white" style="padding: 6px 12px; font-size: 13px; background: red; border-color: darkred;" onclick="toggleSlot('${slot.id}', '${slot.file}', 'hide')">ẨN</button>
+            </div>
+          </div>
+        `);
+        });
+      </script>
+    </div>
+  </div>
+  
   <div class="panel-box" style="background: #fffafa;">
     <div class="panel-title">Bàn điều phối âm thanh Soundboard</div>
     <div class="btn-row">
@@ -449,17 +517,17 @@
     // Cập nhật lại hàm pushRoomConfigurationToServer để tự động sync cấu hình nhạc hiện tại khi khởi tạo phòng
     function pushRoomConfigurationToServer() {
       if (!currentActiveRoomID) return;
-      
+
       const currentMusic = document.getElementById('spinMusicSelect').value;
-      
+
       socket.emit('techCreateRoom', {
         roomid: currentActiveRoomID,
         passwords: roomPasswordsConfig
       });
-      
+
       // Đồng bộ luôn bài nhạc đang được chọn
       socket.emit('techChangeSpinMusic', { roomid: currentActiveRoomID, musicFile: currentMusic });
-      
+
       document.getElementById('statusLog').innerText = `Phòng ${currentActiveRoomID} và Mật khẩu đã được đồng bộ an toàn lên Server!`;
       document.getElementById('statusLog').style.color = 'green';
     }
@@ -542,6 +610,12 @@
       document.getElementById('statusLog').style.color = 'blue';
     }
 
+    function setPointerColor(pointerId, colorState) {
+      if (socket && socket.connected) {
+        socket.emit('techUpdatePointerColor', { pointerId, colorState });
+      }
+    }
+    
     document.addEventListener('contextmenu', e => e.preventDefault());
     document.addEventListener('keydown', e => {
       if (e.keyCode === 123) e.preventDefault();
