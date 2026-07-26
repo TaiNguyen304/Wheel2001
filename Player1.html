@@ -408,7 +408,7 @@
       const match = imageName.match(/vong(\d+)/i);
       if (match) {
         const roundNumber = parseInt(match[1], 10);
-        if (roundNumber >= 7 && roundNumber <= 23) {
+        if (roundNumber >= 7 && roundNumber <= 25) {
           // 1. Phục hồi 100% hình ảnh mặt Nón, KHÔNG cắt xén, giữ chuẩn 90% kích thước
           wheel.style.objectFit = "cover";
           wheel.style.width = "90%";
@@ -872,10 +872,16 @@
           // Giữ nguyên cấu hình chuẩn của các Ô
           imgEl.style.objectFit = 'contain';
           const isGroup2 = ['o3000', 'o4000', 'oqd'].includes(data.id) || data.id.endsWith('2') || data.id.endsWith('_2');
+          const isGroup3 = ['o2500', 'o3500'].includes(data.id) || data.id.endsWith('3') || data.id.endsWith('_3');
           if (isGroup2) {
             imgEl.style.top = '60px';
             imgEl.style.width = '120px';
             imgEl.style.height = '370px';
+          }
+          else if (isGroup3) {
+            imgEl.style.top = '58px';
+            imgEl.style.width = '100px';
+            imgEl.style.height = '215px';
           } else {
             imgEl.style.top = '0px';
             imgEl.style.width = '100px';
