@@ -871,14 +871,29 @@
         } else {
           // Giữ nguyên cấu hình chuẩn của các Ô
           imgEl.style.objectFit = 'contain';
+
           const isGroup2 = ['o3000', 'o4000', 'oqd'].includes(data.id) || data.id.endsWith('2') || data.id.endsWith('_2');
-          const isGroup3 = ['o2500', 'o3500'].includes(data.id) || data.id.endsWith('3') || data.id.endsWith('_3');
+
+          // Kiểm tra chính xác riêng cho 2 ô 2500 và 3500
+          const isTarget2500_3500 = ['o2500', 'o3500', '2500', '3500'].includes(data.id);
+
+          const isGroup3 = data.id.endsWith('3') || data.id.endsWith('_3');
+
           if (isGroup2) {
             imgEl.style.top = '60px';
             imgEl.style.width = '120px';
             imgEl.style.height = '370px';
           }
+          else if (isTarget2500_3500) {
+            // CHỈNH RIÊNG 2.500 VÀ 3.500:
+            // top: 64px giúp đẩy đỉnh lùi sâu hơn vào trong đường tròn ngoài
+            // height: 202px giúp thu ngắn đáy lại để vừa khít viền tâm xanh lá
+            imgEl.style.top = '64px';
+            imgEl.style.width = '110px';
+            imgEl.style.height = '202px';
+          }
           else if (isGroup3) {
+            // Cấu hình cũ cho các ô nhóm 3 khác
             imgEl.style.top = '58px';
             imgEl.style.width = '100px';
             imgEl.style.height = '215px';
