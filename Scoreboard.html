@@ -21,73 +21,64 @@
 
     html,
     body {
-      width: 100%;
-      height: 100%;
+      width: 100vw;
+      height: 100vh;
       overflow: hidden;
-      background: transparent;
+      background: transparent !important;
       user-select: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     #scoreboardContainer {
-      width: 100vw;
-      height: 100vh;
+      width: 100%;
+      height: 100%;
+      max-width: calc(100vh * (2005 / 1125));
+      max-height: calc(100vw * (1125 / 2005));
+      aspect-ratio: 2005 / 1125;
       display: flex;
       flex-direction: column;
       position: relative;
+      background: url('bg.png') no-repeat center center;
+      background-size: 100% 100%;
+      container-type: size;
     }
 
-    /* SECTION TRÊN: CAMERA CUTOUTS & PHÔNG ĐÊM */
+    /* SECTION TRÊN: KHUNG CAMERA TRONG SUỐT (31.8% x 32.0% khớp lỗ bg.png) */
     #topSection {
-      height: 58%;
+      height: 66.7%;
       width: 100%;
       position: relative;
       display: flex;
       align-items: center;
       justify-content: space-around;
-      padding: 0 2%;
+      padding: 0 0.8%;
       overflow: hidden;
+      background: transparent;
     }
 
-    /* Background SVG với Mask đục lỗ 3 ô Camera */
-    .top-bg-svg {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 1;
-      pointer-events: none;
-    }
-
-    /* 3 Ô LỖ KHUNG CAMERA (Tỉ lệ 16:9) Trong suốt */
     .cam-box {
       aspect-ratio: 16 / 9;
-      width: 29%;
+      width: 31.8%;
       max-height: 90%;
       position: relative;
       z-index: 2;
       background: transparent !important;
-      border: 3px solid rgba(255, 255, 255, 0.7);
-      border-radius: 12px;
-      box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+      border: none;
+      box-shadow: none;
       pointer-events: none;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    /* THANH BẠC PHÂN CÁCH GIỮA */
-    #dividerBar {
-      height: 20px;
-      width: 100%;
-      background: linear-gradient(180deg, #ffffff 0%, #d0d0d0 25%, #999999 50%, #666666 75%, #333333 100%);
-      border-top: 2px solid #ffffff;
-      border-bottom: 2px solid #1a1a1a;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
-      position: relative;
-      z-index: 10;
-    }
-
-    /* SECTION DƯỚI: BẢNG ĐIỂM 3 NGƯỜI CHƠI */
+    /* SECTION DƯỚI: ĐIỂM SỐ 3 NGƯỜI CHƠI */
     #bottomSection {
-      height: calc(42% - 20px);
+      height: 33.3%;
       width: 100%;
       display: flex;
       position: relative;
@@ -98,74 +89,30 @@
       flex: 1;
       height: 100%;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
       position: relative;
-      padding: 15px;
-      overflow: hidden;
+      background: transparent !important;
+      border: none !important;
     }
 
-    /* Hình chìm CHIẾC NÓN KỲ DIỆU */
-    .watermark-text {
-      position: absolute;
-      font-family: 'FortuneWheel', Arial, sans-serif;
-      font-size: 3.5vw;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      text-align: center;
-      opacity: 0.18;
-      width: 90%;
-      line-height: 1.15;
-      pointer-events: none;
-      user-select: none;
-      z-index: 1;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
-    }
-
-    /* Column 1: RED */
-    .col-p1 {
-      background: linear-gradient(180deg, #dc143c 0%, #a00000 50%, #660000 100%);
-      border-right: 2px solid rgba(0, 0, 0, 0.3);
-    }
-    .col-p1 .watermark-text { color: #ffffff; }
-
-    /* Column 2: GOLD / YELLOW */
-    .col-p2 {
-      background: linear-gradient(180deg, #d4af37 0%, #aa8800 50%, #775500 100%);
-      border-right: 2px solid rgba(0, 0, 0, 0.3);
-    }
-    .col-p2 .watermark-text { color: #ffffff; }
-
-    /* Column 3: BLUE */
-    .col-p3 {
-      background: linear-gradient(180deg, #0088cc 0%, #0055a0 50%, #003366 100%);
-    }
-    .col-p3 .watermark-text { color: #ffffff; }
-
-    /* THẺ HIỂN THỊ ĐIỂM SỐ - KHÔNG CÓ KHUNG TRẮNG */
     .score-card {
       position: relative;
       z-index: 5;
       background: transparent;
       border: none;
-      border-radius: 0;
-      padding: 0;
       width: 100%;
       text-align: center;
-      box-shadow: none;
     }
 
     .score-value {
       position: relative;
       z-index: 5;
-      font-size: 5.5vw;
+      font-size: 6cqw;
       color: #ffffff;
       text-shadow: 0 0 15px rgba(0, 0, 0, 0.9), 0 4px 10px rgba(0, 0, 0, 0.9);
       letter-spacing: 2px;
       line-height: 1;
-      transition: transform 0.2s ease, color 0.2s ease;
-    }
       transition: transform 0.2s ease, color 0.2s ease;
     }
 
@@ -237,7 +184,6 @@
       background: orange;
       color: white;
     }
-
   </style>
   <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.4/dist/socket.io.min.js"></script>
 </head>
@@ -247,57 +193,15 @@
   <div id="scoreboardContainer">
     <!-- SECTION TRÊN: CAMERA CUTOUTS -->
     <div id="topSection">
-      <!-- Background SVG mask đục lỗ 3 camera -->
-      <svg class="top-bg-svg" preserveAspectRatio="none">
-        <defs>
-          <!-- Gradient Bầu trời đêm -->
-          <radialGradient id="skyGradient" cx="50%" cy="30%" r="75%">
-            <stop offset="0%" stop-color="#0e1a4d" />
-            <stop offset="60%" stop-color="#050a26" />
-            <stop offset="100%" stop-color="#010310" />
-          </radialGradient>
-
-          <!-- Pattern Ngôi sao nhỏ -->
-          <pattern id="starsPattern" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
-            <circle cx="15" cy="20" r="1.2" fill="#ffffff" opacity="0.8" />
-            <circle cx="75" cy="40" r="1.5" fill="#ffffff" opacity="0.9" />
-            <circle cx="40" cy="70" r="1" fill="#ffffff" opacity="0.6" />
-            <circle cx="85" cy="15" r="1" fill="#88ccff" opacity="0.7" />
-            <circle cx="25" cy="80" r="1.8" fill="#ffffff" opacity="0.9" />
-            <circle cx="60" cy="10" r="1.2" fill="#ffffff" opacity="0.7" />
-          </pattern>
-
-          <!-- MASK ĐỤC LỖ 3 KHUNG CAMERA (TRẮNG LÀ HỆN BG, ĐEN LÀ ĐỤC TRONG SUỐT) -->
-          <mask id="cameraHolesMask">
-            <rect width="100%" height="100%" fill="white" />
-            <rect id="hole1" x="0" y="0" width="0" height="0" rx="12" fill="black" />
-            <rect id="hole2" x="0" y="0" width="0" height="0" rx="12" fill="black" />
-            <rect id="hole3" x="0" y="0" width="0" height="0" rx="12" fill="black" />
-          </mask>
-        </defs>
-
-        <!-- Lớp phông trời đêm có mask đục lỗ -->
-        <rect width="100%" height="100%" fill="url(#skyGradient)" mask="url(#cameraHolesMask)" />
-        <rect width="100%" height="100%" fill="url(#starsPattern)" mask="url(#cameraHolesMask)" opacity="0.8" />
-
-        <!-- Bóng dải thành phố phía dưới phông đêm -->
-        <path d="M 0 100% L 0 92% L 3% 92% L 3% 88% L 7% 88% L 7% 95% L 12% 95% L 12% 85% L 16% 85% L 16% 95% L 22% 95% L 22% 89% L 28% 89% L 28% 96% L 35% 96% L 35% 86% L 40% 86% L 40% 95% L 48% 95% L 48% 84% L 54% 84% L 54% 96% L 62% 96% L 62% 88% L 68% 88% L 68% 95% L 75% 95% L 75% 85% L 82% 85% L 82% 96% L 90% 96% L 90% 89% L 96% 89% L 96% 96% L 100% 96% L 100% 100% Z" fill="#020512" mask="url(#cameraHolesMask)" opacity="0.85" />
-      </svg>
-
-      <!-- 3 Khung viền camera trong suốt -->
       <div id="camBox1" class="cam-box"></div>
       <div id="camBox2" class="cam-box"></div>
       <div id="camBox3" class="cam-box"></div>
     </div>
 
-    <!-- THANH BẠC PHÂN CÁCH -->
-    <div id="dividerBar"></div>
-
     <!-- SECTION DƯỚI: BẢNG ĐIỂM 3 NGƯỜI CHƠI -->
     <div id="bottomSection">
       <!-- Player 1 -->
       <div class="player-column col-p1">
-        <div class="watermark-text">CHIẾC NÓN<br>KỲ DIỆU</div>
         <div class="score-card">
           <div id="scoreVal1" class="score-value">0</div>
         </div>
@@ -305,7 +209,6 @@
 
       <!-- Player 2 -->
       <div class="player-column col-p2">
-        <div class="watermark-text">CHIẾC NÓN<br>KỲ DIỆU</div>
         <div class="score-card">
           <div id="scoreVal2" class="score-value">0</div>
         </div>
@@ -313,7 +216,6 @@
 
       <!-- Player 3 -->
       <div class="player-column col-p3">
-        <div class="watermark-text">CHIẾC NÓN<br>KỲ DIỆU</div>
         <div class="score-card">
           <div id="scoreVal3" class="score-value">0</div>
         </div>
@@ -342,54 +244,9 @@
       displayMode: 'round'
     };
 
-    // Hàm cập nhật đục lỗ mask SVG theo vị trí 3 khung camera
-    function updateCameraCutouts() {
-      const topBg = document.getElementById('topSection').getBoundingClientRect();
-      const b1 = document.getElementById('camBox1').getBoundingClientRect();
-      const b2 = document.getElementById('camBox2').getBoundingClientRect();
-      const b3 = document.getElementById('camBox3').getBoundingClientRect();
-
-      const h1 = document.getElementById('hole1');
-      const h2 = document.getElementById('hole2');
-      const h3 = document.getElementById('hole3');
-
-      if (h1 && b1) {
-        h1.setAttribute('x', b1.left - topBg.left);
-        h1.setAttribute('y', b1.top - topBg.top);
-        h1.setAttribute('width', b1.width);
-        h1.setAttribute('height', b1.height);
-      }
-      if (h2 && b2) {
-        h2.setAttribute('x', b2.left - topBg.left);
-        h2.setAttribute('y', b2.top - topBg.top);
-        h2.setAttribute('width', b2.width);
-        h2.setAttribute('height', b2.height);
-      }
-      if (h3 && b3) {
-        h3.setAttribute('x', b3.left - topBg.left);
-        h3.setAttribute('y', b3.top - topBg.top);
-        h3.setAttribute('width', b3.width);
-        h3.setAttribute('height', b3.height);
-      }
-    }
-
-    window.addEventListener('resize', updateCameraCutouts);
     window.addEventListener('load', () => {
-      updateCameraCutouts();
-      setTimeout(updateCameraCutouts, 100);
-      setTimeout(updateCameraCutouts, 500);
       initRoomConnection();
     });
-
-    if (window.ResizeObserver) {
-      const ro = new ResizeObserver(() => {
-        updateCameraCutouts();
-      });
-      document.addEventListener('DOMContentLoaded', () => {
-        const topSec = document.getElementById('topSection');
-        if (topSec) ro.observe(topSec);
-      });
-    }
 
     function formatThousands(num) {
       if (num === null || num === undefined || isNaN(num)) return '0';
@@ -452,7 +309,6 @@
       currentRoomId = roomid;
       sessionStorage.setItem('scoreboard_roomid', roomid);
 
-      // Cập nhật URL parameter mà không reload trang
       const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?roomid=' + roomid;
       window.history.pushState({ path: newUrl }, '', newUrl);
 
