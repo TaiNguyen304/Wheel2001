@@ -6,6 +6,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Bảng Điểm - Scoreboard</title>
   <style>
+    @font-face {
+      font-family: 'FortuneWheel';
+      src: url('NVA-SF Fortune Wheel.ttf') format('truetype');
+    }
+
     * {
       box-sizing: border-box;
       font-family: Arial, sans-serif;
@@ -54,16 +59,17 @@
       pointer-events: none;
     }
 
-    /* 3 Ô LỖ KHUNG CAMERA */
+    /* 3 Ô LỖ KHUNG CAMERA (Tỉ lệ 16:9) */
     .cam-box {
+      aspect-ratio: 16 / 9;
       width: 29%;
-      height: 76%;
+      max-height: 90%;
       position: relative;
       z-index: 2;
       background: transparent;
-      border: 4px solid #ffffff;
+      border: 3px solid rgba(255, 255, 255, 0.7);
       border-radius: 12px;
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.3);
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
     }
 
     /* THANH BẠC PHÂN CÁCH GIỮA */
@@ -102,15 +108,17 @@
     /* Hình chìm CHIẾC NÓN KỲ DIỆU */
     .watermark-text {
       position: absolute;
-      font-size: 2.8vw;
+      font-family: 'FortuneWheel', Arial, sans-serif;
+      font-size: 3.5vw;
       text-transform: uppercase;
       letter-spacing: 2px;
       text-align: center;
-      opacity: 0.22;
+      opacity: 0.18;
       width: 90%;
-      line-height: 1.2;
+      line-height: 1.15;
       pointer-events: none;
       user-select: none;
+      z-index: 1;
       filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
     }
 
@@ -119,65 +127,44 @@
       background: linear-gradient(180deg, #dc143c 0%, #a00000 50%, #660000 100%);
       border-right: 2px solid rgba(0, 0, 0, 0.3);
     }
-    .col-p1 .watermark-text { color: #ffe6e6; }
+    .col-p1 .watermark-text { color: #ffffff; }
 
     /* Column 2: GOLD / YELLOW */
     .col-p2 {
       background: linear-gradient(180deg, #d4af37 0%, #aa8800 50%, #775500 100%);
       border-right: 2px solid rgba(0, 0, 0, 0.3);
     }
-    .col-p2 .watermark-text { color: #fffde6; }
+    .col-p2 .watermark-text { color: #ffffff; }
 
     /* Column 3: BLUE */
     .col-p3 {
       background: linear-gradient(180deg, #0088cc 0%, #0055a0 50%, #003366 100%);
     }
-    .col-p3 .watermark-text { color: #e6f2ff; }
+    .col-p3 .watermark-text { color: #ffffff; }
 
-    /* THẺ HIỂN THỊ ĐIỂM SỐ */
+    /* THẺ HIỂN THỊ ĐIỂM SỐ - KHÔNG CÓ KHUNG TRẮNG */
     .score-card {
       position: relative;
-      z-index: 3;
-      background: rgba(0, 0, 0, 0.45);
-      border: 3px solid #ffffff;
-      border-radius: 16px;
-      padding: 15px 25px;
-      width: 85%;
-      max-width: 380px;
+      z-index: 5;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      padding: 0;
+      width: 100%;
       text-align: center;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(255, 255, 255, 0.2);
-      backdrop-filter: blur(4px);
-    }
-
-    .player-label {
-      font-size: 1.4vw;
-      color: #ffeb3b;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 4px;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
-    }
-
-    .mode-badge {
-      display: inline-block;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 0.95vw;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 8px;
-      background: #800080;
-      color: #ffffff;
-      border: 1px solid #ff00ff;
-      box-shadow: 0 0 8px rgba(255, 0, 255, 0.5);
+      box-shadow: none;
     }
 
     .score-value {
-      font-size: 3.8vw;
+      position: relative;
+      z-index: 5;
+      font-size: 5.5vw;
       color: #ffffff;
-      text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 4px 8px rgba(0, 0, 0, 0.9);
+      text-shadow: 0 0 15px rgba(0, 0, 0, 0.9), 0 4px 10px rgba(0, 0, 0, 0.9);
       letter-spacing: 2px;
-      line-height: 1.1;
+      line-height: 1;
+      transition: transform 0.2s ease, color 0.2s ease;
+    }
       transition: transform 0.2s ease, color 0.2s ease;
     }
 
@@ -332,30 +319,24 @@
     <div id="bottomSection">
       <!-- Player 1 -->
       <div class="player-column col-p1">
-        <div class="watermark-text">CHIẾC NÓN KỲ DIỆU</div>
+        <div class="watermark-text">CHIẾC NÓN<br>KỲ DIỆU</div>
         <div class="score-card">
-          <div class="player-label">PLAYER 1</div>
-          <div id="modeBadge1" class="mode-badge">ĐIỂM VÒNG</div>
           <div id="scoreVal1" class="score-value">0</div>
         </div>
       </div>
 
       <!-- Player 2 -->
       <div class="player-column col-p2">
-        <div class="watermark-text">CHIẾC NÓN KỲ DIỆU</div>
+        <div class="watermark-text">CHIẾC NÓN<br>KỲ DIỆU</div>
         <div class="score-card">
-          <div class="player-label" style="color: #000000; text-shadow: none;">PLAYER 2</div>
-          <div id="modeBadge2" class="mode-badge">ĐIỂM VÒNG</div>
           <div id="scoreVal2" class="score-value">0</div>
         </div>
       </div>
 
       <!-- Player 3 -->
       <div class="player-column col-p3">
-        <div class="watermark-text">CHIẾC NÓN KỲ DIỆU</div>
+        <div class="watermark-text">CHIẾC NÓN<br>KỲ DIỆU</div>
         <div class="score-card">
-          <div class="player-label">PLAYER 3</div>
-          <div id="modeBadge3" class="mode-badge">ĐIỂM VÒNG</div>
           <div id="scoreVal3" class="score-value">0</div>
         </div>
       </div>
@@ -431,11 +412,6 @@
 
     function renderScores() {
       const isTotal = scoresState.displayMode === 'total';
-      const badgeText = isTotal ? 'ĐIỂM TỔNG' : 'ĐIỂM VÒNG';
-
-      document.getElementById('modeBadge1').innerText = badgeText;
-      document.getElementById('modeBadge2').innerText = badgeText;
-      document.getElementById('modeBadge3').innerText = badgeText;
 
       const val1 = isTotal ? scoresState.p1.total : scoresState.p1.round;
       const val2 = isTotal ? scoresState.p2.total : scoresState.p2.round;

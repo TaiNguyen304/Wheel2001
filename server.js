@@ -26,6 +26,12 @@ function initRoomIfNotExist(roomid) {
         "Player 3": null
       },
       allowedPlayer: null,
+      scores: {
+        p1: { round: 0, total: 0 },
+        p2: { round: 0, total: 0 },
+        p3: { round: 0, total: 0 },
+        displayMode: 'round'
+      },
       wheelState: {
         activeImage: 'wheel-template.png',
         spinMusic: 'spin.mp3',
@@ -53,6 +59,25 @@ io.on('connection', (socket) => {
 
     rooms[roomid].wheelState.pointerState = data.pointerState;
     io.to(roomid).emit('syncPointerState', data.pointerState);
+  });
+
+  socket.on('techUpdateScores', (data) => {
+    const roomid = data?.roomid || myRoomId;
+    if (!roomid) return;
+
+    initRoomIfNotExist(roomid);
+
+    if (data.scores) {
+      if (data.scores.p1) rooms[roomid].scores.p1 = { ...rooms[roomid].scores.p1, ...data.scores.p1 };
+      if (data.scores.p2) rooms[roomid].scores.p2 = { ...rooms[roomid].scores.p2, ...data.scores.p2 };
+      if (data.scores.p3) rooms[roomid].scores.p3 = { ...rooms[roomid].scores.p3, ...data.scores.p3 };
+      if (data.scores.displayMode) rooms[roomid].scores.displayMode = data.scores.displayMode;
+    }
+    if (data.displayMode) {
+      rooms[roomid].scores.displayMode = data.displayMode;
+    }
+
+    io.to(roomid).emit('syncScores', rooms[roomid].scores);
   });
   // --- BỔ SUNG: CƠ CHẾ ĐỒNG BỘ ĐỒNG HỒ ĐỊA LÝ TOÀN CẦU ---
   // Lắng nghe và phản hồi ngay lập tức thời gian của server để các máy tự tính độ lệch pha (latency)
@@ -188,6 +213,7 @@ io.on('connection', (socket) => {
       socket.emit('initGameState', {
         ...rooms[roomid].wheelState,
         allowedPlayer: rooms[roomid].allowedPlayer,
+        scores: rooms[roomid].scores,
         serverNow: Date.now()
       });
       return;
@@ -211,6 +237,7 @@ io.on('connection', (socket) => {
       socket.emit('initGameState', {
         ...rooms[roomid].wheelState,
         allowedPlayer: rooms[roomid].allowedPlayer,
+        scores: rooms[roomid].scores,
         serverNow: Date.now()
       });
     } else {
@@ -251,6 +278,7 @@ io.on('connection', (socket) => {
       socket.emit('initGameState', {
         ...rooms[roomid].wheelState,
         allowedPlayer: rooms[roomid].allowedPlayer,
+        scores: rooms[roomid].scores,
         serverNow: Date.now()
       });
       return;
@@ -268,6 +296,7 @@ io.on('connection', (socket) => {
       socket.emit('initGameState', {
         ...rooms[roomid].wheelState,
         allowedPlayer: rooms[roomid].allowedPlayer,
+        scores: rooms[roomid].scores,
         serverNow: Date.now()
       });
     } else {
@@ -337,4 +366,6 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`);
+});

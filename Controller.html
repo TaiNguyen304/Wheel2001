@@ -886,6 +886,9 @@
       roomPasswordsConfig["Player 2"] = Math.floor(1000 + Math.random() * 9000).toString();
       roomPasswordsConfig["Player 3"] = Math.floor(1000 + Math.random() * 9000).toString();
 
+      sessionStorage.setItem('controller_roomid', currentActiveRoomID);
+      sessionStorage.setItem('controller_passwords', JSON.stringify(roomPasswordsConfig));
+
       renderRoomCredentialsBox();
       pushRoomConfigurationToServer();
     }
@@ -1001,13 +1004,18 @@
     }
 
     function sendScoresToServer() {
-      if (currentActiveRoomID) {
-        socket.emit('techUpdateScores', {
-          roomid: currentActiveRoomID,
-          scores: currentScores,
-          displayMode: currentScores.displayMode
-        });
+      if (!currentActiveRoomID) {
+        currentActiveRoomID = sessionStorage.getItem('controller_roomid');
+        if (!currentActiveRoomID) {
+          actionInitializeRoomAndPasswords();
+          return;
+        }
       }
+      socket.emit('techUpdateScores', {
+        roomid: currentActiveRoomID,
+        scores: currentScores,
+        displayMode: currentScores.displayMode
+      });
     }
 
     function pScoreAction(player, action) {
@@ -1060,7 +1068,6 @@
     socket.on('syncScores', (scoresData) => {
       if (scoresData) {
         if (scoresData.p1) currentScores.p1 = scoresData.p1;
-        if (scoresData.p2) scoresState = scoresData.p2; // p2
         if (scoresData.p2) currentScores.p2 = scoresData.p2;
         if (scoresData.p3) currentScores.p3 = scoresData.p3;
         if (scoresData.displayMode) currentScores.displayMode = scoresData.displayMode;
@@ -1099,6 +1106,19 @@
         socket.emit('techUpdatePointerColor', { pointerId, colorState });
       }
     }
+
+    window.addEventListener('load', () => {
+      const savedRoom = sessionStorage.getItem('controller_roomid');
+      const savedPass = sessionStorage.getItem('controller_passwords');
+      if (savedRoom) {
+        currentActiveRoomID = savedRoom;
+        if (savedPass) {
+          try { roomPasswordsConfig = JSON.parse(savedPass); } catch(e) {}
+        }
+        renderRoomCredentialsBox();
+        pushRoomConfigurationToServer();
+      }
+    });
 
     document.addEventListener('contextmenu', e => e.preventDefault());
     document.addEventListener('keydown', e => {
