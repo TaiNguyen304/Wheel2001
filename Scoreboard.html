@@ -36,9 +36,9 @@
     #scoreboardContainer {
       width: 100%;
       height: 100%;
-      max-width: calc(100vh * (2005 / 1125));
-      max-height: calc(100vw * (1125 / 2005));
-      aspect-ratio: 2005 / 1125;
+      max-width: calc(100vh * (16 / 9));
+      max-height: calc(100vw * (9 / 16));
+      aspect-ratio: 16 / 9;
       display: flex;
       flex-direction: column;
       position: relative;
@@ -46,7 +46,7 @@
       container-type: size;
     }
 
-    /* ĐẠT ĐỤC LỖ CAMERA BẰNG MASK TRÊN LỚP NỀN BG.PNG */
+    /* ĐỤC LỖ BẰNG SVG MASK TỰ ĐỘNG THEO TỶ LỆ PIXEL CỦA ẢNH BG.PNG */
     #scoreboardContainer::before {
       content: '';
       position: absolute;
@@ -54,69 +54,25 @@
       z-index: 1;
       background: url('bg.png') no-repeat center center;
       background-size: 100% 100%;
-
-      /* Đục 3 lỗ tương ứng 3 khung đen trên ảnh bg.png */
-      -webkit-mask-image: 
-        linear-gradient(#000 0 0),
-        linear-gradient(#000 0 0),
-        linear-gradient(#000 0 0),
-        linear-gradient(#000 0 0);
-      mask-image: 
-        linear-gradient(#000 0 0),
-        linear-gradient(#000 0 0),
-        linear-gradient(#000 0 0),
-        linear-gradient(#000 0 0);
-
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
-
-      /* Kích thước chính xác 3 ô cambox theo tỷ lệ 16:9 */
-      -webkit-mask-size: 
-        100% 100%,
-        31.8% 56.6%,
-        31.8% 56.6%,
-        31.8% 56.6%;
-      mask-size: 
-        100% 100%,
-        31.8% 56.6%,
-        31.8% 56.6%,
-        31.8% 56.6%;
-
-      /* Căn tọa độ chính xác cho 3 lỗ đục */
-      -webkit-mask-position: 
-        0 0,
-        1.2% 8.5%,
-        50% 8.5%,
-        98.8% 8.5%;
-      mask-position: 
-        0 0,
-        1.2% 8.5%,
-        50% 8.5%,
-        98.8% 8.5%;
-
-      -webkit-mask-repeat: no-repeat;
-      mask-repeat: no-repeat;
+      -webkit-mask: url(#camHoleMask);
+      mask: url(#camHoleMask);
     }
 
-    /* SECTION TRÊN: KHUNG CAMERA TRONG SUỐT */
+    /* SECTION TRÊN: VÙNG CHỨA CAMERA */
     #topSection {
       height: 66.7%;
       width: 100%;
       position: relative;
       z-index: 2;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 1.2%;
-      overflow: hidden;
       background: transparent;
     }
 
+    /* VỊ TRÍ 3 Ô CAMBOX KHỚP VỚI LỖ ĐỤC */
     .cam-box {
-      aspect-ratio: 16 / 9;
-      width: 31.8%;
-      max-height: 90%;
-      position: relative;
+      position: absolute;
+      top: 39.58%; /* (152px / 384px chiều cao topSection) */
+      width: 32.03%;
+      height: 47.92%;
       z-index: 2;
       background: transparent !important;
       border: none;
@@ -127,6 +83,10 @@
       align-items: center;
       justify-content: center;
     }
+
+    #camBox1 { left: 0.88%; }
+    #camBox2 { left: 33.98%; }
+    #camBox3 { left: 67.09%; }
 
     /* SECTION DƯỚI: ĐIỂM SỐ 3 NGƯỜI CHƠI */
     #bottomSection {
@@ -236,11 +196,32 @@
       background: orange;
       color: white;
     }
+
+    .svg-mask-defs {
+      position: absolute;
+      width: 0;
+      height: 0;
+      overflow: hidden;
+    }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.4/dist/socket.io.min.js"></script>
 </head>
 
 <body>
+
+  <!-- MASK SVG ĐỤC LỖ CHÍNH XÁC THEO TỶ LỆ KÍCH THƯỚC Ô ĐEN TRÊN ẢNH -->
+  <svg class="svg-mask-defs">
+    <defs>
+      <mask id="camHoleMask" maskUnits="objectBoundingBox" x="0" y="0" width="1" height="1">
+        <!-- Lớp trắng giữ lại ảnh nền -->
+        <rect x="0" y="0" width="1" height="1" fill="#white" />
+        
+        <!-- 3 Lỗ đục đen trùng khớp hoàn toàn vị trí ô đen trên bg.png -->
+        <rect x="0.0088" y="0.2639" width="0.3203" height="0.3194" fill="#black" />
+        <rect x="0.3398" y="0.2639" width="0.3203" height="0.3194" fill="#black" />
+        <rect x="0.6709" y="0.2639" width="0.3203" height="0.3194" fill="#black" />
+      </mask>
+    </defs>
+  </svg>
 
   <div id="scoreboardContainer">
     <!-- SECTION TRÊN: CAMERA CUTOUTS -->
