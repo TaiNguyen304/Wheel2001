@@ -59,17 +59,18 @@
       pointer-events: none;
     }
 
-    /* 3 Ô LỖ KHUNG CAMERA (Tỉ lệ 16:9) */
+    /* 3 Ô LỖ KHUNG CAMERA (Tỉ lệ 16:9) Trong suốt */
     .cam-box {
       aspect-ratio: 16 / 9;
       width: 29%;
       max-height: 90%;
       position: relative;
       z-index: 2;
-      background: transparent;
+      background: transparent !important;
       border: 3px solid rgba(255, 255, 255, 0.7);
       border-radius: 12px;
       box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+      pointer-events: none;
     }
 
     /* THANH BẠC PHÂN CÁCH GIỮA */
@@ -237,34 +238,11 @@
       color: white;
     }
 
-    /* NÚT ĐỔI PHÒNG NHỎ Ở GÓC */
-    #roomChangeBtn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      z-index: 100;
-      background: rgba(0, 0, 0, 0.6);
-      color: #fff;
-      border: 1px solid #fff;
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 12px;
-      cursor: pointer;
-      opacity: 0.3;
-      transition: opacity 0.2s;
-    }
-
-    #roomChangeBtn:hover {
-      opacity: 1;
-      background: #800080;
-    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.4/dist/socket.io.min.js"></script>
 </head>
 
 <body>
-
-  <button id="roomChangeBtn" onclick="openRoomModal()">Đổi mã phòng</button>
 
   <div id="scoreboardContainer">
     <!-- SECTION TRÊN: CAMERA CUTOUTS -->
@@ -397,9 +375,21 @@
 
     window.addEventListener('resize', updateCameraCutouts);
     window.addEventListener('load', () => {
+      updateCameraCutouts();
       setTimeout(updateCameraCutouts, 100);
+      setTimeout(updateCameraCutouts, 500);
       initRoomConnection();
     });
+
+    if (window.ResizeObserver) {
+      const ro = new ResizeObserver(() => {
+        updateCameraCutouts();
+      });
+      document.addEventListener('DOMContentLoaded', () => {
+        const topSec = document.getElementById('topSection');
+        if (topSec) ro.observe(topSec);
+      });
+    }
 
     function formatThousands(num) {
       if (num === null || num === undefined || isNaN(num)) return '0';
