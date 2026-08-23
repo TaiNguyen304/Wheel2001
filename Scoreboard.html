@@ -248,13 +248,15 @@
     </div>
   </div>
 
-  <!-- MODAL ĐĂNG NHẬP PHÒNG -->
-  <div id="roomModal" class="room-modal-overlay" style="display: none;">
-    <div class="room-modal-box">
-      <h2>KẾT NỐI BẢNG ĐIỂM</h2>
-      <p style="color: #bbb; margin-bottom: 15px; font-size: 14px;">Nhập mã phòng 6 chữ số từ Controller</p>
-      <input type="text" id="modalRoomIdInput" maxlength="6" placeholder="Nhập mã phòng..." />
-      <button onclick="confirmConnectRoom()">KẾT NỐI BẢNG ĐIỂM</button>
+  <!-- THÔNG BÁO YÊU CẦU MÃ PHÒNG TRÊN URL -->
+  <div id="noRoomNoticeModal" class="room-modal-overlay" style="display: none;">
+    <div class="room-modal-box" style="border: 3px solid #ff0000; box-shadow: 0 0 25px rgba(255, 0, 0, 0.7); width: 440px;">
+      <h2 style="color: #ff3333; margin-bottom: 15px; font-size: 20px; text-transform: uppercase;">THÔNG BÁO HỆ THỐNG</h2>
+      <p style="color: #ffffff; margin-bottom: 20px; font-size: 16px; font-weight: bold; line-height: 1.5; text-align: center;">Vui lòng nhập ?roomid=Mã phòng trên URL</p>
+      <div style="display: flex; gap: 8px;">
+        <input type="text" id="warningRoomInput" maxlength="6" placeholder="Nhập mã phòng (VD: 123456)..." style="margin-bottom: 0;" />
+        <button onclick="applyRoomFromInput()" style="width: auto; padding: 12px 18px; white-space: nowrap; background: #39ff14; color: black;">KẾT NỐI</button>
+      </div>
     </div>
   </div>
 
@@ -309,33 +311,40 @@
 
     function initRoomConnection() {
       const urlParams = new URLSearchParams(window.location.search);
-      let roomParam = urlParams.get('roomid') || sessionStorage.getItem('scoreboard_roomid');
+      const roomParam = urlParams.get('roomid');
 
-      if (roomParam) {
-        connectToRoom(roomParam);
+      if (!roomParam || !roomParam.trim()) {
+        showNoRoomNotice();
       } else {
-        openRoomModal();
+        hideNoRoomNotice();
+        connectToRoom(roomParam.trim());
       }
     }
 
-    function openRoomModal() {
-      document.getElementById('roomModal').style.display = 'flex';
-      document.getElementById('modalRoomIdInput').focus();
+    function showNoRoomNotice() {
+      document.getElementById('noRoomNoticeModal').style.display = 'flex';
     }
 
-    function confirmConnectRoom() {
-      const inputVal = document.getElementById('modalRoomIdInput').value.trim();
+    function hideNoRoomNotice() {
+      document.getElementById('noRoomNoticeModal').style.display = 'none';
+    }
+
+    function applyRoomFromInput() {
+      const inputVal = document.getElementById('warningRoomInput').value.trim();
       if (!inputVal) return;
-      document.getElementById('roomModal').style.display = 'none';
-      connectToRoom(inputVal);
+      const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?roomid=' + encodeURIComponent(inputVal);
+      window.location.href = newUrl;
     }
 
     function connectToRoom(roomid) {
       currentRoomId = roomid;
       sessionStorage.setItem('scoreboard_roomid', roomid);
 
-      const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?roomid=' + roomid;
-      window.history.pushState({ path: newUrl }, '', newUrl);
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('roomid') !== roomid) {
+        const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?roomid=' + roomid;
+        window.history.pushState({ path: newUrl }, '', newUrl);
+      }
 
       if (socket.connected) {
         joinRoomSocket();
@@ -345,6 +354,7 @@
     function joinRoomSocket() {
       if (!currentRoomId) return;
       socket.emit('playerVerifyLogin', { roomid: currentRoomId, playerRole: 'viewer' });
+      socket.emit('joinRoom', { roomid: currentRoomId, role: 'viewer' });
     }
 
     socket.on('connect', () => {

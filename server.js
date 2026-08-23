@@ -198,10 +198,7 @@ io.on('connection', (socket) => {
     const { roomid, role, password } = data;
     if (!roomid) return;
 
-    if (!rooms[roomid]) {
-      socket.emit('loginResult', { success: false, message: 'Phòng thi đấu chưa được Ban Tổ Chức khởi tạo!' });
-      return;
-    }
+    initRoomIfNotExist(roomid);
 
     myRoomId = roomid;
     socket.join(roomid);
@@ -261,12 +258,7 @@ io.on('connection', (socket) => {
       return;
     }
 
-    if (!rooms[roomid]) {
-      if (typeof callback === 'function') {
-        callback({ success: false, message: 'Phòng thi đấu này chưa được Ban Tổ Chức (Tech) khởi tạo trên hệ thống!' });
-      }
-      return;
-    }
+    initRoomIfNotExist(roomid);
 
     if (playerRole && String(playerRole).toLowerCase() === 'viewer') {
       myRoomId = roomid;

@@ -736,8 +736,8 @@
           <script>
             // Danh sách định nghĩa 17 ô và 2 thẻ 
             const slotsData = [
-              { id: 'pn1', name: 'Ô Phần thưởng 1 (Kiểu 1)', file: 'Ô Phần thưởng 1.png', angles: [307.5] },
-              { id: 'pn1', name: 'Ô Phần thưởng 2 (Kiểu 1)', file: 'Ô Phần thưởng 1.png', angles: [37.5, 142.5] },
+              { id: 'pn1_a', name: 'Ô Phần thưởng 1 (Kiểu 1)', file: 'Ô Phần thưởng 1.png', angles: [307.5] },
+              { id: 'pn1_b', name: 'Ô Phần thưởng 2 (Kiểu 1)', file: 'Ô Phần thưởng 1.png', angles: [37.5, 142.5] },
               { id: 'bm1_1', name: 'Ô bí mật 1 (Kiểu 1)', file: 'Ô Bí Mật 1.png', angles: [37.5] },
               { id: 'bm2_1', name: 'Ô bí mật 2 (Kiểu 1)', file: 'Ô Bí Mật 1.png', angles: [217.5] },
               { id: 'st1', name: 'Ô Siêu tốc (Kiểu 1)', file: 'Ô Siêu Tốc 1.png', angles: [37.5] },
@@ -765,8 +765,9 @@
 
             // Hàm xử lý gửi trạng thái qua Socket.io
             function toggleSlot(id, file, action) {
+              let slotObj = slotsData.find(s => s.id === id);
               let selectedAngle = parseFloat(document.getElementById(`angle_${id}`).value);
-              socket.emit('controlSlotState', { id, file, action, angle: selectedAngle });
+              socket.emit('controlSlotState', { id, file, action, angle: selectedAngle, isCard: slotObj ? !!slotObj.isCard : false });
             }
 
             // Render các dòng điều khiển ra HTML
