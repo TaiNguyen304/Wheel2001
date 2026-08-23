@@ -169,7 +169,7 @@
   </div>
 
   <script>
-    const socket = io("https://wheel2001.onrender.com", { transports: ['websocket'] });
+    const socket = io({ transports: ['websocket', 'polling'] });
 
     const urlParams = new URLSearchParams(window.location.search);
     let roomid = urlParams.get('roomid');
@@ -370,7 +370,15 @@
       "Ô Bí Mật": new Audio('Ô Bí Mật.mp3'),
       "Vòng đặc biệt": new Audio('Vòng đặc biệt.mp3'),
       "Vòng chung kết": new Audio('Vòng chung kết.mp3'),
-      "Người chơi": new Audio('Người chơi.mp3')
+      "Người chơi": new Audio('Người chơi.mp3'),
+      "Đổi điểm": new Audio('Đổi Điểm.mp3'),
+      "Siêu Tốc": new Audio('Siêu Tốc.mp3'),
+      "Độc Đắc": new Audio('Độc Đắc.mp3'),
+      "Thử Thách": new Audio('Thử Thách.mp3'),
+      "Quy Đổi": new Audio('Quy Đổi.mp3'),
+      "Cơ Hội": new Audio('Cơ Hội.wav'),
+      "Quyền Năng": new Audio('Quyền Năng.mp3'),
+      "100.000": new Audio('100000.wav')
     };
 
     soundboard["10s"].volume = 0.3;

@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Controller</title>
+  <title>Controller - Bàn Điều Khiển</title>
   <style>
     * {
       font-weight: bold !important;
@@ -12,72 +12,130 @@
       font-family: Arial, sans-serif;
     }
 
-    body {
-      background: white;
-      color: black;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
+    html, body {
+      width: 100vw;
+      height: 100vh;
       margin: 0;
-      padding: 20px;
+      padding: 0;
+      overflow: hidden;
+      background: #f0f2f5;
+      color: #111;
     }
 
-    h1 {
-      margin-bottom: 5px;
+    body {
+      display: flex;
+      flex-direction: column;
+      padding: 6px 8px;
+    }
+
+    /* TOP HEADER BAR */
+    .header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #ffffff;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      padding: 4px 10px;
+      margin-bottom: 6px;
+      gap: 10px;
+      flex-shrink: 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .header-title-box {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header-title-box h1 {
+      font-size: 14px;
+      margin: 0;
       color: blue;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      white-space: nowrap;
     }
 
     .status-log {
-      margin: 10px 0 20px 0;
-      font-size: 18px;
+      margin: 0;
+      font-size: 11px;
       color: green;
-      text-align: center;
+      white-space: nowrap;
     }
 
-    .panel-box {
-      border: 2px solid #ccc;
-      padding: 18px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-      width: 100%;
-      max-width: 780px;
-      text-align: center;
-    }
-
-    .panel-title {
-      font-size: 15px;
-      color: #666;
-      margin-bottom: 12px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    .btn-row {
+    .header-actions {
       display: flex;
-      justify-content: center;
-      gap: 12px;
-      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
     }
 
-    .grid-layout {
+    .info-box-inline {
+      font-size: 11px;
+      background: #f9f9f9;
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px dashed #bbb;
+      line-height: 1.3;
+      text-align: left;
+      display: inline-block;
+    }
+
+    /* DASHBOARD GRID CONTAINER */
+    .dashboard-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 15px;
-      width: 100%;
+      grid-template-columns: 270px 1fr 300px;
+      gap: 6px;
+      flex: 1;
+      min-height: 0;
+      height: calc(100vh - 58px);
     }
 
-    /* Button Color Tokens Specified */
+    .column-box {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      height: 100%;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+
+    .column-box::-webkit-scrollbar {
+      width: 4px;
+    }
+    .column-box::-webkit-scrollbar-thumb {
+      background: #bbb;
+      border-radius: 4px;
+    }
+
+    .panel-card {
+      background: #ffffff;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      padding: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .panel-card-title {
+      font-size: 12px;
+      color: #444;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      text-align: center;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 4px;
+    }
+
+    /* BUTTON STYLES */
     .btn-green-white {
       background: green;
       color: white;
-      border: 2px solid darkgreen;
-      padding: 14px 28px;
-      font-size: 16px;
-      border-radius: 8px;
+      border: 1px solid darkgreen;
+      padding: 6px 12px;
+      font-size: 12px;
+      border-radius: 6px;
       cursor: pointer;
+      transition: background 0.15s;
     }
 
     .btn-green-white:hover {
@@ -88,11 +146,12 @@
     .btn-yellow-black {
       background: yellow;
       color: black;
-      border: 2px solid #ccaa00;
-      padding: 15px 22px;
-      font-size: 16px;
-      border-radius: 8px;
+      border: 1px solid #ccaa00;
+      padding: 6px 8px;
+      font-size: 11px;
+      border-radius: 6px;
       cursor: pointer;
+      transition: background 0.15s;
     }
 
     .btn-yellow-black:hover {
@@ -103,11 +162,13 @@
     .btn-purple-face {
       background: purple;
       color: white;
-      border: 2px solid aqua;
-      padding: 20px 10px;
-      font-size: 16px;
-      border-radius: 8px;
+      border: 1px solid aqua;
+      padding: 6px 2px;
+      font-size: 11px;
+      border-radius: 5px;
       cursor: pointer;
+      text-align: center;
+      transition: background 0.15s;
     }
 
     .btn-purple-face:hover {
@@ -118,13 +179,15 @@
     .btn-red-sound {
       background: red;
       color: white;
-      border: 2px solid darkred;
-      padding: 14px 12px;
-      font-size: 14px;
-      border-radius: 6px;
+      border: 1px solid darkred;
+      padding: 5px 3px;
+      font-size: 11px;
+      border-radius: 4px;
       cursor: pointer;
-      flex: 1 1 15%;
-      min-width: 110px;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .btn-red-sound:hover {
@@ -135,13 +198,15 @@
     .btn-blue-sound {
       background: blue;
       color: white;
-      border: 2px solid darkblue;
-      padding: 14px 12px;
-      font-size: 14px;
-      border-radius: 6px;
+      border: 1px solid darkblue;
+      padding: 5px 3px;
+      font-size: 11px;
+      border-radius: 4px;
       cursor: pointer;
-      flex: 1 1 15%;
-      min-width: 110px;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .btn-blue-sound:hover {
@@ -153,11 +218,10 @@
       background: red;
       color: white;
       border: none;
-      padding: 12px 25px;
-      font-size: 16px;
-      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 12px;
+      border-radius: 6px;
       cursor: pointer;
-      margin-top: 12px;
     }
 
     .btn-system-reset:hover {
@@ -165,19 +229,174 @@
       color: white;
     }
 
-    .info-box {
-      margin-top: 12px;
-      font-size: 16px;
-      background: #f9f9f9;
-      padding: 12px;
-      border-radius: 6px;
-      border: 2px dashed #bbb;
-      line-height: 1.6;
-      text-align: left;
-      display: inline-block;
+    /* SCORE MANAGEMENT STYLES */
+    .score-players-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-bottom: 6px;
     }
 
-    /* --- Giao diện Hệ thống Popup Tùy biến Mới --- */
+    .player-score-card {
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      padding: 6px;
+      background: #fafafa;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .player-score-card h3 {
+      margin: 0;
+      font-size: 13px;
+      text-transform: uppercase;
+    }
+
+    .score-display-row {
+      display: flex;
+      gap: 4px;
+      width: 100%;
+    }
+
+    /* Player 1 Box Styles */
+    .p1-card-title { color: #ff0000; }
+    .p1-score-box {
+      background: #ff0000;
+      color: #ffffff;
+      padding: 4px 2px;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: bold;
+      flex: 1;
+      text-align: center;
+      border: 1px solid #cc0000;
+    }
+    .btn-p1-action {
+      background: #ff0000;
+      color: #ffffff;
+      border: 1px solid #cc0000;
+      padding: 5px 2px;
+      font-size: 11px;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-p1-action:hover {
+      background: orange !important;
+      color: white !important;
+    }
+
+    /* Player 2 Box Styles */
+    .p2-card-title { color: #b39b00; }
+    .p2-score-box {
+      background: #ffff00;
+      color: #000000;
+      padding: 4px 2px;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: bold;
+      flex: 1;
+      text-align: center;
+      border: 1px solid #cccc00;
+    }
+    .btn-p2-action {
+      background: #ffff00;
+      color: #000000;
+      border: 1px solid #cccc00;
+      padding: 5px 2px;
+      font-size: 11px;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-p2-action:hover {
+      background: orange !important;
+      color: white !important;
+    }
+
+    /* Player 3 Box Styles */
+    .p3-card-title { color: #0000ff; }
+    .p3-score-box {
+      background: #0000ff;
+      color: #ffffff;
+      padding: 4px 2px;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: bold;
+      flex: 1;
+      text-align: center;
+      border: 1px solid #0000cc;
+    }
+    .btn-p3-action {
+      background: #0000ff;
+      color: #ffffff;
+      border: 1px solid #0000cc;
+      padding: 5px 2px;
+      font-size: 11px;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-p3-action:hover {
+      background: orange !important;
+      color: white !important;
+    }
+
+    .score-input-box {
+      width: 100%;
+      padding: 4px 6px;
+      font-size: 14px;
+      font-weight: bold;
+      text-align: center;
+      border: 1px solid #aaa;
+      border-radius: 4px;
+      outline: none;
+      background: #fff;
+    }
+    .score-input-box:focus {
+      border-color: #333;
+    }
+
+    .score-btns-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 3px;
+      width: 100%;
+    }
+
+    .global-score-ctrls {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px dashed #ccc;
+    }
+
+    .btn-purple-global {
+      background: #800080;
+      color: #ffffff !important;
+      font-weight: bold !important;
+      font-size: 12px;
+      padding: 6px 4px;
+      border: 1px solid #4b0082;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .btn-purple-global:hover {
+      background: orange !important;
+      color: white !important;
+    }
+
+    /* POPUP OVERLAY */
     .popup-overlay {
       display: none;
       position: fixed;
@@ -194,9 +413,9 @@
     .popup-box {
       background: white;
       border: 4px solid blue;
-      padding: 30px;
-      border-radius: 14px;
-      max-width: 480px;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 450px;
       width: 90%;
       text-align: center;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
@@ -204,11 +423,11 @@
     }
 
     .popup-message {
-      font-size: 16px;
+      font-size: 14px;
       color: #111;
-      margin-bottom: 25px;
+      margin-bottom: 20px;
       text-align: left;
-      line-height: 1.6;
+      line-height: 1.5;
       white-space: pre-line;
     }
 
@@ -216,8 +435,8 @@
       background: blue;
       color: white;
       border: 2px solid darkblue;
-      padding: 10px 30px;
-      font-size: 16px;
+      padding: 8px 25px;
+      font-size: 14px;
       border-radius: 6px;
       cursor: pointer;
     }
@@ -228,15 +447,8 @@
     }
 
     @keyframes popupShow {
-      from {
-        transform: scale(0.85);
-        opacity: 0;
-      }
-
-      to {
-        transform: scale(1);
-        opacity: 1;
-      }
+      from { transform: scale(0.85); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.4/dist/socket.io.min.js"></script>
@@ -244,217 +456,344 @@
 
 <body>
 
-  <h1>HỆ THỐNG ĐIỀU KHIỂN KỸ THUẬT TẬP TRUNG</h1>
-  <p class="status-log" id="statusLog">Đang kết nối tới máy chủ Socket.io...</p>
-
-  <div class="panel-box" style="background: #f4faf4;">
-    <div class="panel-title">Quản lý định danh phòng thi đấu</div>
-    <div class="btn-row">
+  <!-- TOP HEADER BAR -->
+  <div class="header-bar">
+    <div class="header-title-box">
+      <h1>HỆ THỐNG ĐIỀU KHIỂN KỸ THUẬT TẬP TRUNG</h1>
+      <p class="status-log" id="statusLog">Đang kết nối tới máy chủ Socket.io...</p>
+    </div>
+    <div class="header-actions">
       <button class="btn-green-white" style="background: green; border-color: #39ff14;"
         onclick="actionInitializeRoomAndPasswords()">KÍCH HOẠT KHỞI TẠO PHÒNG TỰ ĐỘNG</button>
       <button class="btn-green-white" style="background: green; border-color: #39ff14;"
         onclick="verifyDataSentToServer()">🔍 KIỂM TRA DỮ LIỆU</button>
-    </div>
-    <div id="roomCredentialsDisplay" class="info-box" style="display:none;"></div>
-  </div>
-
-  <div class="panel-box" style="background: #fffee8;">
-    <div class="panel-title">Quản lý phân quyền điều khiển nón</div>
-    <div class="btn-row">
-      <button class="btn-yellow-black" onclick="dispatchPlayerPermission('Player 1')">Mở quay Player1</button>
-      <button class="btn-yellow-black" onclick="dispatchPlayerPermission('Player 2')">Mở quay Player2</button>
-      <button class="btn-yellow-black" onclick="dispatchPlayerPermission('Player 3')">Mở quay Player3</button>
-      <button class="btn-yellow-black" onclick="dispatchPlayerPermission(null)">Khóa tất cả</button>
+      <div id="roomCredentialsDisplay" class="info-box-inline" style="display:none;"></div>
     </div>
   </div>
 
-  <div class="panel-box" style="background: #e8f4ff;">
-    <div class="panel-title">Quản lý Kim chỉ thị (Pointers)</div>
-    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+  <!-- DASHBOARD MAIN 3-COLUMN GRID -->
+  <div class="dashboard-grid">
 
-      <div style="border: 1px dashed #aaa; padding: 10px; border-radius: 8px;">
-        <div style="margin-bottom: 8px;">Kim 1 (Gốc - Dưới)</div>
-        <button class="btn-green-white" style="padding: 8px 15px; font-size: 14px;"
-          onclick="setPointerState('p1', true)">HIỆN</button>
-        <button class="btn-system-reset" style="padding: 8px 15px; font-size: 14px; margin: 0;"
-          onclick="setPointerState('p1', false)">ẨN</button>
-      </div>
-
-      <div style="border: 1px dashed #aaa; padding: 10px; border-radius: 8px;">
-        <div style="margin-bottom: 8px;">Kim 2 (Đối diện - Đỉnh)</div>
-        <div style="margin-bottom: 6px;">
-          <button class="btn-green-white" style="padding: 6px 12px; font-size: 13px;" onclick="setPointerState('p2', true)">HIỆN</button>
-          <button class="btn-system-reset" style="padding: 6px 12px; font-size: 13px; margin: 0;" onclick="setPointerState('p2', false)">ẨN</button>
-        </div>
-        <div>
-          <button class="btn-green-white" style="background: blue; border-color: #0055cc; padding: 6px 12px; font-size: 13px;" onclick="setPointerColor('p2', 'default')">Đèn màu</button>
-          <button class="btn-purple-face" style="padding: 6px 12px; font-size: 13px;" onclick="setPointerColor('p2', 'purple')">Đèn tím</button>
+    <!-- LEFT COLUMN -->
+    <div class="column-box">
+      <!-- Panel 1: Quản lý phân quyền -->
+      <div class="panel-card" style="background: #fffee8;">
+        <div class="panel-card-title">Quản lý phân quyền điều khiển nón</div>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px;">
+          <button class="btn-yellow-black" onclick="dispatchPlayerPermission('Player 1')">Mở quay Player1</button>
+          <button class="btn-yellow-black" onclick="dispatchPlayerPermission('Player 2')">Mở quay Player2</button>
+          <button class="btn-yellow-black" onclick="dispatchPlayerPermission('Player 3')">Mở quay Player3</button>
+          <button class="btn-yellow-black" onclick="dispatchPlayerPermission(null)">Khóa tất cả</button>
         </div>
       </div>
 
-      <div style="border: 1px dashed #aaa; padding: 10px; border-radius: 8px;">
-        <div style="margin-bottom: 8px;">Kim 3 (Trái Kim 2)</div>
-        <div style="margin-bottom: 6px;">
-          <button class="btn-green-white" style="padding: 6px 12px; font-size: 13px;" onclick="setPointerState('p3', true)">HIỆN</button>
-          <button class="btn-system-reset" style="padding: 6px 12px; font-size: 13px; margin: 0;" onclick="setPointerState('p3', false)">ẨN</button>
-        </div>
-        <div>
-          <button class="btn-green-white" style="background: blue; border-color: #0055cc; padding: 6px 12px; font-size: 13px;" onclick="setPointerColor('p3', 'default')">Đèn màu</button>
-          <button class="btn-purple-face" style="padding: 6px 12px; font-size: 13px;" onclick="setPointerColor('p3', 'purple')">Đèn tím</button>
-        </div>
-      </div>
-
-      <div style="border: 1px dashed #aaa; padding: 10px; border-radius: 8px;">
-        <div style="margin-bottom: 8px;">Kim 4 (Phải Kim 2)</div>
-        <div style="margin-bottom: 6px;">
-          <button class="btn-green-white" style="padding: 6px 12px; font-size: 13px;" onclick="setPointerState('p4', true)">HIỆN</button>
-          <button class="btn-system-reset" style="padding: 6px 12px; font-size: 13px; margin: 0;" onclick="setPointerState('p4', false)">ẨN</button>
-        </div>
-        <div>
-          <button class="btn-green-white" style="background: blue; border-color: #0055cc; padding: 6px 12px; font-size: 13px;" onclick="setPointerColor('p4', 'default')">Đèn màu</button>
-          <button class="btn-purple-face" style="padding: 6px 12px; font-size: 13px;" onclick="setPointerColor('p4', 'purple')">Đèn tím</button>
+      <!-- Panel 2: Cấu hình Nhạc quay Nón -->
+      <div class="panel-card" style="border-color: #ff00cc; background: #fffafa;">
+        <div class="panel-card-title" style="color: #d000aa;">Cấu hình Nhạc quay Nón</div>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+          <label for="spinMusicSelect" style="font-size: 12px; color: #333;">Nhạc quay:</label>
+          <select id="spinMusicSelect"
+            style="padding: 4px 8px; font-size: 12px; font-weight: bold; border-radius: 4px; border: 2px solid #ff00cc; color: #000;"
+            onchange="changeSpinMusic(this.value)">
+            <option value="spin.mp3">Nhạc 1 (spin.mp3)</option>
+            <option value="spin2.mp3">Nhạc 2 (spin2.mp3)</option>
+            <option value="spin3.mp3">Nhạc 3 (spin3.mp3)</option>
+            <option value="spin4.mp3">Nhạc 4 (spin4.mp3)</option>
+          </select>
         </div>
       </div>
 
-    </div>
-  </div>
+      <!-- Panel 3: Quản lý Kim chỉ thị -->
+      <div class="panel-card" style="background: #e8f4ff;">
+        <div class="panel-card-title">Quản lý Kim chỉ thị (Pointers)</div>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px;">
 
-  <div style="margin-bottom: 20px; border: 2px solid #ff00cc; padding: 12px; border-radius: 8px; background: #fff;">
-    <label for="spinMusicSelect" style="font-size: 16px; color: #333; margin-right: 10px;">Cấu hình Nhạc quay
-      Nón:</label>
-    <select id="spinMusicSelect"
-      style="padding: 8px 15px; font-size: 16px; font-weight: bold; border-radius: 6px; border: 2px solid #ff00cc; color: #000;"
-      onchange="changeSpinMusic(this.value)">
-      <option value="spin.mp3">Nhạc 1 (spin.mp3)</option>
-      <option value="spin2.mp3">Nhạc 2 (spin2.mp3)</option>
-      <option value="spin3.mp3">Nhạc 3 (spin3.mp3)</option>
-      <option value="spin4.mp3">Nhạc 4 (spin4.mp3)</option>
-    </select>
-  </div>
-  <div class="panel-box">
-    <div class="panel-title">Giao diện nón thi đấu</div>
-    <div class="grid-layout">
-      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong1.png')">Mặt Nón 1</button>
-      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong2.png')">Mặt Nón 2</button>
-      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong3.png')">Mặt Nón 3</button>
-      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong4.png')">Mặt Nón 4</button>
-      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong5.png')">Mặt Nón 5</button>
-      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong6.png')">Mặt Nón 6</button>
-      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong7.png')">Mặt Nón 7</button>
-      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong13.png')">Mặt Nón 13</button>
-      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong14.png')">Mặt Nón 14</button>
-      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong18.png')">Mặt Nón 18</button>
-      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong19.png')">Mặt Nón 19</button>
-      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong23.png')">Mặt Nón 23</button>
-      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong24.png')">Mặt Nón 24</button>
-      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong25.png')">Mặt Nón 25</button>
-      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong26.png')">Mặt Nón 26</button>
-      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong27.png')">Mặt Nón 27</button>
-      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong28.png')">Mặt Nón 28</button>
-      <button class="btn-purple-face" onclick="changeRoomWheelImage('vong29.png')">Mặt Nón 29</button>
-    </div>
-    <button class="btn-system-reset" onclick="triggerResetWheelZero()">Đưa nón về góc 0</button>
-  </div>
+          <div style="border: 1px dashed #aaa; padding: 4px; border-radius: 6px; text-align: center;">
+            <div style="font-size: 11px; margin-bottom: 4px;">Kim 1 (Gốc - Dưới)</div>
+            <button class="btn-green-white" style="padding: 4px 8px; font-size: 11px;"
+              onclick="setPointerState('p1', true)">HIỆN</button>
+            <button class="btn-system-reset" style="padding: 4px 8px; font-size: 11px; margin: 0;"
+              onclick="setPointerState('p1', false)">ẨN</button>
+          </div>
 
-  <div class="panel-box" style="margin-top: 20px;">
-    <div class="panel-title">Điều khiển ô trên Nón</div>
-    <div
-      style="display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto; padding-right: 5px; text-align: left;">
-
-      <script>
-        // Danh sách định nghĩa 17 ô và 2 thẻ 
-        const slotsData = [
-          { id: 'pn1', name: 'Ô Phần thưởng 1 (Kiểu 1)', file: 'Ô Phần thưởng 1.png', angles: [307.5] },
-          { id: 'pn1', name: 'Ô Phần thưởng 2 (Kiểu 1)', file: 'Ô Phần thưởng 1.png', angles: [37.5, 142.5] },
-          { id: 'bm1_1', name: 'Ô bí mật 1 (Kiểu 1)', file: 'Ô Bí Mật 1.png', angles: [37.5] },
-          { id: 'bm2_1', name: 'Ô bí mật 2 (Kiểu 1)', file: 'Ô Bí Mật 1.png', angles: [217.5] },
-          { id: 'st1', name: 'Ô Siêu tốc (Kiểu 1)', file: 'Ô Siêu Tốc 1.png', angles: [37.5] },
-          { id: 'dd1', name: 'Ô Đổi điểm (Kiểu 1)', file: 'Ô Đổi điểm 1.png', angles: [37.5] },
-          { id: 'o1000', name: 'Ô 1.000', file: 'Ô 1000.png', angles: [262.5] },
-          { id: 'o2000', name: 'Ô 2.000', file: 'Ô 2000.png', angles: [232.5] },
-          { id: 'o100k_1', name: 'Ô 100.000 (Kiểu 1)', file: 'Ô 100000 1.png', angles: [172.5] },
-          { id: 'pn2', name: 'Ô Phần thưởng (Kiểu 2)', file: 'Ô Phần thưởng 2.png', angles: [172.5, 202.5] },
-          { id: 'bm1_2', name: 'Ô bí mật 1 (Kiểu 2)', file: 'Ô Bí Mật 2.png', angles: [172.5, 202.5] },
-          { id: 'bm2_2', name: 'Ô bí mật 2 (Kiểu 2)', file: 'Ô Bí Mật 2.png', angles: [262.5, 337.5] },
-          { id: 'st2', name: 'Ô Siêu tốc (Kiểu 2)', file: 'Ô Siêu Tốc 2.png', angles: [172.5, 202.5] },
-          { id: 'dd2', name: 'Ô Đổi điểm (Kiểu 2)', file: 'Ô Đổi điểm 2.png', angles: [172.5, 202.5] },
-          { id: 'o3000', name: 'Ô 3.000', file: 'Ô 3000.png', angles: [37.5, 157.5] },
-          { id: 'o4000', name: 'Ô 4.000', file: 'Ô 4000.png', angles: [37.5, 157.5] },
-          { id: 'oqd', name: 'Ô Quy đổi', file: 'Ô Quy đổi.png', angles: [262.5, 337.5] },
-          { id: 'o100k_2', name: 'Ô 100.000 (Kiểu 2)', file: 'Ô 100000 2.png', angles: [127.5, 142.5] },
-          { id: 't_ch', name: 'Thẻ Cơ hội', file: 'Thẻ Cơ hội.png', angles: [7.5, 22.5, 82.5], isCard: true },
-          { id: 't_qn', name: 'Thẻ Quyền năng', file: 'Thẻ Quyền năng.png', angles: [112.5, 277.5, 292.5], isCard: true },
-          { id: 'pn3', name: 'Ô Phần thưởng (Kiểu 3)', file: 'Ô Phần thưởng 3.png', angles: [22.5] },
-          { id: 'bm1_3', name: 'Ô bí mật 1 (Kiểu 3)', file: 'Ô Bí Mật 3.png', angles: [262.5] },
-          { id: 'bm2_3', name: 'Ô bí mật 2 (Kiểu 3)', file: 'Ô Bí Mật 3.png', angles: [337.5] },
-          { id: 'o2500', name: 'Ô 2.500', file: 'Ô 2500.png', angles: [97.5] },
-          { id: 'o3500', name: 'Ô 3.500', file: 'Ô 3500.png', angles: [97.5] },
-        ];
-
-        // Hàm xử lý gửi trạng thái qua Socket.io
-        function toggleSlot(id, file, action) {
-          let selectedAngle = parseFloat(document.getElementById(`angle_${id}`).value);
-          socket.emit('controlSlotState', { id, file, action, angle: selectedAngle });
-        }
-
-        // Render các dòng điều khiển ra HTML
-        slotsData.forEach(slot => {
-          document.write(`
-          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eee; padding: 8px 0;">
-            <span style="font-size: 14px; width: 220px;">${slot.name}</span>
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <label style="font-size: 13px; color: #555;">Góc: 
-                <select id="angle_${slot.id}" style="padding: 4px; font-weight: bold;">
-                  ${slot.angles.map(a => `<option value="${a}">${a}°</option>`).join('')}
-                </select>
-              </label>
-              <button class="btn-green-white" style="padding: 6px 12px; font-size: 13px; background: green;" onclick="toggleSlot('${slot.id}', '${slot.file}', 'show')">HIỆN</button>
-              <button class="btn-green-white" style="padding: 6px 12px; font-size: 13px; background: red; border-color: darkred;" onclick="toggleSlot('${slot.id}', '${slot.file}', 'hide')">ẨN</button>
+          <div style="border: 1px dashed #aaa; padding: 4px; border-radius: 6px; text-align: center;">
+            <div style="font-size: 11px; margin-bottom: 3px;">Kim 2 (Đối diện - Đỉnh)</div>
+            <div style="margin-bottom: 3px;">
+              <button class="btn-green-white" style="padding: 3px 6px; font-size: 11px;" onclick="setPointerState('p2', true)">HIỆN</button>
+              <button class="btn-system-reset" style="padding: 3px 6px; font-size: 11px; margin: 0;" onclick="setPointerState('p2', false)">ẨN</button>
+            </div>
+            <div>
+              <button class="btn-green-white" style="background: blue; border-color: #0055cc; padding: 3px 6px; font-size: 10px;" onclick="setPointerColor('p2', 'default')">Đèn màu</button>
+              <button class="btn-purple-face" style="padding: 3px 6px; font-size: 10px;" onclick="setPointerColor('p2', 'purple')">Đèn tím</button>
             </div>
           </div>
-        `);
-        });
-      </script>
+
+          <div style="border: 1px dashed #aaa; padding: 4px; border-radius: 6px; text-align: center;">
+            <div style="font-size: 11px; margin-bottom: 3px;">Kim 3 (Trái Kim 2)</div>
+            <div style="margin-bottom: 3px;">
+              <button class="btn-green-white" style="padding: 3px 6px; font-size: 11px;" onclick="setPointerState('p3', true)">HIỆN</button>
+              <button class="btn-system-reset" style="padding: 3px 6px; font-size: 11px; margin: 0;" onclick="setPointerState('p3', false)">ẨN</button>
+            </div>
+            <div>
+              <button class="btn-green-white" style="background: blue; border-color: #0055cc; padding: 3px 6px; font-size: 10px;" onclick="setPointerColor('p3', 'default')">Đèn màu</button>
+              <button class="btn-purple-face" style="padding: 3px 6px; font-size: 10px;" onclick="setPointerColor('p3', 'purple')">Đèn tím</button>
+            </div>
+          </div>
+
+          <div style="border: 1px dashed #aaa; padding: 4px; border-radius: 6px; text-align: center;">
+            <div style="font-size: 11px; margin-bottom: 3px;">Kim 4 (Phải Kim 2)</div>
+            <div style="margin-bottom: 3px;">
+              <button class="btn-green-white" style="padding: 3px 6px; font-size: 11px;" onclick="setPointerState('p4', true)">HIỆN</button>
+              <button class="btn-system-reset" style="padding: 3px 6px; font-size: 11px; margin: 0;" onclick="setPointerState('p4', false)">ẨN</button>
+            </div>
+            <div>
+              <button class="btn-green-white" style="background: blue; border-color: #0055cc; padding: 3px 6px; font-size: 10px;" onclick="setPointerColor('p4', 'default')">Đèn màu</button>
+              <button class="btn-purple-face" style="padding: 3px 6px; font-size: 10px;" onclick="setPointerColor('p4', 'purple')">Đèn tím</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Panel 4: Giao diện nón thi đấu -->
+      <div class="panel-card">
+        <div class="panel-card-title">Giao diện nón thi đấu</div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; margin-bottom: 6px;">
+          <button class="btn-purple-face" onclick="changeRoomWheelImage('vong1.png')">Mặt Nón 1</button>
+          <button class="btn-purple-face" onclick="changeRoomWheelImage('vong2.png')">Mặt Nón 2</button>
+          <button class="btn-purple-face" onclick="changeRoomWheelImage('vong3.png')">Mặt Nón 3</button>
+          <button class="btn-purple-face" onclick="changeRoomWheelImage('vong4.png')">Mặt Nón 4</button>
+          <button class="btn-purple-face" onclick="changeRoomWheelImage('vong5.png')">Mặt Nón 5</button>
+          <button class="btn-purple-face" onclick="changeRoomWheelImage('vong6.png')">Mặt Nón 6</button>
+          <button class="btn-purple-face" onclick="changeRoomWheelImage('vong7.png')">Mặt Nón 7</button>
+          <button class="btn-purple-face" onclick="changeRoomWheelImage('vong13.png')">Mặt Nón 13</button>
+          <button class="btn-purple-face" onclick="changeRoomWheelImage('vong14.png')">Mặt Nón 14</button>
+          <button class="btn-purple-face" onclick="changeRoomWheelImage('vong18.png')">Mặt Nón 18</button>
+          <button class="btn-purple-face" onclick="changeRoomWheelImage('vong19.png')">Mặt Nón 19</button>
+          <button class="btn-purple-face" onclick="changeRoomWheelImage('vong23.png')">Mặt Nón 23</button>
+          <button class="btn-purple-face" onclick="changeRoomWheelImage('vong24.png')">Mặt Nón 24</button>
+          <button class="btn-purple-face" onclick="changeRoomWheelImage('vong25.png')">Mặt Nón 25</button>
+          <button class="btn-purple-face" onclick="changeRoomWheelImage('vong26.png')">Mặt Nón 26</button>
+          <button class="btn-purple-face" onclick="changeRoomWheelImage('vong27.png')">Mặt Nón 27</button>
+          <button class="btn-purple-face" onclick="changeRoomWheelImage('vong28.png')">Mặt Nón 28</button>
+          <button class="btn-purple-face" onclick="changeRoomWheelImage('vong29.png')">Mặt Nón 29</button>
+        </div>
+        <button class="btn-system-reset" style="width: 100%; font-size: 11px; padding: 6px;" onclick="triggerResetWheelZero()">Đưa nón về góc 0</button>
+      </div>
     </div>
-  </div>
-  
-  <div class="panel-box" style="background: #fffafa;">
-    <div class="panel-title">Bàn điều phối âm thanh Soundboard</div>
-    <div class="btn-row">
-      <button class="btn-red-sound" onclick="broadcastSoundEvent('Half')">Half</button>
-      <button class="btn-red-sound" onclick="broadcastSoundEvent('Double')">Double</button>
-      <button class="btn-red-sound" onclick="broadcastSoundEvent('FreeTurn')">FreeTurn</button>
-      <button class="btn-red-sound" onclick="broadcastSoundEvent('Lucky')">Lucky</button>
-      <button class="btn-red-sound" onclick="broadcastSoundEvent('LoseATurn')">LoseATurn</button>
-      <button class="btn-red-sound" onclick="broadcastSoundEvent('Bankrupt')">Bankrupt</button>
-      <button class="btn-blue-sound" onclick="broadcastSoundEvent('Intro')">Intro</button>
-      <button class="btn-blue-sound" onclick="broadcastSoundEvent('Commercial')">Commercial</button>
-      <button class="btn-blue-sound" onclick="broadcastSoundEvent('HostEntrance')">HostEntrance</button>
-      <button class="btn-blue-sound" onclick="broadcastSoundEvent('Credit')">Credit</button>
-      <button class="btn-blue-sound" onclick="broadcastSoundEvent('Nhạc nền 1')">Nhạc nền 1</button>
-      <button class="btn-blue-sound" onclick="broadcastSoundEvent('Nhạc nền 2')">Nhạc nền 2</button>
-      <button class="btn-red-sound" onclick="broadcastSoundEvent('Nhạc nền 3')">Nhạc nền 3</button>
-      <button class="btn-red-sound" onclick="broadcastSoundEvent('Nhạc nền 4')">Nhạc nền 4</button>
-      <button class="btn-red-sound" onclick="broadcastSoundEvent('Nhạc nền 5')">Nhạc nền 5</button>
-      <button class="btn-red-sound" onclick="broadcastSoundEvent('Nhạc nền 6')">Nhạc nền 6</button>
-      <button class="btn-red-sound" onclick="broadcastSoundEvent('Nhạc nền 7')">Nhạc nền 7</button>
-      <button class="btn-red-sound" onclick="broadcastSoundEvent('Phần thưởng')">Phần thưởng</button>
-      <button class="btn-blue-sound" onclick="broadcastSoundEvent('Ô Bí Mật')">Ô Bí Mật</button>
-      <button class="btn-blue-sound" onclick="broadcastSoundEvent('Vòng đặc biệt')">Vòng đặc biệt</button>
-      <button class="btn-blue-sound" onclick="broadcastSoundEvent('Vòng chung kết')">Vòng chung kết</button>
-      <button class="btn-blue-sound" onclick="broadcastSoundEvent('Người chơi')">Người chơi</button>
-      <button class="btn-blue-sound" onclick="broadcastSoundEvent('30s')">30s</button>
-      <button class="btn-blue-sound" onclick="broadcastSoundEvent('10s')">10s</button>
-      <button class="btn-blue-sound" onclick="broadcastSoundEvent('30s_2')">30s_2</button>
-      <button class="btn-blue-sound" onclick="broadcastSoundEvent('10s_2')">10s_2</button>
+
+    <!-- MIDDLE COLUMN -->
+    <div class="column-box">
+      <!-- Quản lý điểm số -->
+      <div class="panel-card" style="display: flex; flex-direction: column;">
+        <div class="panel-card-title" style="font-size: 14px; color: #333; margin-bottom: 8px;">Quản lý điểm số</div>
+        
+        <div class="score-players-grid">
+          <!-- Player 1 -->
+          <div class="player-score-card">
+            <h3 class="p1-card-title">PLAYER 1</h3>
+            <div class="score-display-row">
+              <div class="p1-score-box">
+                <div style="font-size: 10px; opacity: 0.9;">VÒNG</div>
+                <div id="p1_round_val" style="font-size: 15px;">0</div>
+              </div>
+              <div class="p1-score-box">
+                <div style="font-size: 10px; opacity: 0.9;">TỔNG</div>
+                <div id="p1_total_val" style="font-size: 15px;">0</div>
+              </div>
+            </div>
+            <input type="text" id="p1_score_input" class="score-input-box" placeholder="Nhập điểm..." value="0" oninput="formatInputWithSeparators(this)" />
+            <div class="score-btns-grid">
+              <button class="btn-p1-action" onclick="pScoreAction('p1', 'tong_cong')">Tổng +</button>
+              <button class="btn-p1-action" onclick="pScoreAction('p1', 'vong_cong')">Vòng +</button>
+              <button class="btn-p1-action" onclick="pScoreAction('p1', 'vong_tru')">Vòng -</button>
+              <button class="btn-p1-action" onclick="pScoreAction('p1', 'x1_5')">x1.5</button>
+              <button class="btn-p1-action" onclick="pScoreAction('p1', 'x2')">x2</button>
+              <button class="btn-p1-action" onclick="pScoreAction('p1', 'chia2')">:2</button>
+              <button class="btn-p1-action" onclick="pScoreAction('p1', 'reset_vong')">Reset vòng</button>
+              <button class="btn-p1-action" onclick="pScoreAction('p1', 'reset_tong')">Reset tổng</button>
+            </div>
+          </div>
+
+          <!-- Player 2 -->
+          <div class="player-score-card">
+            <h3 class="p2-card-title">PLAYER 2</h3>
+            <div class="score-display-row">
+              <div class="p2-score-box">
+                <div style="font-size: 10px; opacity: 0.9;">VÒNG</div>
+                <div id="p2_round_val" style="font-size: 15px;">0</div>
+              </div>
+              <div class="p2-score-box">
+                <div style="font-size: 10px; opacity: 0.9;">TỔNG</div>
+                <div id="p2_total_val" style="font-size: 15px;">0</div>
+              </div>
+            </div>
+            <input type="text" id="p2_score_input" class="score-input-box" placeholder="Nhập điểm..." value="0" oninput="formatInputWithSeparators(this)" />
+            <div class="score-btns-grid">
+              <button class="btn-p2-action" onclick="pScoreAction('p2', 'tong_cong')">Tổng +</button>
+              <button class="btn-p2-action" onclick="pScoreAction('p2', 'vong_cong')">Vòng +</button>
+              <button class="btn-p2-action" onclick="pScoreAction('p2', 'vong_tru')">Vòng -</button>
+              <button class="btn-p2-action" onclick="pScoreAction('p2', 'x1_5')">x1.5</button>
+              <button class="btn-p2-action" onclick="pScoreAction('p2', 'x2')">x2</button>
+              <button class="btn-p2-action" onclick="pScoreAction('p2', 'chia2')">:2</button>
+              <button class="btn-p2-action" onclick="pScoreAction('p2', 'reset_vong')">Reset vòng</button>
+              <button class="btn-p2-action" onclick="pScoreAction('p2', 'reset_tong')">Reset tổng</button>
+            </div>
+          </div>
+
+          <!-- Player 3 -->
+          <div class="player-score-card">
+            <h3 class="p3-card-title">PLAYER 3</h3>
+            <div class="score-display-row">
+              <div class="p3-score-box">
+                <div style="font-size: 10px; opacity: 0.9;">VÒNG</div>
+                <div id="p3_round_val" style="font-size: 15px;">0</div>
+              </div>
+              <div class="p3-score-box">
+                <div style="font-size: 10px; opacity: 0.9;">TỔNG</div>
+                <div id="p3_total_val" style="font-size: 15px;">0</div>
+              </div>
+            </div>
+            <input type="text" id="p3_score_input" class="score-input-box" placeholder="Nhập điểm..." value="0" oninput="formatInputWithSeparators(this)" />
+            <div class="score-btns-grid">
+              <button class="btn-p3-action" onclick="pScoreAction('p3', 'tong_cong')">Tổng +</button>
+              <button class="btn-p3-action" onclick="pScoreAction('p3', 'vong_cong')">Vòng +</button>
+              <button class="btn-p3-action" onclick="pScoreAction('p3', 'vong_tru')">Vòng -</button>
+              <button class="btn-p3-action" onclick="pScoreAction('p3', 'x1_5')">x1.5</button>
+              <button class="btn-p3-action" onclick="pScoreAction('p3', 'x2')">x2</button>
+              <button class="btn-p3-action" onclick="pScoreAction('p3', 'chia2')">:2</button>
+              <button class="btn-p3-action" onclick="pScoreAction('p3', 'reset_vong')">Reset vòng</button>
+              <button class="btn-p3-action" onclick="pScoreAction('p3', 'reset_tong')">Reset tổng</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active mode indicator -->
+        <div id="activeDisplayModeLabel" style="font-size: 13px; color: #800080; font-weight: bold; text-align: center; margin-top: 6px; margin-bottom: 6px;">
+          Đang hiện trên bảng: ĐIỂM VÒNG
+        </div>
+
+        <!-- 4 Global Purple Buttons -->
+        <div class="global-score-ctrls">
+          <button class="btn-purple-global" onclick="setDisplayMode('round')">Hiện điểm vòng</button>
+          <button class="btn-purple-global" onclick="setDisplayMode('total')">Hiện điểm tổng</button>
+          <button class="btn-purple-global" onclick="resetAllRoundScores()">Reset điểm vòng</button>
+          <button class="btn-purple-global" onclick="resetAllTotalScores()">Reset điểm tổng</button>
+        </div>
+      </div>
+
+      <!-- Panel Soundboard -->
+      <div class="panel-card" style="background: #fffafa;">
+        <div class="panel-card-title">Bàn điều phối âm thanh Soundboard</div>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; margin-bottom: 6px;">
+          <button class="btn-red-sound" onclick="broadcastSoundEvent('Half')">Half</button>
+          <button class="btn-red-sound" onclick="broadcastSoundEvent('Double')">Double</button>
+          <button class="btn-red-sound" onclick="broadcastSoundEvent('FreeTurn')">FreeTurn</button>
+          <button class="btn-red-sound" onclick="broadcastSoundEvent('Lucky')">Lucky</button>
+          <button class="btn-red-sound" onclick="broadcastSoundEvent('LoseATurn')">LoseATurn</button>
+          <button class="btn-red-sound" onclick="broadcastSoundEvent('Bankrupt')">Bankrupt</button>
+          <button class="btn-blue-sound" onclick="broadcastSoundEvent('Intro')">Intro</button>
+          <button class="btn-blue-sound" onclick="broadcastSoundEvent('Commercial')">Commercial</button>
+          <button class="btn-blue-sound" onclick="broadcastSoundEvent('HostEntrance')">HostEntrance</button>
+          <button class="btn-blue-sound" onclick="broadcastSoundEvent('Credit')">Credit</button>
+          <button class="btn-blue-sound" onclick="broadcastSoundEvent('Nhạc nền 1')">Nhạc nền 1</button>
+          <button class="btn-blue-sound" onclick="broadcastSoundEvent('Nhạc nền 2')">Nhạc nền 2</button>
+          <button class="btn-red-sound" onclick="broadcastSoundEvent('Nhạc nền 3')">Nhạc nền 3</button>
+          <button class="btn-red-sound" onclick="broadcastSoundEvent('Nhạc nền 4')">Nhạc nền 4</button>
+          <button class="btn-red-sound" onclick="broadcastSoundEvent('Nhạc nền 5')">Nhạc nền 5</button>
+          <button class="btn-red-sound" onclick="broadcastSoundEvent('Nhạc nền 6')">Nhạc nền 6</button>
+          <button class="btn-red-sound" onclick="broadcastSoundEvent('Nhạc nền 7')">Nhạc nền 7</button>
+          <button class="btn-red-sound" onclick="broadcastSoundEvent('Phần thưởng')">Phần thưởng</button>
+          <button class="btn-blue-sound" onclick="broadcastSoundEvent('Ô Bí Mật')">Ô Bí Mật</button>
+          <button class="btn-blue-sound" onclick="broadcastSoundEvent('Vòng đặc biệt')">Vòng đặc biệt</button>
+          <button class="btn-blue-sound" onclick="broadcastSoundEvent('Vòng chung kết')">Vòng chung kết</button>
+          <button class="btn-blue-sound" onclick="broadcastSoundEvent('Người chơi')">Người chơi</button>
+          <button class="btn-blue-sound" onclick="broadcastSoundEvent('30s')">30s</button>
+          <button class="btn-blue-sound" onclick="broadcastSoundEvent('10s')">10s</button>
+          <button class="btn-blue-sound" onclick="broadcastSoundEvent('30s_2')">30s_2</button>
+          <button class="btn-blue-sound" onclick="broadcastSoundEvent('10s_2')">10s_2</button>
+          <button class="btn-red-sound" onclick="broadcastSoundEvent('Đổi điểm')">Đổi điểm</button>
+          <button class="btn-red-sound" onclick="broadcastSoundEvent('Siêu Tốc')">Siêu Tốc</button>
+          <button class="btn-red-sound" onclick="broadcastSoundEvent('Độc Đắc')">Độc Đắc</button>
+          <button class="btn-red-sound" onclick="broadcastSoundEvent('Thử Thách')">Thử Thách</button>
+          <button class="btn-blue-sound" onclick="broadcastSoundEvent('Quy Đổi')">Quy Đổi</button>
+          <button class="btn-blue-sound" onclick="broadcastSoundEvent('Cơ Hội')">Cơ Hội</button>
+          <button class="btn-blue-sound" onclick="broadcastSoundEvent('Quyền Năng')">Quyền Năng</button>
+          <button class="btn-blue-sound" onclick="broadcastSoundEvent('100.000')">100.000</button>
+        </div>
+        <button class="btn-blue-sound" style="width: 100%; font-size: 12px; padding: 6px; text-transform: uppercase;"
+          onclick="broadcastStopAllSounds()">Dừng âm thanh</button>
+      </div>
     </div>
-    <div style="margin-top: 15px;">
-      <button class="btn-blue-sound"
-        style="width: 100%; max-width: 300px; font-size: 16px; padding: 12px; text-transform: uppercase;"
-        onclick="broadcastStopAllSounds()">Dừng âm thanh</button>
+
+    <!-- RIGHT COLUMN -->
+    <div class="column-box">
+
+      <!-- Panel Điều khiển ô trên Nón -->
+      <div class="panel-card" style="flex: 1; display: flex; flex-direction: column;">
+        <div class="panel-card-title">Điều khiển ô trên Nón</div>
+        <div id="slotsScrollBox" style="flex: 1; min-height: 120px; overflow-y: auto; padding-right: 2px;">
+          <script>
+            // Danh sách định nghĩa 17 ô và 2 thẻ 
+            const slotsData = [
+              { id: 'pn1', name: 'Ô Phần thưởng 1 (Kiểu 1)', file: 'Ô Phần thưởng 1.png', angles: [307.5] },
+              { id: 'pn1', name: 'Ô Phần thưởng 2 (Kiểu 1)', file: 'Ô Phần thưởng 1.png', angles: [37.5, 142.5] },
+              { id: 'bm1_1', name: 'Ô bí mật 1 (Kiểu 1)', file: 'Ô Bí Mật 1.png', angles: [37.5] },
+              { id: 'bm2_1', name: 'Ô bí mật 2 (Kiểu 1)', file: 'Ô Bí Mật 1.png', angles: [217.5] },
+              { id: 'st1', name: 'Ô Siêu tốc (Kiểu 1)', file: 'Ô Siêu Tốc 1.png', angles: [37.5] },
+              { id: 'dd1', name: 'Ô Đổi điểm (Kiểu 1)', file: 'Ô Đổi điểm 1.png', angles: [37.5] },
+              { id: 'o1000', name: 'Ô 1.000', file: 'Ô 1000.png', angles: [262.5] },
+              { id: 'o2000', name: 'Ô 2.000', file: 'Ô 2000.png', angles: [232.5] },
+              { id: 'o100k_1', name: 'Ô 100.000 (Kiểu 1)', file: 'Ô 100000 1.png', angles: [172.5] },
+              { id: 'pn2', name: 'Ô Phần thưởng (Kiểu 2)', file: 'Ô Phần thưởng 2.png', angles: [172.5, 202.5] },
+              { id: 'bm1_2', name: 'Ô bí mật 1 (Kiểu 2)', file: 'Ô Bí Mật 2.png', angles: [172.5, 202.5] },
+              { id: 'bm2_2', name: 'Ô bí mật 2 (Kiểu 2)', file: 'Ô Bí Mật 2.png', angles: [262.5, 337.5] },
+              { id: 'st2', name: 'Ô Siêu tốc (Kiểu 2)', file: 'Ô Siêu Tốc 2.png', angles: [172.5, 202.5] },
+              { id: 'dd2', name: 'Ô Đổi điểm (Kiểu 2)', file: 'Ô Đổi điểm 2.png', angles: [172.5, 202.5] },
+              { id: 'o3000', name: 'Ô 3.000', file: 'Ô 3000.png', angles: [37.5, 157.5] },
+              { id: 'o4000', name: 'Ô 4.000', file: 'Ô 4000.png', angles: [37.5, 157.5] },
+              { id: 'oqd', name: 'Ô Quy đổi', file: 'Ô Quy đổi.png', angles: [262.5, 337.5] },
+              { id: 'o100k_2', name: 'Ô 100.000 (Kiểu 2)', file: 'Ô 100000 2.png', angles: [127.5, 142.5] },
+              { id: 't_ch', name: 'Thẻ Cơ hội', file: 'Thẻ Cơ hội.png', angles: [7.5, 22.5, 82.5], isCard: true },
+              { id: 't_qn', name: 'Thẻ Quyền năng', file: 'Thẻ Quyền năng.png', angles: [112.5, 277.5, 292.5], isCard: true },
+              { id: 'pn3', name: 'Ô Phần thưởng (Kiểu 3)', file: 'Ô Phần thưởng 3.png', angles: [22.5] },
+              { id: 'bm1_3', name: 'Ô bí mật 1 (Kiểu 3)', file: 'Ô Bí Mật 3.png', angles: [262.5] },
+              { id: 'bm2_3', name: 'Ô bí mật 2 (Kiểu 3)', file: 'Ô Bí Mật 3.png', angles: [337.5] },
+              { id: 'o2500', name: 'Ô 2.500', file: 'Ô 2500.png', angles: [97.5] },
+              { id: 'o3500', name: 'Ô 3.500', file: 'Ô 3500.png', angles: [97.5] },
+            ];
+
+            // Hàm xử lý gửi trạng thái qua Socket.io
+            function toggleSlot(id, file, action) {
+              let selectedAngle = parseFloat(document.getElementById(`angle_${id}`).value);
+              socket.emit('controlSlotState', { id, file, action, angle: selectedAngle });
+            }
+
+            // Render các dòng điều khiển ra HTML
+            slotsData.forEach(slot => {
+              document.write(`
+              <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f0f0f0; padding: 4px 0;">
+                <span style="font-size: 11px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 4px;">${slot.name}</span>
+                <div style="display: flex; align-items: center; gap: 4px;">
+                  <label style="font-size: 10px; color: #555;">Góc: 
+                    <select id="angle_${slot.id}" style="padding: 2px; font-size: 10px; font-weight: bold;">
+                      ${slot.angles.map(a => `<option value="${a}">${a}°</option>`).join('')}
+                    </select>
+                  </label>
+                  <button class="btn-green-white" style="padding: 3px 6px; font-size: 10px; background: green;" onclick="toggleSlot('${slot.id}', '${slot.file}', 'show')">HIỆN</button>
+                  <button class="btn-green-white" style="padding: 3px 6px; font-size: 10px; background: red; border-color: darkred;" onclick="toggleSlot('${slot.id}', '${slot.file}', 'hide')">ẨN</button>
+                </div>
+              </div>
+            `);
+            });
+          </script>
+        </div>
+      </div>
     </div>
+
   </div>
 
+  <!-- POPUP MODAL -->
   <div id="techPopupModal" class="popup-overlay">
     <div class="popup-box">
       <div id="techPopupMessage" class="popup-message"></div>
@@ -463,18 +802,51 @@
   </div>
 
   <script>
-    const socket = io("https://wheel2001.onrender.com", { transports: ['websocket'] });
+    const socket = io({ transports: ['websocket', 'polling'] });
 
     let currentActiveRoomID = null;
     let roomPasswordsConfig = { "Player 1": null, "Player 2": null, "Player 3": null };
 
-    // Hàm gọi hiển thị Popup thay thế alert/confirm/prompt
+    function formatThousands(num) {
+      if (num === null || num === undefined || isNaN(num)) return '0';
+      let str = Math.round(Number(num)).toString();
+      let isNeg = str.startsWith('-');
+      if (isNeg) str = str.substring(1);
+      let formatted = str.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+      return isNeg ? '-' + formatted : formatted;
+    }
+
+    function formatInputWithSeparators(el) {
+      let val = el.value;
+      let isNegative = val.trim().startsWith('-');
+      let digits = val.replace(/[^\d]/g, '');
+      if (!digits) {
+        el.value = isNegative ? '-' : '0';
+        return;
+      }
+      if (digits.length > 1) {
+        digits = digits.replace(/^0+/, '');
+        if (digits === '') digits = '0';
+      }
+      let formatted = digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+      el.value = isNegative ? '-' + formatted : formatted;
+    }
+
+    function parseInputValue(player) {
+      const inputEl = document.getElementById(`${player}_score_input`);
+      if (!inputEl) return 0;
+      let valStr = inputEl.value;
+      let isNegative = valStr.trim().startsWith('-');
+      let digits = valStr.replace(/[^\d]/g, '');
+      let num = parseInt(digits, 10) || 0;
+      return isNegative ? -num : num;
+    }
+
     function showPopup(message) {
       document.getElementById('techPopupMessage').innerText = message;
       document.getElementById('techPopupModal').style.display = 'flex';
     }
 
-    // Hàm đóng Popup
     function closeCustomPopup() {
       document.getElementById('techPopupModal').style.display = 'none';
     }
@@ -483,7 +855,6 @@
       document.getElementById('statusLog').innerText = "Máy chủ Socket.io kết nối thành công!";
       document.getElementById('statusLog').style.color = 'green';
 
-      // Nếu mất kết nối và kết nối lại, tự động rejoin room để giữ trạng thái ổn định
       if (currentActiveRoomID) {
         socket.emit('techCreateRoom', {
           roomid: currentActiveRoomID,
@@ -501,10 +872,10 @@
       const display = document.getElementById('roomCredentialsDisplay');
       display.style.display = "inline-block";
       display.innerHTML = `
-        <strong>MÃ PHÒNG (ROOM ID):</strong> <span style="color:blue; font-size:18px;">${currentActiveRoomID || 'Chưa thiết lập'}</span><br>
-        <strong>Mật khẩu Player 1 (4 số):</strong> <span style="color:darkgreen;">${roomPasswordsConfig["Player 1"] || 'Chưa thiết lập'}</span><br>
-        <strong>Mật khẩu Player 2 (4 số):</strong> <span style="color:darkgreen;">${roomPasswordsConfig["Player 2"] || 'Chưa thiết lập'}</span><br>
-        <strong>Mật khẩu Player 3 (4 số):</strong> <span style="color:darkgreen;">${roomPasswordsConfig["Player 3"] || 'Chưa thiết lập'}</span>
+        <strong>PHÒNG:</strong> <span style="color:blue;">${currentActiveRoomID || 'Chưa thiết lập'}</span> | 
+        <strong>P1 Pass:</strong> <span style="color:darkgreen;">${roomPasswordsConfig["Player 1"] || '---'}</span> | 
+        <strong>P2 Pass:</strong> <span style="color:darkgreen;">${roomPasswordsConfig["Player 2"] || '---'}</span> | 
+        <strong>P3 Pass:</strong> <span style="color:darkgreen;">${roomPasswordsConfig["Player 3"] || '---'}</span>
       `;
     }
 
@@ -519,7 +890,6 @@
       pushRoomConfigurationToServer();
     }
 
-    // Thêm hàm này vào cuối phần script của file Tech
     function changeSpinMusic(musicFile) {
       if (!currentActiveRoomID) {
         document.getElementById('statusLog').innerText = "LỖI: Bạn phải tạo phòng trước khi cấu hình nhạc quay!";
@@ -531,7 +901,6 @@
       document.getElementById('statusLog').style.color = 'blue';
     }
 
-    // Cập nhật lại hàm pushRoomConfigurationToServer để tự động sync cấu hình nhạc hiện tại khi khởi tạo phòng
     function pushRoomConfigurationToServer() {
       if (!currentActiveRoomID) return;
 
@@ -542,8 +911,8 @@
         passwords: roomPasswordsConfig
       });
 
-      // Đồng bộ luôn bài nhạc đang được chọn
       socket.emit('techChangeSpinMusic', { roomid: currentActiveRoomID, musicFile: currentMusic });
+      sendScoresToServer();
 
       document.getElementById('statusLog').innerText = `Phòng ${currentActiveRoomID} và Mật khẩu đã được đồng bộ an toàn lên Server!`;
       document.getElementById('statusLog').style.color = 'green';
@@ -581,7 +950,7 @@
     function broadcastSoundEvent(soundName) {
       if (!currentActiveRoomID) return;
       socket.emit('techPlaySound', { roomid: currentActiveRoomID, soundName: soundName });
-      document.getElementById('statusLog').innerText = `Lệnh phát nhạc Soundboard: ${soundName}.mp3`;
+      document.getElementById('statusLog').innerText = `Lệnh phát nhạc Soundboard: ${soundName}`;
       document.getElementById('statusLog').style.color = 'blue';
     }
 
@@ -608,6 +977,104 @@
 
     let currentPointers = { p1: true, p2: true, p3: true, p4: true };
 
+    let currentScores = {
+      p1: { round: 0, total: 0 },
+      p2: { round: 0, total: 0 },
+      p3: { round: 0, total: 0 },
+      displayMode: 'round'
+    };
+
+    function updateScoreUI() {
+      if (document.getElementById('p1_round_val')) {
+        document.getElementById('p1_round_val').innerText = formatThousands(currentScores.p1.round);
+        document.getElementById('p1_total_val').innerText = formatThousands(currentScores.p1.total);
+        document.getElementById('p2_round_val').innerText = formatThousands(currentScores.p2.round);
+        document.getElementById('p2_total_val').innerText = formatThousands(currentScores.p2.total);
+        document.getElementById('p3_round_val').innerText = formatThousands(currentScores.p3.round);
+        document.getElementById('p3_total_val').innerText = formatThousands(currentScores.p3.total);
+
+        const modeIndicator = document.getElementById('activeDisplayModeLabel');
+        if (modeIndicator) {
+          modeIndicator.innerText = (currentScores.displayMode === 'total') ? "Đang hiện trên bảng: ĐIỂM TỔNG" : "Đang hiện trên bảng: ĐIỂM VÒNG";
+        }
+      }
+    }
+
+    function sendScoresToServer() {
+      if (currentActiveRoomID) {
+        socket.emit('techUpdateScores', {
+          roomid: currentActiveRoomID,
+          scores: currentScores,
+          displayMode: currentScores.displayMode
+        });
+      }
+    }
+
+    function pScoreAction(player, action) {
+      let val = parseInputValue(player);
+
+      if (action === 'tong_cong') {
+        currentScores[player].total += currentScores[player].round;
+      } else if (action === 'vong_cong') {
+        currentScores[player].round += val;
+      } else if (action === 'vong_tru') {
+        currentScores[player].round -= val;
+      } else if (action === 'x1_5') {
+        currentScores[player].round = Math.round(currentScores[player].round * 1.5);
+      } else if (action === 'x2') {
+        currentScores[player].round *= 2;
+      } else if (action === 'chia2') {
+        currentScores[player].round = Math.floor(currentScores[player].round / 2);
+      } else if (action === 'reset_vong') {
+        currentScores[player].round = 0;
+      } else if (action === 'reset_tong') {
+        currentScores[player].total = 0;
+      }
+
+      updateScoreUI();
+      sendScoresToServer();
+    }
+
+    function setDisplayMode(mode) {
+      currentScores.displayMode = mode;
+      updateScoreUI();
+      sendScoresToServer();
+    }
+
+    function resetAllRoundScores() {
+      currentScores.p1.round = 0;
+      currentScores.p2.round = 0;
+      currentScores.p3.round = 0;
+      updateScoreUI();
+      sendScoresToServer();
+    }
+
+    function resetAllTotalScores() {
+      currentScores.p1.total = 0;
+      currentScores.p2.total = 0;
+      currentScores.p3.total = 0;
+      updateScoreUI();
+      sendScoresToServer();
+    }
+
+    socket.on('syncScores', (scoresData) => {
+      if (scoresData) {
+        if (scoresData.p1) currentScores.p1 = scoresData.p1;
+        if (scoresData.p2) scoresState = scoresData.p2; // p2
+        if (scoresData.p2) currentScores.p2 = scoresData.p2;
+        if (scoresData.p3) currentScores.p3 = scoresData.p3;
+        if (scoresData.displayMode) currentScores.displayMode = scoresData.displayMode;
+        updateScoreUI();
+      }
+    });
+
+    socket.on('initGameState', (state) => {
+      if (state && state.scores) {
+        currentScores = state.scores;
+        updateScoreUI();
+      }
+    });
+
     function setPointerState(ptrConfig, isVisible) {
       if (!currentActiveRoomID) {
         document.getElementById('statusLog').innerText = "LỖI: Bạn phải tạo phòng trước khi cấu hình Kim!";
@@ -632,7 +1099,7 @@
         socket.emit('techUpdatePointerColor', { pointerId, colorState });
       }
     }
-    
+
     document.addEventListener('contextmenu', e => e.preventDefault());
     document.addEventListener('keydown', e => {
       if (e.keyCode === 123) e.preventDefault();

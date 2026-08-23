@@ -195,7 +195,7 @@
   </div>
 
   <script>
-    const socket = io("https://wheel2001.onrender.com", { transports: ['websocket'] });
+    const socket = io({ transports: ['websocket', 'polling'] });
 
     function showAlertPopup(message, isInfo = false) {
       const modal = document.getElementById('customAlert');
