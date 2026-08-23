@@ -36,9 +36,9 @@
     #scoreboardContainer {
       width: 100%;
       height: 100%;
-      max-width: calc(100vh * (16 / 9));
-      max-height: calc(100vw * (9 / 16));
-      aspect-ratio: 16 / 9;
+      max-width: calc(100vh * (1024 / 576));
+      max-height: calc(100vw * (576 / 1024));
+      aspect-ratio: 1024 / 576;
       display: flex;
       flex-direction: column;
       position: relative;
@@ -46,16 +46,14 @@
       container-type: size;
     }
 
-    /* ĐỤC LỖ BẰNG SVG MASK TỰ ĐỘNG THEO TỶ LỆ PIXEL CỦA ẢNH BG.PNG */
-    #scoreboardContainer::before {
-      content: '';
+    /* KHUNG SVG CHỨA ẢNH NỀN VÀ ĐỤC LỖ */
+    .bg-hole-layer {
       position: absolute;
       inset: 0;
+      width: 100%;
+      height: 100%;
       z-index: 1;
-      background: url('bg.png') no-repeat center center;
-      background-size: 100% 100%;
-      -webkit-mask: url(#camHoleMask);
-      mask: url(#camHoleMask);
+      pointer-events: none;
     }
 
     /* SECTION TRÊN: VÙNG CHỨA CAMERA */
@@ -67,12 +65,12 @@
       background: transparent;
     }
 
-    /* VỊ TRÍ 3 Ô CAMBOX KHỚP VỚI LỖ ĐỤC */
+    /* VỊ TRÍ 3 Ô CAMBOX TRÙNG KHỚP LỖ ĐỤC KÍCH THƯỚC PIXEL */
     .cam-box {
       position: absolute;
-      top: 39.58%; /* (152px / 384px chiều cao topSection) */
+      top: 26.39%;
       width: 32.03%;
-      height: 47.92%;
+      height: 31.94%;
       z-index: 2;
       background: transparent !important;
       border: none;
@@ -196,34 +194,28 @@
       background: orange;
       color: white;
     }
-
-    .svg-mask-defs {
-      position: absolute;
-      width: 0;
-      height: 0;
-      overflow: hidden;
-    }
   </style>
 </head>
 
 <body>
 
-  <!-- MASK SVG ĐỤC LỖ CHÍNH XÁC THEO TỶ LỆ KÍCH THƯỚC Ô ĐEN TRÊN ẢNH -->
-  <svg class="svg-mask-defs">
-    <defs>
-      <mask id="camHoleMask" maskUnits="objectBoundingBox" x="0" y="0" width="1" height="1">
-        <!-- Lớp trắng giữ lại ảnh nền -->
-        <rect x="0" y="0" width="1" height="1" fill="#white" />
-        
-        <!-- 3 Lỗ đục đen trùng khớp hoàn toàn vị trí ô đen trên bg.png -->
-        <rect x="0.0088" y="0.2639" width="0.3203" height="0.3194" fill="#black" />
-        <rect x="0.3398" y="0.2639" width="0.3203" height="0.3194" fill="#black" />
-        <rect x="0.6709" y="0.2639" width="0.3203" height="0.3194" fill="#black" />
-      </mask>
-    </defs>
-  </svg>
-
   <div id="scoreboardContainer">
+    <!-- SVG ĐỤC LỖ NỀN BG.PNG CHẮC CHẮN NẰM PHÍA DƯỚI CAMBOX VÀ SCORE -->
+    <svg class="bg-hole-layer" viewBox="0 0 1024 576" preserveAspectRatio="none">
+      <defs>
+        <mask id="holeCutout">
+          <!-- Phủ trắng toàn bộ khung hình -->
+          <rect x="0" y="0" width="1024" height="576" fill="white" />
+          <!-- Đục 3 hình chữ nhật màu đen đúng chuẩn vị trí Pixel của ô đen -->
+          <rect x="9" y="152" width="328" height="184" fill="black" />
+          <rect x="348" y="152" width="328" height="184" fill="black" />
+          <rect x="687" y="152" width="328" height="184" fill="black" />
+        </mask>
+      </defs>
+      <!-- Hiển thị ảnh bg.png qua lớp mặt nạ đục lỗ -->
+      <image href="bg.png" x="0" y="0" width="1024" height="576" mask="url(#holeCutout)" />
+    </svg>
+
     <!-- SECTION TRÊN: CAMERA CUTOUTS -->
     <div id="topSection">
       <div id="camBox1" class="cam-box"></div>
