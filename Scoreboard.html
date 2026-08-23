@@ -33,6 +33,7 @@
       justify-content: center;
     }
 
+    /* ĐỤC LỖ NỀN BẰNG CSS MASKING */
     #scoreboardContainer {
       width: 100%;
       height: 100%;
@@ -42,16 +43,50 @@
       display: flex;
       flex-direction: column;
       position: relative;
-      background: url('bg.png') no-repeat center center;
-      background-size: 100% 100%;
       container-type: size;
+      
+      /* Tạo nền qua pseudo-element để áp dụng mask đục lỗ */
+      background: transparent;
     }
 
-    /* SECTION TRÊN: KHUNG CAMERA TRONG SUỐT (31.8% x 32.0% khớp lỗ bg.png) */
+    /* Tạo lớp phủ background và đục lỗ 3 vị trí cam-box */
+    #scoreboardContainer::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url('bg.png') no-repeat center center;
+      background-size: 100% 100%;
+      z-index: 1;
+
+      /* Áp dụng Mask đục lỗ 3 ô camera */
+      -webkit-mask-image: 
+        linear-gradient(#000 0 0),
+        linear-gradient(#000 0 0),
+        linear-gradient(#000 0 0),
+        linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+
+      /* Định vị 3 vùng đục lỗ trùng khớp với vị trí cam-box */
+      -webkit-mask-size: 
+        100% 100%,
+        31.8% 56.5%,
+        31.8% 56.5%,
+        31.8% 56.5%;
+      -webkit-mask-position: 
+        0 0,
+        0.8% 7.6%,
+        34.1% 7.6%,
+        67.4% 7.6%;
+      -webkit-mask-repeat: no-repeat;
+    }
+
+    /* SECTION TRÊN: KHUNG CAMERA TRONG SUỐT */
     #topSection {
       height: 66.7%;
       width: 100%;
       position: relative;
+      z-index: 2;
       display: flex;
       align-items: center;
       justify-content: space-around;
