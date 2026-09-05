@@ -123,17 +123,6 @@
       text-shadow: 0 0 15px rgba(0, 0, 0, 0.9), 0 4px 10px rgba(0, 0, 0, 0.9);
       letter-spacing: 2px;
       line-height: 1;
-      transition: transform 0.2s ease, color 0.2s ease;
-    }
-
-    .score-pulse {
-      animation: scorePulseAnim 0.35s ease-out;
-    }
-
-    @keyframes scorePulseAnim {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.18); color: #ffff00; }
-      100% { transform: scale(1); }
     }
 
     /* MODAL NHẬP MÃ PHÒNG KHI CẦN */
@@ -179,6 +168,11 @@
       outline: none;
     }
 
+    button:hover {
+      background: orange !important;
+      color: black !important;
+    }
+
     .room-modal-box button {
       background: #800080;
       color: #fff;
@@ -191,8 +185,8 @@
     }
 
     .room-modal-box button:hover {
-      background: orange;
-      color: white;
+      background: orange !important;
+      color: black !important;
     }
   </style>
   <script src="/socket.io/socket.io.js"></script>
@@ -305,9 +299,6 @@
       const formatted = formatThousands(newScore);
       if (el.innerText !== formatted) {
         el.innerText = formatted;
-        el.classList.remove('score-pulse');
-        void el.offsetWidth; // Trigger reflow
-        el.classList.add('score-pulse');
       }
     }
 

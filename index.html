@@ -3,7 +3,11 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>Xác Thực Người Chơi</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wheel of Fortune Sync</title>
+  <meta name="description" content="Realtime Wheel Spin System using Socket.io">
+  <meta property="og:title" content="Wheel of Fortune Sync">
+  <meta property="og:description" content="Realtime Wheel Spin System using Socket.io">
   <style>
     * {
       box-sizing: border-box;
@@ -93,9 +97,14 @@
       transform: scale(0.97);
     }
 
+    button:hover:not(:disabled) {
+      background: orange !important;
+      color: black !important;
+    }
+
     .btn-submit:hover:not(:disabled) {
       background: orange !important;
-      color: white !important;
+      color: black !important;
     }
 
     .popup-modal {
@@ -155,7 +164,7 @@
 
     .popup-content button:hover {
       background: orange !important;
-      color: white !important;
+      color: black !important;
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.4/dist/socket.io.min.js"></script>

@@ -127,6 +127,11 @@
     }
 
     /* BUTTON STYLES */
+    button:hover {
+      background: orange !important;
+      color: black !important;
+    }
+
     .btn-green-white {
       background: green;
       color: white;
@@ -140,7 +145,7 @@
 
     .btn-green-white:hover {
       background: orange !important;
-      color: white !important;
+      color: black !important;
     }
 
     .btn-yellow-black {
@@ -155,8 +160,8 @@
     }
 
     .btn-yellow-black:hover {
-      background: orange;
-      color: white;
+      background: orange !important;
+      color: black !important;
     }
 
     .btn-purple-face {
@@ -172,8 +177,8 @@
     }
 
     .btn-purple-face:hover {
-      background: orange;
-      color: white;
+      background: orange !important;
+      color: black !important;
     }
 
     .btn-red-sound {
@@ -191,8 +196,8 @@
     }
 
     .btn-red-sound:hover {
-      background: orange;
-      color: white;
+      background: orange !important;
+      color: black !important;
     }
 
     .btn-blue-sound {
@@ -210,8 +215,8 @@
     }
 
     .btn-blue-sound:hover {
-      background: orange;
-      color: white;
+      background: orange !important;
+      color: black !important;
     }
 
     .btn-system-reset {
@@ -225,8 +230,8 @@
     }
 
     .btn-system-reset:hover {
-      background: orange;
-      color: white;
+      background: orange !important;
+      color: black !important;
     }
 
     /* SCORE MANAGEMENT STYLES */
@@ -287,21 +292,30 @@
     }
     .btn-p1-action:hover {
       background: orange !important;
-      color: white !important;
+      color: black !important;
     }
 
     /* Player 2 Box Styles */
-    .p2-card-title { color: #b39b00; }
+    .p2-card {
+      background: #000000 !important;
+      border: 2px solid #333333 !important;
+    }
+    .p2-card-title {
+      color: #ffff00 !important;
+    }
     .p2-score-box {
-      background: #ffff00;
-      color: #000000;
+      background: #ffff00 !important;
+      color: #000000 !important;
       padding: 4px 2px;
       border-radius: 4px;
       font-size: 14px;
       font-weight: bold;
       flex: 1;
       text-align: center;
-      border: 1px solid #cccc00;
+      border: 1px solid #cccc00 !important;
+    }
+    .p2-score-box div {
+      color: #000000 !important;
     }
     .btn-p2-action {
       background: #ffff00;
@@ -316,8 +330,61 @@
     }
     .btn-p2-action:hover {
       background: orange !important;
-      color: white !important;
+      color: black !important;
     }
+
+    /* Kim 1 Color Button Styles */
+    .btn-ptr-red {
+      background: #ff0000;
+      color: #ffffff;
+      border: 1px solid #cc0000;
+      padding: 3px 2px;
+      font-size: 10px;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-ptr-red:hover { background: orange !important; color: black !important; }
+
+    .btn-ptr-yellow {
+      background: #ffff00;
+      color: #000000;
+      border: 1px solid #cccc00;
+      padding: 3px 2px;
+      font-size: 10px;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-ptr-yellow:hover { background: orange !important; color: black !important; }
+
+    .btn-ptr-green {
+      background: #0000ff;
+      color: #ffffff;
+      border: 1px solid #0000cc;
+      padding: 3px 2px;
+      font-size: 10px;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-ptr-green:hover { background: orange !important; color: black !important; }
+
+    .btn-ptr-default {
+      background: #333333;
+      color: #ffffff;
+      border: 1px solid #111111;
+      padding: 3px 2px;
+      font-size: 10px;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-ptr-default:hover { background: orange !important; color: black !important; }
 
     /* Player 3 Box Styles */
     .p3-card-title { color: #0000ff; }
@@ -345,7 +412,7 @@
     }
     .btn-p3-action:hover {
       background: orange !important;
-      color: white !important;
+      color: black !important;
     }
 
     .score-input-box {
@@ -357,7 +424,8 @@
       border: 1px solid #aaa;
       border-radius: 4px;
       outline: none;
-      background: #fff;
+      background: #ffffff !important;
+      color: #000000 !important;
     }
     .score-input-box:focus {
       border-color: #333;
@@ -393,7 +461,7 @@
     }
     .btn-purple-global:hover {
       background: orange !important;
-      color: white !important;
+      color: black !important;
     }
 
     /* POPUP OVERLAY */
@@ -442,7 +510,8 @@
     }
 
     .btn-popup-close:hover {
-      background: orange;
+      background: orange !important;
+      color: black !important;
       border-color: darkorange;
     }
 
@@ -509,11 +578,19 @@
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px;">
 
           <div style="border: 1px dashed #aaa; padding: 4px; border-radius: 6px; text-align: center;">
-            <div style="font-size: 11px; margin-bottom: 4px;">Kim 1 (Gốc - Dưới)</div>
-            <button class="btn-green-white" style="padding: 4px 8px; font-size: 11px;"
-              onclick="setPointerState('p1', true)">HIỆN</button>
-            <button class="btn-system-reset" style="padding: 4px 8px; font-size: 11px; margin: 0;"
-              onclick="setPointerState('p1', false)">ẨN</button>
+            <div style="font-size: 11px; margin-bottom: 3px;">Kim 1 (Gốc - Dưới)</div>
+            <div style="margin-bottom: 3px;">
+              <button class="btn-green-white" style="padding: 3px 6px; font-size: 11px;"
+                onclick="setPointerState('p1', true)">HIỆN</button>
+              <button class="btn-system-reset" style="padding: 3px 6px; font-size: 11px; margin: 0;"
+                onclick="setPointerState('p1', false)">ẨN</button>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 2px;">
+              <button class="btn-ptr-red" onclick="setPointerColor('p1', 'red')">Đèn đỏ</button>
+              <button class="btn-ptr-yellow" onclick="setPointerColor('p1', 'yellow')">Đèn vàng</button>
+              <button class="btn-ptr-green" onclick="setPointerColor('p1', 'green')">Đèn xanh</button>
+              <button class="btn-ptr-default" onclick="setPointerColor('p1', 'default')">Đèn gốc</button>
+            </div>
           </div>
 
           <div style="border: 1px dashed #aaa; padding: 4px; border-radius: 6px; text-align: center;">
@@ -602,7 +679,10 @@
                 <div id="p1_total_val" style="font-size: 15px;">0</div>
               </div>
             </div>
-            <input type="text" id="p1_score_input" class="score-input-box" placeholder="Nhập điểm..." value="0" oninput="formatInputWithSeparators(this)" />
+            <div style="display: flex; gap: 4px; width: 100%;">
+              <input type="text" id="p1_score_input" class="score-input-box" placeholder="Nhập điểm..." value="0" oninput="formatInputWithSeparators(this)" style="flex: 1;" />
+              <button class="btn-p1-action" style="padding: 4px 8px; font-size: 11px; white-space: nowrap;" onclick="clearScoreInput('p1')">Xóa text</button>
+            </div>
             <div class="score-btns-grid">
               <button class="btn-p1-action" onclick="pScoreAction('p1', 'tong_cong')">Tổng +</button>
               <button class="btn-p1-action" onclick="pScoreAction('p1', 'vong_cong')">Vòng +</button>
@@ -616,7 +696,7 @@
           </div>
 
           <!-- Player 2 -->
-          <div class="player-score-card">
+          <div class="player-score-card p2-card">
             <h3 class="p2-card-title">PLAYER 2</h3>
             <div class="score-display-row">
               <div class="p2-score-box">
@@ -628,7 +708,10 @@
                 <div id="p2_total_val" style="font-size: 15px;">0</div>
               </div>
             </div>
-            <input type="text" id="p2_score_input" class="score-input-box" placeholder="Nhập điểm..." value="0" oninput="formatInputWithSeparators(this)" />
+            <div style="display: flex; gap: 4px; width: 100%;">
+              <input type="text" id="p2_score_input" class="score-input-box" placeholder="Nhập điểm..." value="0" oninput="formatInputWithSeparators(this)" style="flex: 1;" />
+              <button class="btn-p2-action" style="padding: 4px 8px; font-size: 11px; white-space: nowrap;" onclick="clearScoreInput('p2')">Xóa text</button>
+            </div>
             <div class="score-btns-grid">
               <button class="btn-p2-action" onclick="pScoreAction('p2', 'tong_cong')">Tổng +</button>
               <button class="btn-p2-action" onclick="pScoreAction('p2', 'vong_cong')">Vòng +</button>
@@ -654,7 +737,10 @@
                 <div id="p3_total_val" style="font-size: 15px;">0</div>
               </div>
             </div>
-            <input type="text" id="p3_score_input" class="score-input-box" placeholder="Nhập điểm..." value="0" oninput="formatInputWithSeparators(this)" />
+            <div style="display: flex; gap: 4px; width: 100%;">
+              <input type="text" id="p3_score_input" class="score-input-box" placeholder="Nhập điểm..." value="0" oninput="formatInputWithSeparators(this)" style="flex: 1;" />
+              <button class="btn-p3-action" style="padding: 4px 8px; font-size: 11px; white-space: nowrap;" onclick="clearScoreInput('p3')">Xóa text</button>
+            </div>
             <div class="score-btns-grid">
               <button class="btn-p3-action" onclick="pScoreAction('p3', 'tong_cong')">Tổng +</button>
               <button class="btn-p3-action" onclick="pScoreAction('p3', 'vong_cong')">Vòng +</button>
@@ -815,6 +901,14 @@
       if (isNeg) str = str.substring(1);
       let formatted = str.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
       return isNeg ? '-' + formatted : formatted;
+    }
+
+    function clearScoreInput(player) {
+      const inputEl = document.getElementById(`${player}_score_input`);
+      if (inputEl) {
+        inputEl.value = '';
+        inputEl.focus();
+      }
     }
 
     function formatInputWithSeparators(el) {
@@ -1103,8 +1197,20 @@
     }
 
     function setPointerColor(pointerId, colorState) {
+      if (!currentActiveRoomID) {
+        currentActiveRoomID = sessionStorage.getItem('controller_roomid');
+      }
       if (socket && socket.connected) {
-        socket.emit('techUpdatePointerColor', { pointerId, colorState });
+        socket.emit('techUpdatePointerColor', { roomid: currentActiveRoomID, pointerId, colorState });
+        let ptrName = pointerId === 'p1' ? 'Kim 1' : pointerId === 'p2' ? 'Kim 2' : pointerId === 'p3' ? 'Kim 3' : 'Kim 4';
+        let colorName = colorState;
+        if (colorState === 'red') colorName = 'Đèn đỏ (pointer1.png)';
+        else if (colorState === 'yellow') colorName = 'Đèn vàng (pointer2.png)';
+        else if (colorState === 'green') colorName = 'Đèn xanh (pointer3.png)';
+        else if (colorState === 'default') colorName = pointerId === 'p1' ? 'Đèn gốc (pointer.png)' : 'Đèn màu gốc';
+        else if (colorState === 'purple') colorName = 'Đèn tím (pointer4.png)';
+        document.getElementById('statusLog').innerText = `Đã đổi ${ptrName} sang: ${colorName}`;
+        document.getElementById('statusLog').style.color = 'blue';
       }
     }
 

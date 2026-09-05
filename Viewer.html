@@ -98,15 +98,25 @@
       justify-content: center;
     }
 
+    button:hover {
+      background: orange !important;
+      color: black !important;
+    }
+
     .audio-init-overlay button {
       background: #ff00ff;
-      color: white;
+      color: black;
       border: none;
       padding: 25px 50px;
       font-size: 24px;
       border-radius: 12px;
       cursor: pointer;
       box-shadow: 0 0 25px #00ffff;
+    }
+
+    .audio-init-overlay button:hover {
+      background: orange !important;
+      color: black !important;
     }
 
     .error-status-toast {
@@ -573,15 +583,11 @@
 
         if (state.pointerColorState) {
           for (let pId in state.pointerColorState) {
-            const targetPointerDiv = document.getElementById(pId === 'p2' ? 'pointer2' : pId === 'p3' ? 'pointer3' : 'pointer4');
+            const targetPointerDiv = document.getElementById(pId === 'p1' ? 'pointer1' : pId === 'p2' ? 'pointer2' : pId === 'p3' ? 'pointer3' : 'pointer4');
             if (targetPointerDiv) {
               const imgEl = targetPointerDiv.querySelector('img');
               if (imgEl) {
-                if (state.pointerColorState[pId] === 'purple') {
-                  imgEl.src = 'pointer4.png';
-                } else {
-                  imgEl.src = defaultPointerImages[pId];
-                }
+                imgEl.src = getPointerImageSrc(pId, state.pointerColorState[pId]);
               }
             }
           }
@@ -671,17 +677,36 @@
       }
     }
 
+    function getPointerImageSrc(pointerId, colorState) {
+      if (pointerId === 'p1') {
+        if (colorState === 'red' || colorState === 'pointer1.png') return 'pointer1.png';
+        if (colorState === 'yellow' || colorState === 'pointer2.png') return 'pointer2.png';
+        if (colorState === 'green' || colorState === 'pointer3.png') return 'pointer3.png';
+        if (colorState === 'purple' || colorState === 'pointer4.png') return 'pointer4.png';
+        return 'pointer.png';
+      }
+      if (pointerId === 'p2') {
+        if (colorState === 'purple' || colorState === 'pointer4.png') return 'pointer4.png';
+        return 'pointer2.png';
+      }
+      if (pointerId === 'p3') {
+        if (colorState === 'purple' || colorState === 'pointer4.png') return 'pointer4.png';
+        return 'pointer1.png';
+      }
+      if (pointerId === 'p4') {
+        if (colorState === 'purple' || colorState === 'pointer4.png') return 'pointer4.png';
+        return 'pointer3.png';
+      }
+      return 'pointer.png';
+    }
+
     socket.on('syncPointerColorState', (data) => {
       if (data && data.pointerId) {
-        const targetPointerDiv = document.getElementById(data.pointerId === 'p2' ? 'pointer2' : data.pointerId === 'p3' ? 'pointer3' : 'pointer4');
+        const targetPointerDiv = document.getElementById(data.pointerId === 'p1' ? 'pointer1' : data.pointerId === 'p2' ? 'pointer2' : data.pointerId === 'p3' ? 'pointer3' : 'pointer4');
         if (targetPointerDiv) {
           const imgEl = targetPointerDiv.querySelector('img');
           if (imgEl) {
-            if (data.colorState === 'purple') {
-              imgEl.src = 'pointer4.png';
-            } else {
-              imgEl.src = defaultPointerImages[data.pointerId];
-            }
+            imgEl.src = getPointerImageSrc(data.pointerId, data.colorState);
           }
         }
       }

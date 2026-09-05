@@ -43,7 +43,7 @@ function initRoomIfNotExist(roomid) {
         targetSeconds: 20,
         isDraggingSync: false,
         pointerState: { p1: true, p2: true, p3: true, p4: true },
-        pointerColorState: { p2: 'default', p3: 'default', p4: 'default' },
+        pointerColorState: { p1: 'default', p2: 'default', p3: 'default', p4: 'default' },
         slots: {}
       }
     };
