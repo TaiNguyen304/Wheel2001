@@ -92,6 +92,17 @@
       border: 2px solid #555555;
     }
 
+    /* Khi bị khóa/disabled thì hover không đổi màu */
+    .btn-spin:not(.active):hover,
+    .btn-spin:disabled:hover,
+    .btn-spin[disabled]:hover {
+      background-color: #000000 !important;
+      color: #ffffff !important;
+      border: 2px solid #555555 !important;
+      box-shadow: none !important;
+      cursor: not-allowed !important;
+    }
+
     /* Trạng thái Mở khi có quyền */
     .btn-spin.active {
       cursor: pointer;
@@ -105,15 +116,15 @@
 
     /* Trạng thái Hover khi có quyền */
     .btn-spin.active:hover {
-      background-color: #ffa500;
+      background-color: #ffa500 !important;
       /* Màu cam ffa500 */
-      color: #000000;
+      color: #000000 !important;
       /* Chữ đậm đen */
-      border: 2px solid #ffa500;
-      box-shadow: 0 0 25px #ffa500;
+      border: 2px solid #ffa500 !important;
+      box-shadow: 0 0 25px #ffa500 !important;
     }
 
-    button:hover {
+    button:not(.btn-spin):hover {
       background: orange !important;
       color: black !important;
     }
